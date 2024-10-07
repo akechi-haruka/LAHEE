@@ -19,8 +19,7 @@ namespace LAHEE {
         .FirstOrDefault(attr => attr.Key == "GitHash")?.Value;
 
             AssemblyName assemblyInfo = Assembly.GetExecutingAssembly().GetName();
-            FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(Assembly.GetEntryAssembly().Location);
-            NAME = assemblyInfo.Name + "/" + assemblyInfo.Version + "-" + gitHash + " - " + versionInfo.LegalCopyright;
+            NAME = assemblyInfo.Name + "/" + assemblyInfo.Version + "-" + gitHash + " - Akechi Haruka";
         }
 
         static void Main(string[] args) {
