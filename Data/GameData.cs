@@ -24,8 +24,16 @@ namespace LAHEE.Data {
             return Achievements.Where(a => a.ID == achievementid).FirstOrDefault((AchievementData)null);
         }
 
-        internal LeaderboardData GetLeaderboardById(int leaderboardId) {
+        public LeaderboardData GetLeaderboardById(int leaderboardId) {
             return Leaderboards.Where(l => l.ID == leaderboardId).FirstOrDefault((LeaderboardData)null);
+        }
+
+        public AchievementData GetAchievementByName(string str, bool partial) {
+            if (partial) {
+                return Achievements.Where(r => r.Title.Contains(str)).FirstOrDefault();
+            } else {
+                return Achievements.Where(r => r.Title.Equals(str)).FirstOrDefault();
+            }
         }
     }
 }

@@ -202,6 +202,14 @@ namespace LAHEE {
         public static GameData FindGameDataByHash(String str) {
             return gameData.Where(r => r.Value.ROMHashes.Contains(str)).FirstOrDefault().Value;
         }
+
+        public static GameData FindGameDataByName(string str, bool partial) {
+            if (partial) {
+                return gameData.Where(r => r.Value.Title.Contains(str)).FirstOrDefault().Value;
+            } else {
+                return gameData.Where(r => r.Value.Title.Equals(str)).FirstOrDefault().Value;
+            }
+        }
     }
 
 }

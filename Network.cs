@@ -50,6 +50,11 @@ namespace LAHEE {
             raRoutes.Add(key, route);
             Log.Network.LogDebug("Added route: " + key);
         }
+
+        public static void Stop() {
+            Log.Network.LogDebug("Stopping webserver");
+            server.Stop();
+        }
     }
 
     internal class Routes {
