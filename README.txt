@@ -35,7 +35,19 @@ Usage:
 This has been tested only with Dolphin 2409-108.
 
 Unfortunately, Dolphin does not support overriding RetroAchievements.ini with the -C flag,
-so you need to go to <your user data location>/Config/RetroAchievements.ini
+so you need to go to <your user data location>\Config\RetroAchievements.ini
 and append a new entry named
 
 HostUrl = http://localhost:8000/lahee
+
+Local achievement images must be placed in <root>\Badge\<badgeid>.png
+User avatars must be placed in <root>\UserPic\<username>.png
+Achievement definitions must be placed in <root>\<Data>\<gameid>-<optional_label>.<extension>
+ - The optional label is simply for file organization convenience
+   (ex. 3885-FFCCSubsetRareItems.json)
+ - For core sets, simply copy the ####.json file from RAIntegration\Data.
+ - For user sets, simply copy the ####-User.txt file from RAIntegration\Data.
+  - Latest supported RAIntegration version: 1.3.0.
+Game hash defitions must be placed in <root>\<Data>\<gameid>-<optional_label>.zzz
+ - Every line should depict one valid hash for this game+achievement set combo
+Progress is saved in <root>\User\<username>.json
