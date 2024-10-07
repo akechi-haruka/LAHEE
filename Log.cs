@@ -30,7 +30,7 @@ namespace LAHEE {
                 .AddFile(loggingConfig.GetSection("File"))
             );
             Main = factory.CreateLogger("Main");
-            Network = factory.CreateLogger("Network");
+            Network = factory.CreateLogger("Net ");
             Data = factory.CreateLogger("Data");
             User = factory.CreateLogger("User");
 
