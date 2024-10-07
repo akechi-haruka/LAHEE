@@ -80,6 +80,8 @@ listach <gamename>                                              Lists all achiev
 unlock <username> <gamename> <achievementname> <hardcore 1/0>   Grant an achievement
 lock <username> <gamename> <achievementname> <hardcore 1/0>     Remove an achievement
 lockall <username> <gamename>                                   Remove ALL achievements
+reload                                                          Reloads achievement data
+reloaduser                                                      Reloads user data
 ");
                     break;
                 case "exit":
@@ -99,10 +101,24 @@ lockall <username> <gamename>                                   Remove ALL achie
                 case "lockall":
                     LockAllAchievementsFromConsole(args[1], args[2]);
                     break;
+                case "reload":
+                    ReloadFromConsole();
+                    break;
+                case "reloaduser":
+                    ReloadUserFromConsole();
+                    break;
                 default:
                     Log.Main.LogWarning("Unknown command: {arg}", args[0]);
                     break;
             }
+        }
+
+        private static void ReloadUserFromConsole() {
+            UserManager.Load(UserManager.UserDataDirectory);
+        }
+
+        private static void ReloadFromConsole() {
+            StaticDataManager.InitializeAchievements();
         }
 
         private static void LockAllAchievementsFromConsole(string username, string gamename) {
