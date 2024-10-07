@@ -51,3 +51,6 @@ Achievement definitions must be placed in <root>\<Data>\<gameid>-<optional_label
 Game hash defitions must be placed in <root>\<Data>\<gameid>-<optional_label>.zzz
  - Every line should depict one valid hash for this game+achievement set combo
 Progress is saved in <root>\User\<username>.json
+
+Note that the Game ID from the file name itself will override the Game ID 
+that is stored inside the .json itself. This allows you to easily merge sets.
