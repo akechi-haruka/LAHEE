@@ -26,8 +26,8 @@ namespace LAHEE {
 
             try {
                 Configuration.Initialize();
-            }catch(Exception ex) {
-                Console.WriteLine("An error ocurred during loading the configuration:\n"+ex.Message);
+            } catch (Exception ex) {
+                Console.WriteLine("An error ocurred during loading the configuration:\n" + ex.Message);
 #if DEBUG
                 Console.WriteLine(ex);
 #endif

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace LAHEE.Data {
-    
+
     public class UserGameData {
         public int GameID;
         public String LastPresence;

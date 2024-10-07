@@ -40,7 +40,7 @@ namespace LAHEE {
                     userData[data.UserName] = data;
 
                     Log.User.LogDebug("Loaded data for \"{User}\"", data);
-                }catch(Exception ex) {
+                } catch (Exception ex) {
                     Log.User.LogError("Failed to load data from " + file + ": " + ex);
                     userData[username] = new UserData() {
                         UserName = username,

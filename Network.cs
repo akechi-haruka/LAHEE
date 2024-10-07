@@ -5,14 +5,15 @@ using WatsonWebserver;
 using WatsonWebserver.Core;
 using HttpMethod = WatsonWebserver.Core.HttpMethod;
 
-namespace LAHEE
-{
+namespace LAHEE {
     internal class Network {
 
         public const String LOCAL_HOST = "localhost";
         public const int LOCAL_PORT = 8000;
         public const String BASE_DIR = "/lahee";
         public const String LOCAL_URL = "http://" + LOCAL_HOST + ":8080" + BASE_DIR;
+
+        internal const String RA_ROUTE_HEADER = "X-RA-Route";
 
         private static Webserver server;
         internal static Dictionary<string, Func<HttpContextBase, Task>> raRoutes;
@@ -26,6 +27,7 @@ namespace LAHEE
             server.Routes.PreAuthentication.Static.Add(HttpMethod.POST, BASE_DIR + "/dorequest.php", Routes.RARequestRoute, Routes.DefaultErrorRoute);
 
             server.Routes.PreAuthentication.Content.Add(BASE_DIR + "/Badge/", true);
+            server.Routes.PreAuthentication.Content.Add(BASE_DIR + "/UserPic/", true);
 
             server.Routes.PostRouting = Routes.PostRouting;
 
@@ -63,12 +65,13 @@ namespace LAHEE
         }
 
         internal static async Task PostRouting(HttpContextBase ctx) {
-            Log.Network.LogInformation("{Method} {Url}: {ResponseCode} {ResponseLength} {UserAgent}", ctx.Request.Method, ctx.Request.Url.Full, ctx.Response.StatusCode, ctx.Response.ContentLength, ctx.Request.Useragent);
+            Log.Network.LogInformation("{Method} {Url} ({RAPath}): {ResponseCode} {ResponseLength} {UserAgent}", ctx.Request.Method, ctx.Request.Url.Full, ctx.Response.Headers.Get(Network.RA_ROUTE_HEADER) ?? "N/A", ctx.Response.StatusCode, ctx.Response.ContentLength, ctx.Request.Useragent);
         }
 
         internal static async Task RARequestRoute(HttpContextBase ctx) {
             string r = ctx.Request.GetParameter("r");
-            Log.Network.LogInformation("RA Request: {r}", r);
+            Log.Network.LogDebug("RA Request: {r}", r);
+            ctx.Response.Headers.Add(Network.RA_ROUTE_HEADER, r);
             if (Network.raRoutes.ContainsKey(r)) {
                 await Network.raRoutes[r].Invoke(ctx);
             } else {
@@ -238,7 +241,7 @@ namespace LAHEE
 
             if (userGameData.Achievements.TryGetValue(achievementid, out UserAchievementData userAchievementData)) {
                 if (userAchievementData.Status == UserAchievementData.StatusFlag.HardcoreUnlock || (userAchievementData.Status == UserAchievementData.StatusFlag.SoftcoreUnlock && hardcoreFlag == 0))
-                Log.User.LogWarning("{user} sent unlock for achievement \"{ach}\" in \"{game}\", but already has it!", user, ach, game);
+                    Log.User.LogWarning("{user} sent unlock for achievement \"{ach}\" in \"{game}\", but already has it!", user, ach, game);
                 await ctx.Response.SendJson(new RAErrorResponse("User already has this achievement"));
                 return;
             }

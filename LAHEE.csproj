@@ -28,6 +28,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<None Remove="LICENSE.txt" />
 		<None Remove="README.txt" />
 	</ItemGroup>
 
