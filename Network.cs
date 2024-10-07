@@ -11,7 +11,7 @@ namespace LAHEE {
         public const String LOCAL_HOST = "localhost";
         public const int LOCAL_PORT = 8000;
         public const String BASE_DIR = "/lahee";
-        public const String LOCAL_URL = "http://" + LOCAL_HOST + ":8080" + BASE_DIR;
+        public const String LOCAL_URL = "http://" + LOCAL_HOST + ":8000" + BASE_DIR;
 
         internal const String RA_ROUTE_HEADER = "X-RA-Route";
 
