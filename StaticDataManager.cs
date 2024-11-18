@@ -169,7 +169,9 @@ namespace LAHEE {
             GameData existing = gameData[game.ID];
 
             if (game.RichPresencePatch != null) {
-                Log.Data.LogWarning("While merging \"{Game}\" into \"{Game2}\", found two rich presence patches", game.Title, existing.Title);
+                if (existing.RichPresencePatch != null) {
+                    Log.Data.LogWarning("While merging \"{Game}\" into \"{Game2}\", found two rich presence patches", game.Title, existing.Title);
+                }
                 existing.RichPresencePatch = game.RichPresencePatch;
             }
 

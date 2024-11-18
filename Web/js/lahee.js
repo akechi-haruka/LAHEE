@@ -58,7 +58,7 @@ function lahee_update_game_status() {
         if (res.currentgameid == lahee_game.ID) {
             var lastping = new Date() - new Date(res.lastping);
             if (lastping < 600_000) {
-                msg = res.gamestatus + "\nPlaytime: " + res.playtime;
+                msg = res.gamestatus + "\nPlaytime: " + TimeSpan.parse(res.playtime);
             } else {
                 msg = "Game last played: " + TimeSpan.fromMilliseconds(lastping).toShortString() + " ago";
             }
