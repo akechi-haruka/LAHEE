@@ -100,7 +100,7 @@ function lahee_change_game() {
     lahee_user = user;
     lahee_game = game;
 
-    document.getElementById("useravatar").src = "../UserPic/" + user.ID + ".png";
+    document.getElementById("useravatar").src = "../UserPic/" + user.UserName + ".png";
     document.getElementById("gameavatar").src = game.ImageIconURL;
 
     lahee_build_achievements(user, game);
