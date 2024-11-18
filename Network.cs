@@ -330,6 +330,9 @@ namespace LAHEE {
             userGameData.PlayTimeApprox += (DateTime.Now - userGameData.PlayTimeLastPing);
             userGameData.PlayTimeLastPing = DateTime.Now;
             userGameData.LastPresence = statusMessage;
+            if (userGameData.PresenceHistory == null) { // 1.0 backcompat
+                userGameData.PresenceHistory = new List<PresenceHistory>();
+            }
             userGameData.PresenceHistory.Add(new PresenceHistory(DateTime.Now, statusMessage));
 
             int limit = Configuration.GetInt("LAHEE", "PresenceHistoryLimit");

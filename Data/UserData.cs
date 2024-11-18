@@ -25,7 +25,9 @@ namespace LAHEE.Data {
             UserGameData ugd = new UserGameData() {
                 GameID = game.ID,
                 Achievements = new Dictionary<int, UserAchievementData>(),
+                PresenceHistory = new List<PresenceHistory>(),
                 FirstPlay = DateTime.Now,
+                LastPlay = DateTime.Now,
                 PlayTimeLastPing = DateTime.Now
             };
             GameData.Add(game.ID, ugd);
