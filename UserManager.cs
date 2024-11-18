@@ -101,7 +101,7 @@ namespace LAHEE {
         }
 
         public static UserData GetUserDataFromToken(string str) {
-            return activeTokens[str];
+            return activeTokens.GetValueOrDefault(str, null);
         }
 
         internal static UserData[] GetAllUserData() {
