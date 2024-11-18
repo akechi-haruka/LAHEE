@@ -40,8 +40,8 @@ and append a new entry named
 
 HostUrl = http://localhost:8000/
 
-Local achievement images must be placed in <root>\Badge\<badgeid>.png
-User avatars must be placed in <root>\UserPic\<username>.png
+Local achievement images must be placed in <root>\lahee\Badge\<badgeid>.png
+User avatars must be placed in <root>\lahee\UserPic\<username>.png
 Achievement definitions must be placed in <root>\<Data>\<gameid>-<optional_label>.<extension>
  - The optional label is simply for file organization convenience
    (ex. 3885-FFCCSubsetRareItems.json)
@@ -51,6 +51,9 @@ Achievement definitions must be placed in <root>\<Data>\<gameid>-<optional_label
 Game hash defitions must be placed in <root>\<Data>\<gameid>-<optional_label>.zhash
  - Every line should depict one valid hash for this game+achievement set combo
 Progress is saved in <root>\User\<username>.json
+
+Note that the Game ID from the file name itself will override the Game ID 
+that is stored inside the .json itself. This allows you to easily merge sets.
 
 Web Viewer:
 
