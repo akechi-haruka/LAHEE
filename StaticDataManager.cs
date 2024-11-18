@@ -41,7 +41,7 @@ namespace LAHEE {
                     } else if (file.EndsWith(".txt")) {
                         int gameId = GetGameIdFromFilename(fname);
                         ParseAchievementUserTxt(gameId, File.ReadAllLines(file));
-                    } else if (file.EndsWith(".zzz")) {
+                    } else if (file.EndsWith(".zzz") || file.EndsWith(".zhash")) {
                         int gameId = GetGameIdFromFilename(fname);
                         ParseAchievementHashFile(gameId, File.ReadAllLines(file));
                     }

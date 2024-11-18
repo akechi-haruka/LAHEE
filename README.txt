@@ -38,7 +38,7 @@ Unfortunately, Dolphin does not support overriding RetroAchievements.ini with th
 so you need to go to <your user data location>\Config\RetroAchievements.ini
 and append a new entry named
 
-HostUrl = http://localhost:8000/lahee
+HostUrl = http://localhost:8000/
 
 Local achievement images must be placed in <root>\Badge\<badgeid>.png
 User avatars must be placed in <root>\UserPic\<username>.png
@@ -48,6 +48,11 @@ Achievement definitions must be placed in <root>\<Data>\<gameid>-<optional_label
  - For core sets, simply copy the ####.json file from RAIntegration\Data.
  - For user sets, simply copy the ####-User.txt file from RAIntegration\Data.
   - Latest supported RAIntegration version: 1.3.0.
-Game hash defitions must be placed in <root>\<Data>\<gameid>-<optional_label>.zzz
+Game hash defitions must be placed in <root>\<Data>\<gameid>-<optional_label>.zhash
  - Every line should depict one valid hash for this game+achievement set combo
 Progress is saved in <root>\User\<username>.json
+
+Web Viewer:
+
+Open http://localhost:8000/Web/ in your browser.
+The LiveTicker feature requires access to ws://localhost:8001/
