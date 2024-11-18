@@ -20,5 +20,13 @@ namespace LAHEE {
         public static string Get(string section, string value) {
             return Current.GetSection(section)?.GetSection(value)?.Value;
         }
+
+        public static int GetInt(string section, string value) {
+            return (Current.GetSection(section)?.GetValue<int>(value)).Value;
+        }
+
+        public static bool GetBool(string section, string value) {
+            return (Current.GetSection(section)?.GetValue<bool>(value)).Value;
+        }
     }
 }

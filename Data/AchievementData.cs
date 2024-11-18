@@ -21,7 +21,8 @@
                 case "1": return "missable";
                 case "2": return "progression";
                 case "3": return "win_condition";
-                default: return "";
+                case "": return "";
+                default: throw new ArgumentException("unknown achievement type: " + type);
             }
         }
 

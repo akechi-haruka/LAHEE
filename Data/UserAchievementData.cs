@@ -11,6 +11,8 @@ namespace LAHEE.Data {
         public StatusFlag Status;
         public long AchieveDate;
         public long AchieveDateSoftcore;
+        public TimeSpan AchievePlaytime;
+        public TimeSpan AchievePlaytimeSoftcore;
 
         public enum StatusFlag {
             Locked = 0,

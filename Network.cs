@@ -10,7 +10,7 @@ namespace LAHEE {
 
         public const String LOCAL_HOST = "localhost";
         public const int LOCAL_PORT = 8000;
-        public const String BASE_DIR = "/lahee";
+        public const String BASE_DIR = "/";
         public const String LOCAL_URL = "http://" + LOCAL_HOST + ":8000" + BASE_DIR;
 
         internal const String RA_ROUTE_HEADER = "X-RA-Route";
@@ -24,14 +24,18 @@ namespace LAHEE {
 
             server = new Webserver(new WebserverSettings(LOCAL_HOST, LOCAL_PORT), Routes.DefaultNotFoundRoute);
 
-            server.Routes.PreAuthentication.Static.Add(HttpMethod.POST, BASE_DIR + "/dorequest.php", Routes.RARequestRoute, Routes.DefaultErrorRoute);
+            server.Routes.PreAuthentication.Static.Add(HttpMethod.GET, BASE_DIR, Routes.RedirectWeb, Routes.DefaultErrorRoute);
+            server.Routes.PreAuthentication.Static.Add(HttpMethod.POST, BASE_DIR + "dorequest.php", Routes.RARequestRoute, Routes.DefaultErrorRoute);
 
-            server.Routes.PreAuthentication.Content.Add(BASE_DIR + "/Badge/", true);
-            server.Routes.PreAuthentication.Content.Add(BASE_DIR + "/UserPic/", true);
+            server.Routes.PreAuthentication.Content.Add(BASE_DIR + "Badge/", true);
+            server.Routes.PreAuthentication.Content.Add(BASE_DIR + "UserPic/", true);
+            server.Routes.PreAuthentication.Content.Add(BASE_DIR + "Web/", true);
 
             server.Routes.PostRouting = Routes.PostRouting;
 
             raRoutes = new Dictionary<string, Func<HttpContextBase, Task>>();
+            AddRARoute("laheeinfo", Routes.LaheeInfo);
+            AddRARoute("laheeuserinfo", Routes.LaheeUserInfo);
             AddRARoute("login", Routes.RALogin);
             AddRARoute("login2", Routes.RALogin);
             AddRARoute("gameid", Routes.RAGameId);
@@ -67,6 +71,12 @@ namespace LAHEE {
             ctx.Response.StatusCode = 500;
             Log.Network.LogError("Failed to handle request to " + ctx.Request.Url.Full + " from " + ctx.Request.Source + ": " + e);
             await ctx.Response.Send(e.Message);
+        }
+
+        internal static async Task RedirectWeb(HttpContextBase ctx) {
+            ctx.Response.Headers.Add("Location", "Web/");
+            ctx.Response.StatusCode = 308;
+            await ctx.Response.Send();
         }
 
         internal static async Task PostRouting(HttpContextBase ctx) {
@@ -189,6 +199,9 @@ namespace LAHEE {
                 UserManager.Save();
             }
 
+            userGameData.PlayTimeLastPing = DateTime.Now;
+            userGameData.LastPlay = DateTime.Now;
+
             List<RAStartSessionResponse.RAStartSessionAchievementData> softcore = new List<RAStartSessionResponse.RAStartSessionAchievementData>();
             List<RAStartSessionResponse.RAStartSessionAchievementData> hardcore = new List<RAStartSessionResponse.RAStartSessionAchievementData>();
 
@@ -261,13 +274,17 @@ namespace LAHEE {
             if (hardcoreFlag == 1) {
                 userAchievementData.Status = UserAchievementData.StatusFlag.HardcoreUnlock;
                 userAchievementData.AchieveDate = Util.CurrentUnixSeconds;
+                userAchievementData.AchievePlaytime = userGameData.PlayTimeApprox + (DateTime.Now - userGameData.PlayTimeLastPing);
             } else if (userAchievementData.Status == UserAchievementData.StatusFlag.Locked) {
                 userAchievementData.Status = UserAchievementData.StatusFlag.SoftcoreUnlock;
                 userAchievementData.AchieveDateSoftcore = Util.CurrentUnixSeconds;
+                userAchievementData.AchievePlaytimeSoftcore = userGameData.PlayTimeApprox + (DateTime.Now - userGameData.PlayTimeLastPing);
             }
 
             Log.User.LogInformation("{user} has unlocked \"{ach}\" in \"{game}\" in {mode} mode!", user, ach, game, hardcoreFlag == 1 ? "Hardcore" : "Softcore");
             UserManager.Save();
+
+            LiveTicker.BroadcastPing();
 
             int totalAchievementCount = game.Achievements.Length;
             int userAchieved = userGameData.Achievements.Where(a => a.Value.Status == (hardcoreFlag == 1 ? UserAchievementData.StatusFlag.HardcoreUnlock : UserAchievementData.StatusFlag.SoftcoreUnlock)).Count();
@@ -306,11 +323,23 @@ namespace LAHEE {
                 return;
             }
 
+            user.CurrentGameId = game.ID;
+
             UserGameData userGameData = user.GameData[game.ID];
 
+            userGameData.PlayTimeApprox += (DateTime.Now - userGameData.PlayTimeLastPing);
+            userGameData.PlayTimeLastPing = DateTime.Now;
             userGameData.LastPresence = statusMessage;
+            userGameData.PresenceHistory.Add(new PresenceHistory(DateTime.Now, statusMessage));
+
+            int limit = Configuration.GetInt("LAHEE", "PresenceHistoryLimit");
+            while (limit > -1 && userGameData.PresenceHistory.Count > limit) {
+                userGameData.PresenceHistory.RemoveAt(0);
+            }
 
             UserManager.Save();
+
+            LiveTicker.BroadcastPing();
 
             RAErrorResponse response = new RAErrorResponse(null) {
                 Success = true
@@ -361,6 +390,8 @@ namespace LAHEE {
             Log.User.LogInformation("{user} recorded a score of {score} on the leaderboard \"{lb}\" in \"{game}\"", user, score, leaderboardData, game);
             UserManager.Save();
 
+            LiveTicker.BroadcastPing();
+
             RALeaderboardResponse response = new RALeaderboardResponse() {
                 Success = true,
                 Score = score,
@@ -370,6 +401,47 @@ namespace LAHEE {
                     Rank = 1
                 },
                 TopEntries = new RALeaderboardResponse.TopObject[0] // out of scope
+            };
+
+            await ctx.Response.SendJson(response);
+        }
+
+        internal static async Task LaheeInfo(HttpContextBase ctx) {
+
+            LaheeResponse response = new LaheeResponse() {
+                version = Program.NAME,
+                games = StaticDataManager.GetAllGameData(),
+                users = UserManager.GetAllUserData(),
+            };
+
+            await ctx.Response.SendJson(response);
+        }
+
+        internal static async Task LaheeUserInfo(HttpContextBase ctx) {
+
+            String user = ctx.Request.GetParameter("user");
+            int gameid = Int32.Parse(ctx.Request.GetParameter("gameid"));
+
+            UserData userData = UserManager.GetUserData(user);
+            if (userData == null) {
+                await ctx.Response.SendJson(new RAErrorResponse("User does not exist!"));
+                return;
+            }
+
+            GameData game = StaticDataManager.FindGameDataById(gameid);
+            if (game == null) {
+                await ctx.Response.SendJson(new RAErrorResponse("Game ID is not registered!"));
+                return;
+            }
+
+            UserGameData userGameData = userData.GameData[gameid];
+
+            LaheeUserResponse response = new LaheeUserResponse() {
+                currentgameid = userData.CurrentGameId,
+                gamestatus = userGameData?.LastPresence,
+                lastping = userGameData?.PlayTimeLastPing,
+                playtime = userGameData?.PlayTimeApprox,
+                achievements = userGameData.Achievements
             };
 
             await ctx.Response.SendJson(response);

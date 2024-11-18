@@ -11,5 +11,10 @@ namespace LAHEE.Data {
         public String LastPresence;
         public Dictionary<int, UserAchievementData> Achievements;
         public Dictionary<int, UserLeaderboardData> LeaderboardEntries;
+        public List<PresenceHistory> PresenceHistory;
+        public DateTime FirstPlay;
+        public DateTime LastPlay;
+        public DateTime PlayTimeLastPing;
+        public TimeSpan PlayTimeApprox;
     }
 }

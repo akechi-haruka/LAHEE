@@ -82,4 +82,18 @@ namespace LAHEE {
             public int Score;
         }
     }
+
+    internal class LaheeResponse {
+        public String version;
+        public UserData[] users;
+        public GameData[] games;
+    }
+
+    internal class LaheeUserResponse {
+        public int currentgameid;
+        public DateTime? lastping;
+        public TimeSpan? playtime;
+        public String gamestatus;
+        public Dictionary<int, UserAchievementData> achievements;
+    }
 }

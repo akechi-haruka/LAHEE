@@ -1,0 +1,48 @@
+main.container {
+    padding-bottom: 80px;
+}
+
+.footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+.bd-mode-toggle {
+    z-index: 2;
+}
+
+#useravatar, #gameavatar {
+    margin-right: 5px;
+}
+
+.ach_grid, .ach_grid img {
+    float: left;
+}
+
+.ach_grid img {
+    border: 2px solid transparent;
+    cursor: pointer;
+}
+
+#adetail_img {
+    border: 2px solid transparent;
+    display: block;
+    margin: 0 auto;
+}
+
+.ach_type_missable {
+    border-color: red !important;
+}
+
+.ach_status_1 {
+    border-color: transparent !important; /* override missable type */
+}
+
+.ach_status_2 {
+    border-color: gold !important;
+}
+
+table {
+    width: 100%;
+}

@@ -115,8 +115,8 @@ namespace LAHEE {
                     // 11 = upvotes(?)
                     // 12 = downvotes(??)
                     BadgeName = parts[13],
-                    BadgeURL = Network.LOCAL_URL + "/Badge/" + parts[13] + ".png",
-                    BadgeLockedURL = Network.LOCAL_URL + "/Badge/" + parts[13] + "_lock.png",
+                    BadgeURL = Network.LOCAL_URL + "Badge/" + parts[13] + ".png",
+                    BadgeLockedURL = Network.LOCAL_URL + "Badge/" + parts[13] + "_lock.png",
                     Flags = 3, // TODO
                 };
 
@@ -209,6 +209,10 @@ namespace LAHEE {
             } else {
                 return gameData.Where(r => r.Value.Title.Equals(str)).FirstOrDefault().Value;
             }
+        }
+
+        internal static GameData[] GetAllGameData() {
+            return gameData.Values.ToArray();
         }
     }
 

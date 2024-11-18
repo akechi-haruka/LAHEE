@@ -41,6 +41,7 @@ namespace LAHEE {
             UserManager.Initialize();
             StaticDataManager.Initialize();
             Network.Initialize();
+            LiveTicker.Initialize();
 
             Log.Main.LogInformation("Initialization complete.");
             Console.WriteLine("Type \"stop\" to save and exit.\nType \"help\" for console commands.\nPoint your emulator to: " + Network.LOCAL_URL);
@@ -115,10 +116,12 @@ reloaduser                                                      Reloads user dat
 
         private static void ReloadUserFromConsole() {
             UserManager.Load(UserManager.UserDataDirectory);
+            Log.Main.LogInformation("Reload completed");
         }
 
         private static void ReloadFromConsole() {
             StaticDataManager.InitializeAchievements();
+            Log.Main.LogInformation("Reload completed");
         }
 
         private static void LockAllAchievementsFromConsole(string username, string gamename) {
@@ -194,6 +197,7 @@ reloaduser                                                      Reloads user dat
 
             Log.Main.LogInformation("Successfully set achievement \"{ach}\" of \"{game}\" for {user} to {status}", ach, game, user, userAchievementData.Status);
             UserManager.Save();
+            LiveTicker.BroadcastPing();
         }
 
         private static string[] ParseConsoleCommand(string line) {
