@@ -171,7 +171,7 @@ function lahee_build_achievements(user, game) {
         }
         maxpt += a.Points;
 
-        content += `<img src="${status != 0 ? a.BadgeURL : a.BadgeLockedURL}" class="ach_type_${a.Type} ach_status_${status}" onclick="lahee_select_ach(${game.ID}, ${a.ID});" loading="lazy" />`;
+        content += `<img src="${status != 0 ? a.BadgeURL : a.BadgeLockedURL}" class="ach_type_${a.Type} ach_status_${status}" onclick="lahee_select_ach(${game.ID}, ${a.ID});" loading="lazy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-title="<b>${a.Title}</b> (${a.Points})<hr />${a.Description}" />`;
     }
 
     document.getElementById("achievementgrid").innerHTML = content + "</div>";
@@ -194,6 +194,9 @@ function lahee_build_achievements(user, game) {
     }
     document.getElementById("totalpt").innerText = totalpt.toLocaleString();
     document.getElementById("adetail_info").style.display = "block";
+
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 }
 
 function lahee_select_ach(gid, aid) {
