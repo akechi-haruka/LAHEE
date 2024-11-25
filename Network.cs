@@ -1,8 +1,8 @@
 ﻿using LAHEE.Data;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using WatsonWebserver;
 using WatsonWebserver.Core;
+using WatsonWebserver.Lite;
 using HttpMethod = WatsonWebserver.Core.HttpMethod;
 
 namespace LAHEE {
@@ -15,14 +15,14 @@ namespace LAHEE {
 
         internal const String RA_ROUTE_HEADER = "X-RA-Route";
 
-        private static Webserver server;
+        private static WebserverLite server;
         internal static Dictionary<string, Func<HttpContextBase, Task>> raRoutes;
 
         public static void Initialize() {
 
             Log.Network.LogDebug("Initalizing network...");
 
-            server = new Webserver(new WebserverSettings(LOCAL_HOST, LOCAL_PORT), Routes.DefaultNotFoundRoute);
+            server = new WebserverLite(new WebserverSettings("0.0.0.0", LOCAL_PORT), Routes.DefaultNotFoundRoute);
 
             server.Routes.PreAuthentication.Static.Add(HttpMethod.GET, BASE_DIR, Routes.RedirectWeb, Routes.DefaultErrorRoute);
             server.Routes.PreAuthentication.Static.Add(HttpMethod.POST, BASE_DIR + "dorequest.php", Routes.RARequestRoute, Routes.DefaultErrorRoute);

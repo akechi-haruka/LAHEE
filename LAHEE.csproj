@@ -28,6 +28,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Web\**" />
+	  <EmbeddedResource Remove="Web\**" />
+	  <None Remove="Web\**" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<None Remove="LICENSE.txt" />
 		<None Remove="README.txt" />
 	</ItemGroup>
@@ -43,8 +49,8 @@
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 		<PackageReference Include="NReco.Logging.File" Version="1.2.1" />
-		<PackageReference Include="Watson" Version="6.2.2" />
-		<PackageReference Include="Watson.Core" Version="6.2.2" />
+		<PackageReference Include="Watson.Core" Version="6.2.3" />
+		<PackageReference Include="Watson.Lite" Version="6.2.3" />
 		<PackageReference Include="websocketsharp.core" Version="1.0.0" />
 	</ItemGroup>
 
