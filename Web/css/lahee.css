@@ -16,7 +16,7 @@ main.container {
     margin-right: 5px;
 }
 
-#achievementgrid {
+#achievementgrid, #achievementdetails {
     overflow-y: scroll;
     height: calc(100vh - 170px);
 }
