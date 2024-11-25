@@ -26,7 +26,13 @@ function lahee_set_page(page) {
     for (var p of document.getElementsByClassName("lahee-page")) {
         p.style.display = "none";
     }
+    for (var p of document.getElementsByClassName("page-controls")) {
+        p.style.display = "none";
+    }
     document.getElementById(page).style.display = "block";
+    for (var c of document.getElementsByClassName(page + "_controls")) {
+        c.style.display = "block";
+    }
 }
 
 function lahee_postinit(res) {
@@ -49,6 +55,7 @@ function lahee_postinit(res) {
 
     lahee_set_page("page_achievements");
     lahee_change_game();
+    lahee_change_lb();
     lahee_connect_liveticker();
 }
 
@@ -58,7 +65,7 @@ function lahee_update_game_status() {
         if (res.currentgameid == lahee_game.ID) {
             var lastping = new Date() - new Date(res.lastping);
             if (lastping < 600_000) {
-                msg = res.gamestatus + "\nPlaytime: " + TimeSpan.parse(res.playtime);
+                msg = res.gamestatus + "\nPlaytime: " + TimeSpan.parse(res.playtime).toStringWithoutMs();
             } else {
                 msg = "Game last played: " + TimeSpan.fromMilliseconds(lastping).toShortString() + " ago";
             }
@@ -97,6 +104,11 @@ function lahee_change_game() {
         return;
     }
 
+    if (!user.AllowUse) {
+        alert("An error occurred while trying to load save data for this user. Check LAHEE log files.");
+        return;
+    }
+
     lahee_user = user;
     lahee_game = game;
 
@@ -104,6 +116,8 @@ function lahee_change_game() {
     document.getElementById("gameavatar").src = game.ImageIconURL;
 
     lahee_build_achievements(user, game);
+    lahee_build_leaderboards(user, game);
+    lahee_change_lb();
 }
 
 function lahee_build_achievements(user, game) {
@@ -217,11 +231,11 @@ function lahee_select_ach(gid, aid) {
     if (ua.Status == 2) {
         status = "Hardcore Unlocked";
         unlockDate = Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'short' }).format(new Date(ua.AchieveDate * 1000));
-        unlockTime = ua.AchievePlaytime;
+        unlockTime = TimeSpan.parse(ua.AchievePlaytime).toStringWithoutMs();
     } else if (ua.Status == 1) {
         status = "Unlocked";
         unlockDate = Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'short' }).format(new Date(ua.AchieveDateSoftcore * 1000));
-        unlockTime = ua.AchievePlaytimeSoftcore;
+        unlockTime = TimeSpan.parse(ua.AchievePlaytimeSoftcore).toStringWithoutMs();
     }
 
     document.getElementById("adetail_status").innerText = status;
@@ -255,4 +269,66 @@ function lahee_connect_liveticker() {
     socket.onerror = function (error) {
         console.log(`[error] ${error}`);
     };
+}
+
+function lahee_build_leaderboards(user, game) {
+    var list = "";
+
+    for (var le of game.Leaderboards) {
+        list += "<option value='" + le.ID + "'>" + le.Title + "</option>";
+    }
+
+    document.getElementById("lb_id").innerHTML = list;
+}
+
+function lahee_change_lb() {
+
+    var lb_id = document.getElementById("lb_id").value;
+
+    var ul = lahee_user.GameData[lahee_game.ID]?.LeaderboardEntries[lb_id] ?? []; 
+    var gl = null;
+
+    for (var glb of lahee_game.Leaderboards) {
+        if (glb.ID == lb_id) {
+            gl = glb;
+            break;
+        }
+    }
+    if (!gl) {
+        console.error("leaderboard id not found: " + lb_id);
+        return;
+    }
+    var sort = document.getElementById("lbsort_select").value;
+    var arr = ul.slice();
+    for (var i = 0; i < arr.length; i++) {
+        arr[i]._presort_index = i;
+    }
+    arr.sort(function (a, b) {
+        if (sort == 0) {
+            return b.Score - a.Score;
+        } else if (sort == 1) {
+            return b.RecordDate - a.RecordDate;
+        }
+    });
+
+    var list = "";
+
+    if (ul.length > 0) {
+        var format = Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'short' });
+        for (var e of arr) {
+            list += `
+            <tr>
+                <td>${e._presort_index + 1}</td>
+                <td>${e.Score.toLocaleString()}</td>
+                <td>${format.format(new Date(e.RecordDate * 1000))}</td>
+                <td>${TimeSpan.parse(e.PlayTime).toStringWithoutMs()}</td>
+            </tr>
+            `;
+        }
+    } else {
+        list = "<tr><td colspan='4'>No scores recorded.</td></tr>";
+    }
+
+    document.getElementById("lb_content").innerHTML = list;
+    document.getElementById("lb_desc").innerHTML = gl.Description;
 }

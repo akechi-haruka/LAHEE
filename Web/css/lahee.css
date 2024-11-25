@@ -51,3 +51,7 @@ main.container {
 table {
     width: 100%;
 }
+
+.lahee-page, .page-controls {
+    display: none;
+}

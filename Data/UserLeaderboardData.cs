@@ -9,5 +9,6 @@ namespace LAHEE.Data {
         public int LeaderboardID;
         public int Score;
         public long RecordDate;
+        public TimeSpan PlayTime;
     }
 }

@@ -31,13 +31,12 @@
         </symbol>
     </svg>
 
-    <div class="dropdown position-fixed bottom-0 end-0 mb-3 me-3 bd-mode-toggle">
+    <div class="dropdown position-fixed bottom-0 end-0 mb-4 me-3 bd-mode-toggle">
         <button class="btn btn-bd-primary py-2 dropdown-toggle d-flex align-items-center"
                 id="bd-theme"
                 type="button"
-                aria-expanded="false"
                 data-bs-toggle="dropdown"
-                aria-label="Toggle theme (auto)">
+                style="background-color: rgba(0, 148, 255, 0.2)">
             <svg class="bi my-1 theme-icon-active" width="1em" height="1em"><use href="#circle-half"></use></svg>
             <span class="visually-hidden" id="bd-theme-text">Toggle theme</span>
         </button>
@@ -69,12 +68,17 @@
 
     <nav class="navbar navbar-expand-md navbar-dark bg-dark mb-4">
         <div class="container-fluid">
-            <a id="lahee_version" class="navbar-brand" href="#">LAHEE</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarCollapse">
                 <ul class="navbar-nav me-auto mb-2 mb-md-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="javascript:lahee_set_page('page_achievements')">Achievements</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="javascript:lahee_set_page('page_leaderboards')">Records</a>
+                    </li>
                 </ul>
                 <form class="d-flex">
                     <img id="useravatar" src="" height="48" />
@@ -85,13 +89,17 @@
                     <select id="game_select" class="form-select me-2">
                         <option>Loading...</option>
                     </select>
-                    <select id="sort_select" class="form-select me-2">
+                    <select id="sort_select" class="form-select me-2 page_achievements_controls page-controls">
                         <option value="0">Sort: Default</option>
                         <option value="1">Sort: Locked</option>
                         <option value="2">Sort: Unlocked</option>
                         <option value="3">Sort: Missable</option>
                     </select>
-                    <input class="form-control me-2" type="text" name="filter" id="filter" placeholder="Filter by name/description" />
+                    <input class="form-control me-2 page_achievements_controls page-controls" type="text" id="filter" placeholder="Filter by name/description" />
+                    <select id="lbsort_select" class="form-select me-2 page-controls page_leaderboards_controls">
+                        <option value="0">Sort: Best</option>
+                        <option value="1">Sort: Recent</option>
+                    </select>
                     <button class="btn btn-outline-success" type="button" onclick="lahee_change_game();">Switch</button>
                 </form>
             </div>
@@ -99,7 +107,7 @@
     </nav>
 
     <main class="container">
-        <div id="page_loading" class="lahee-page">
+        <div id="page_loading" class="lahee-page" style="display: block;">
             <p>Now Loading...</p>
             <p>Depending on the number of games or achievements, this may take a moment.</p>
         </div>
@@ -151,11 +159,32 @@
                 </div>
             </div>
         </div>
+        <div id="page_leaderboards" class="lahee-page">
+            <select class="form-select" id="lb_id" onchange="lahee_change_lb();">
+                <option>Loading...</option>
+            </select>
+            <hr />
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th colspan="4" id="lb_desc"></th>
+                    </tr>
+                    <tr>
+                        <th>Attempt #</th>
+                        <th>Score</th>
+                        <th>Record Date</th>
+                        <th>Play Time</th>
+                    </tr>
+                </thead>
+                <tbody id="lb_content"></tbody>
+            </table>
+        </div>
     </main>
 
     <footer class="footer mt-auto py-3 bg-body-tertiary">
         <div class="container">
             <span class="text-body-secondary" id="ingame">Live Ticker: Connecting...</span>
+            <span class="text-body-secondary float-end" id="lahee_version">LAHEE</span>
         </div>
     </footer>
 

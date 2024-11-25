@@ -69,7 +69,8 @@ namespace LAHEE {
 
         internal static async Task DefaultErrorRoute(HttpContextBase ctx, Exception e) {
             ctx.Response.StatusCode = 500;
-            Log.Network.LogError("Failed to handle request to " + ctx.Request.Url.Full + " from " + ctx.Request.Source + ": " + e);
+            Log.Network.LogError("Failed to handle request to " + ctx.Request.Url.RawWithQuery + " from " + ctx.Request.Source + ": " + e);
+            Log.Network.LogInformation("Request content: " + ctx.Request.DataAsString);
             await ctx.Response.Send(e.Message);
         }
 
@@ -259,7 +260,7 @@ namespace LAHEE {
 
             if (userGameData.Achievements.TryGetValue(achievementid, out UserAchievementData userAchievementData)) {
                 if (userAchievementData.Status == UserAchievementData.StatusFlag.HardcoreUnlock || (userAchievementData.Status == UserAchievementData.StatusFlag.SoftcoreUnlock && hardcoreFlag == 0))
-                    Log.User.LogWarning("{user} sent unlock for achievement \"{ach}\" in \"{game}\", but already has it!", user, ach, game);
+                    Log.User.LogWarning("{user} sent unlock for achievement \"{ach}\" in \"{game}\", but already has it! (status={s},hardcore submission={hc})", user, ach, game, userAchievementData.Status, hardcoreFlag);
                 await ctx.Response.SendJson(new RAErrorResponse("User already has this achievement"));
                 return;
             }
@@ -358,7 +359,7 @@ namespace LAHEE {
             int score = Int32.Parse(ctx.Request.GetParameter("s"));
             String gamehash = ctx.Request.GetParameter("m");
             // int secondsSinceUnlock = ctx.Request.GetParameter("o");
-            int gameid = Int32.Parse(ctx.Request.GetParameter("g"));
+            // int gameid = Int32.Parse(ctx.Request.GetParameter("g"));
             String verification = ctx.Request.GetParameter("v");
 
             GameData game = StaticDataManager.FindGameDataByHash(gamehash);
@@ -384,10 +385,17 @@ namespace LAHEE {
                 return;
             }
 
-            userGameData.LeaderboardEntries.Add(leaderboardId, new UserLeaderboardData() {
+            if (userGameData.LeaderboardEntries == null) { // backcompat
+                userGameData.LeaderboardEntries = new Dictionary<int, List<UserLeaderboardData>>(); 
+            }
+            if (!userGameData.LeaderboardEntries.ContainsKey(leaderboardId)) {
+                userGameData.LeaderboardEntries.Add(leaderboardId, new List<UserLeaderboardData>());
+            }
+            userGameData.LeaderboardEntries[leaderboardId].Add(new UserLeaderboardData() {
                 LeaderboardID = leaderboardId,
                 Score = score,
-                RecordDate = Util.CurrentUnixSeconds
+                RecordDate = Util.CurrentUnixSeconds,
+                PlayTime = userGameData.PlayTimeApprox + (DateTime.Now - userGameData.PlayTimeLastPing)
             });
 
             Log.User.LogInformation("{user} recorded a score of {score} on the leaderboard \"{lb}\" in \"{game}\"", user, score, leaderboardData, game);
@@ -398,7 +406,7 @@ namespace LAHEE {
             RALeaderboardResponse response = new RALeaderboardResponse() {
                 Success = true,
                 Score = score,
-                BestScore = userGameData.LeaderboardEntries.Select(r => r.Value.Score).Max(),
+                BestScore = userGameData.LeaderboardEntries[leaderboardId].Select(r => r.Score).Max(),
                 RankInfo = new RALeaderboardResponse.RankObject() {
                     NumEntries = 1, // out of scope
                     Rank = 1
