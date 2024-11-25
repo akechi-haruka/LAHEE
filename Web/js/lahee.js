@@ -285,7 +285,7 @@ function lahee_change_lb() {
 
     var lb_id = document.getElementById("lb_id").value;
 
-    var ul = lahee_user.GameData[lahee_game.ID]?.LeaderboardEntries[lb_id] ?? []; 
+    var ul = (lahee_user.GameData[lahee_game.ID]?.LeaderboardEntries ?? [])[lb_id] ?? [];  
     var gl = null;
 
     for (var glb of lahee_game.Leaderboards) {
