@@ -91,6 +91,7 @@
                         <option value="2">Sort: Unlocked</option>
                         <option value="3">Sort: Missable</option>
                     </select>
+                    <input class="form-control me-2" type="text" name="filter" id="filter" placeholder="Filter by name/description" />
                     <button class="btn btn-outline-success" type="button" onclick="lahee_change_game();">Switch</button>
                 </form>
             </div>
@@ -109,28 +110,30 @@
                     <p><img id="adetail_img" /></p>
                     <h3 id="adetail_title" class="text-center">Please select...</h3>
                     <p id="adetail_desc"></p>
-                    <table>
-                        <tr>
-                            <td>Type</td>
-                            <td id="adetail_type"></td>
-                        </tr>
-                        <tr>
-                            <td>Score</td>
-                            <td id="adetail_score"></td>
-                        </tr>
-                        <tr>
-                            <td>Status</td>
-                            <td id="adetail_status"></td>
-                        </tr>
-                        <tr>
-                            <td>Unlocked</td>
-                            <td id="adetail_unlock"></td>
-                        </tr>
-                        <tr>
-                            <td>Play Time</td>
-                            <td id="adetail_unlock_pt"></td>
-                        </tr>
-                    </table>
+                    <div id="adetail_info" style="display:none;">
+                        <table>
+                            <tr>
+                                <td>Type</td>
+                                <td id="adetail_type"></td>
+                            </tr>
+                            <tr>
+                                <td>Score</td>
+                                <td id="adetail_score"></td>
+                            </tr>
+                            <tr>
+                                <td>Status</td>
+                                <td id="adetail_status"></td>
+                            </tr>
+                            <tr>
+                                <td>Unlocked</td>
+                                <td id="adetail_unlock"></td>
+                            </tr>
+                            <tr>
+                                <td>Play Time</td>
+                                <td id="adetail_unlock_pt"></td>
+                            </tr>
+                        </table>
+                    </div>
                     <hr />
                     <div class="row">
                         <div class="col">

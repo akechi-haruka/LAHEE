@@ -110,7 +110,16 @@ function lahee_build_achievements(user, game) {
     var content = "<div class='ach_grid'>";
 
     var sort = document.getElementById("sort_select").value;
+    var filter = document.getElementById("filter").value;
     var arr = game.Achievements.slice();
+
+    if (filter) {
+        filter = filter.toLowerCase();
+        arr = arr.filter(a => {
+            return a.Title.toLowerCase().includes(filter) ||
+                a.Description.toLowerCase().includes(filter);
+        });
+    }
 
     arr.sort(function (a, b) {
         var ua = user.GameData[game.ID]?.Achievements[a.ID] ?? {};
@@ -148,7 +157,7 @@ function lahee_build_achievements(user, game) {
         }
         maxpt += a.Points;
 
-        content += `<img src="${status != 0 ? a.BadgeURL : a.BadgeLockedURL}" class="ach_type_${a.Type} ach_status_${status}" onclick="lahee_select_ach(${game.ID}, ${a.ID});" />`;
+        content += `<img src="${status != 0 ? a.BadgeURL : a.BadgeLockedURL}" class="ach_type_${a.Type} ach_status_${status}" onclick="lahee_select_ach(${game.ID}, ${a.ID});" loading="lazy" />`;
     }
 
     document.getElementById("achievementgrid").innerHTML = content + "</div>";
@@ -170,6 +179,7 @@ function lahee_build_achievements(user, game) {
         }
     }
     document.getElementById("totalpt").innerText = totalpt.toLocaleString();
+    document.getElementById("adetail_info").style.display = "block";
 }
 
 function lahee_select_ach(gid, aid) {
