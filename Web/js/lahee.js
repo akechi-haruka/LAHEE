@@ -4,7 +4,7 @@ var lahee_user;
 var lahee_game;
 
 function lahee_init() {
-    LAHEE_URL = "http://localhost:8000/dorequest.php";
+    LAHEE_URL = "http://"+window.location.host+"/dorequest.php";
     lahee_request("r=laheeinfo", lahee_postinit);
 }
 

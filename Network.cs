@@ -22,7 +22,7 @@ namespace LAHEE {
 
             Log.Network.LogDebug("Initalizing network...");
 
-            server = new WebserverLite(new WebserverSettings("127.0.0.1", LOCAL_PORT), Routes.DefaultNotFoundRoute);
+            server = new WebserverLite(new WebserverSettings("0.0.0.0", LOCAL_PORT), Routes.DefaultNotFoundRoute);
 
             server.Routes.PreAuthentication.Static.Add(HttpMethod.GET, BASE_DIR, Routes.RedirectWeb, Routes.DefaultErrorRoute);
             server.Routes.PreAuthentication.Static.Add(HttpMethod.POST, BASE_DIR + "dorequest.php", Routes.RARequestRoute, Routes.DefaultErrorRoute);
