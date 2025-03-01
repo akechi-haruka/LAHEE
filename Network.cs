@@ -259,10 +259,11 @@ namespace LAHEE {
             UserGameData userGameData = user.GameData[game.ID];
 
             if (userGameData.Achievements.TryGetValue(achievementid, out UserAchievementData userAchievementData)) {
-                if (userAchievementData.Status == UserAchievementData.StatusFlag.HardcoreUnlock || (userAchievementData.Status == UserAchievementData.StatusFlag.SoftcoreUnlock && hardcoreFlag == 0))
+                if (userAchievementData.Status == UserAchievementData.StatusFlag.HardcoreUnlock || (userAchievementData.Status == UserAchievementData.StatusFlag.SoftcoreUnlock && hardcoreFlag == 0)) {
                     Log.User.LogWarning("{user} sent unlock for achievement \"{ach}\" in \"{game}\", but already has it! (status={s},hardcore submission={hc})", user, ach, game, userAchievementData.Status, hardcoreFlag);
-                await ctx.Response.SendJson(new RAErrorResponse("User already has this achievement"));
-                return;
+                    await ctx.Response.SendJson(new RAErrorResponse("User already has this achievement"));
+                    return;
+                }
             }
 
             if (userAchievementData == null) {
