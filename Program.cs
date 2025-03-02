@@ -26,6 +26,11 @@ namespace LAHEE {
 
             Console.Title = NAME;
 
+            String path = System.Environment.ProcessPath;
+            if (path != null) {
+                Environment.CurrentDirectory = Path.GetDirectoryName(path);
+            }
+
             try {
                 Configuration.Initialize();
             } catch (Exception ex) {
