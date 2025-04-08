@@ -79,7 +79,7 @@ public static class RaOfficialServer {
         imageDownloads.Add(gameData.ImageIcon, gameData.ImageIconURL);
         foreach (AchievementData ad in gameData.Achievements) {
             imageDownloads.Add(ad.BadgeName, ad.BadgeURL);
-            imageDownloads.Add(Path.GetFileNameWithoutExtension(ad.BadgeName) + "_locked.png", ad.BadgeLockedURL);
+            imageDownloads.Add(Path.GetFileNameWithoutExtension(ad.BadgeName) + "_lock.png", ad.BadgeLockedURL);
         }
 
         // Achievement data modifications:
