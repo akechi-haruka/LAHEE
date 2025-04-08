@@ -11,6 +11,9 @@ What???
 
 This allows local/offline/modded progression of RetroAchievements.
 
+Screenshot:
+https://puu.sh/KrrG0/12a0dc0431.jpg
+
 Features:
 * Obtain achievements without an internet connection.
 * Add or Modify achievements (ex. remove single player checks from Final Fantasy Crystal Chronicles achievements)
@@ -28,8 +31,7 @@ Usage
 
 This has been tested only with Dolphin.
 
-Unfortunately, Dolphin does not support overriding RetroAchievements.ini with the -C flag,
-so you need to go to <your user data location>\Config\RetroAchievements.ini
+Unfortunately, Dolphin does not support overriding RetroAchievements.ini with the -C flag, so you need to go to <your user data location>\Config\RetroAchievements.ini
 and append a new entry named
 
 HostUrl = http://localhost:8000/
@@ -63,8 +65,7 @@ Game hash defitions must be placed in <root>\<Data>\<gameid>-<optional_label>.zh
  - Every line should depict one valid hash for this game+achievement set combo
  - All .zhash files of the same ID are merged.
 
-Note that the Game ID from the file name itself will override the Game ID 
-that is stored inside the .json itself. This allows you to easily merge sets.
+Note that the Game ID from the file name itself will override the Game ID that is stored inside the .json itself. This allows you to easily merge sets.
 For example, to merge the core FFCC set (ID 3885) and the "Rare Drops" subset (ID 28855), name both files simply a variation of "3885-FFCC Core.json" and "3885-FFCC Rare Drops.json", and both will be combined into one set and no longer requires patching your game hash.
 
 -------------------------------------------------
