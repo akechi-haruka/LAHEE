@@ -138,7 +138,7 @@ public static class RaOfficialServer {
                     userGameData.UnlockAchievement(ad.ID, false, ad.When);
                 }
 
-                foreach (RAStartSessionResponse.RAStartSessionAchievementData ad in al.Unlocks) {
+                foreach (RAStartSessionResponse.RAStartSessionAchievementData ad in al.HardcoreUnlocks) {
                     userGameData.UnlockAchievement(ad.ID, true, ad.When);
                 }
             } else {
