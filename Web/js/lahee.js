@@ -171,7 +171,7 @@ function lahee_build_achievements(user, game) {
         }
         maxpt += a.Points;
 
-        content += `<img src="${status != 0 ? a.BadgeURL : a.BadgeLockedURL}" class="ach_type_${a.Type} ach_status_${status}" onclick="lahee_select_ach(${game.ID}, ${a.ID});" loading="lazy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-title="<b>${a.Title}</b> (${a.Points})<hr />${a.Description}" />`;
+        content += `<img src="${status != 0 ? a.BadgeURL : a.BadgeLockedURL}" class="ach_type_${a.Type} ach_status_${status}" onclick="lahee_select_ach(${game.ID}, ${a.ID});" loading="lazy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-title="<b>${a.Title.replaceAll("\"", "&quot;")}</b> (${a.Points})<hr />${a.Description.replaceAll("\"", "&quot;")}" />`;
     }
 
     document.getElementById("achievementgrid").innerHTML = content + "</div>";
@@ -280,8 +280,16 @@ function lahee_build_leaderboards(user, game) {
     for (var le of game.Leaderboards) {
         list += "<option value='" + le.ID + "'>" + le.Title + "</option>";
     }
+    if (game.Leaderboards.length == 0){
+        list += "<option value=''>No entries exist for this game.</option>";
+    }
 
-    document.getElementById("lb_id").innerHTML = list;
+    var lb = document.getElementById("lb_id");
+    lb.innerHTML = list;
+    lb.disabled = game.Leaderboards.length == 0;
+    
+    var lt = document.getElementById("lb_table");
+    lt.style.display = game.Leaderboards.length > 0 ? "table": "none";
 }
 
 function lahee_change_lb() {
