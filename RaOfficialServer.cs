@@ -97,7 +97,7 @@ public static class RaOfficialServer {
         
         Log.RCheevos.LogInformation("Finished getting data from \"{u}\"", url);
 
-        String fileBase = "Data\\" + overrideId + "-" + new string(gameData.Title.Where(ch => !INVALID_FILE_NAME_CHARS.Contains(ch)).ToArray());
+        String fileBase = "Data\\" + overrideId + "-" + (fetchId != overrideId ? "zz-" : "") + new string(gameData.Title.Where(ch => !INVALID_FILE_NAME_CHARS.Contains(ch)).ToArray());
         String fileData = fileBase + ".json";
         String fileHash = fileBase + ".zhash";
         if (!File.Exists(fileData)) {
