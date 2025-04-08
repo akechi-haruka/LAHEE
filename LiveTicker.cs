@@ -4,7 +4,7 @@ using WebSocketSharp;
 using WebSocketSharp.Server;
 
 namespace LAHEE {
-    internal class LiveTicker {
+    class LiveTicker {
 
         private static List<LiveTickerWS> connecteds = new List<LiveTickerWS>();
 

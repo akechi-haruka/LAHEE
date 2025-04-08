@@ -1,20 +1,15 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NReco.Logging.File;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace LAHEE {
-    internal class Log {
+    class Log {
 
         public static ILogger Main { get; private set; }
         public static ILogger Network { get; private set; }
         public static ILogger Data { get; private set; }
         public static ILogger User { get; private set; }
+        public static ILogger RCheevos { get; private set; }
 
         public static void Initialize() {
 
@@ -33,6 +28,7 @@ namespace LAHEE {
             Network = factory.CreateLogger("Net ");
             Data = factory.CreateLogger("Data");
             User = factory.CreateLogger("User");
+            RCheevos = factory.CreateLogger("Rche");
 
             Main.LogInformation("Logging started.");
             Main.LogInformation("Local Achievements Home Enhanced Edition " + Program.NAME);

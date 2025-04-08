@@ -1,12 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LAHEE {
-    internal class Configuration {
+    class Configuration {
 
         public static IConfigurationRoot Current { get; private set; }
 
@@ -19,6 +14,10 @@ namespace LAHEE {
 
         public static string Get(string section, string value) {
             return Current.GetSection(section)?.GetSection(value)?.Value;
+        }
+
+        public static string Get(string section, string subsection, string value) {
+            return Current.GetSection(section)?.GetSection(subsection)?.GetSection(value)?.Value;
         }
 
         public static int GetInt(string section, string value) {

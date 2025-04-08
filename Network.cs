@@ -1,12 +1,11 @@
 ﻿using LAHEE.Data;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using WatsonWebserver.Core;
 using WatsonWebserver.Lite;
 using HttpMethod = WatsonWebserver.Core.HttpMethod;
 
 namespace LAHEE {
-    internal class Network {
+    static class Network {
 
         public const String LOCAL_HOST = "localhost";
         public const int LOCAL_PORT = 8000;
@@ -20,7 +19,7 @@ namespace LAHEE {
 
         public static void Initialize() {
 
-            Log.Network.LogDebug("Initalizing network...");
+            Log.Network.LogDebug("Initializing network...");
 
             server = new WebserverLite(new WebserverSettings("0.0.0.0", LOCAL_PORT), Routes.DefaultNotFoundRoute);
 
@@ -61,7 +60,7 @@ namespace LAHEE {
         }
     }
 
-    internal class Routes {
+    static class Routes {
         internal static async Task DefaultNotFoundRoute(HttpContextBase ctx) {
             ctx.Response.StatusCode = 404;
             await ctx.Response.Send("kweh.");
@@ -266,22 +265,7 @@ namespace LAHEE {
                 }
             }
 
-            if (userAchievementData == null) {
-                userAchievementData = new UserAchievementData() {
-                    AchievementID = achievementid
-                };
-                userGameData.Achievements[achievementid] = userAchievementData;
-            }
-
-            if (hardcoreFlag == 1) {
-                userAchievementData.Status = UserAchievementData.StatusFlag.HardcoreUnlock;
-                userAchievementData.AchieveDate = Util.CurrentUnixSeconds;
-                userAchievementData.AchievePlaytime = userGameData.PlayTimeApprox + (DateTime.Now - userGameData.PlayTimeLastPing);
-            } else if (userAchievementData.Status == UserAchievementData.StatusFlag.Locked) {
-                userAchievementData.Status = UserAchievementData.StatusFlag.SoftcoreUnlock;
-                userAchievementData.AchieveDateSoftcore = Util.CurrentUnixSeconds;
-                userAchievementData.AchievePlaytimeSoftcore = userGameData.PlayTimeApprox + (DateTime.Now - userGameData.PlayTimeLastPing);
-            }
+            userGameData.UnlockAchievement(achievementid, hardcoreFlag == 1);
 
             Log.User.LogInformation("{user} has unlocked \"{ach}\" in \"{game}\" in {mode} mode!", user, ach, game, hardcoreFlag == 1 ? "Hardcore" : "Softcore");
             UserManager.Save();
@@ -289,7 +273,7 @@ namespace LAHEE {
             LiveTicker.BroadcastPing();
 
             int totalAchievementCount = game.Achievements.Length;
-            int userAchieved = userGameData.Achievements.Where(a => a.Value.Status == (hardcoreFlag == 1 ? UserAchievementData.StatusFlag.HardcoreUnlock : UserAchievementData.StatusFlag.SoftcoreUnlock)).Count();
+            int userAchieved = userGameData.Achievements.Count(a => a.Value.Status == (hardcoreFlag == 1 ? UserAchievementData.StatusFlag.HardcoreUnlock : UserAchievementData.StatusFlag.SoftcoreUnlock));
 
             RAUnlockResponse response = new RAUnlockResponse() {
                 Success = true,

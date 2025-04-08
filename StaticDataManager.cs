@@ -4,13 +4,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic.FileIO;
 using Newtonsoft.Json;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace LAHEE {
-
-    internal class StaticDataManager {
-
-        private const String SUPPORTED_LOCAL_ACHIEVEMENT_FILE_VERSION_PREFIX = "1.3.0";
+    static class StaticDataManager {
+        
+        private static readonly String[] SUPPORTED_LOCAL_ACHIEVEMENT_FILE_VERSION_PREFIX_LIST = new String[]{"1.3.0", "1.3.1"};
+        public const int UNSUPPORTED_EMULATOR_ACHIEVEMENT_ID = 101000001;
 
         private static Dictionary<int, GameData> gameData;
 
@@ -70,7 +69,7 @@ namespace LAHEE {
         private static void ParseAchievementUserTxt(int gameId, string[] content) {
             Log.Data.LogDebug("Starting to process user data file for game ID {ID}", gameId);
 
-            if (!content[0].StartsWith(SUPPORTED_LOCAL_ACHIEVEMENT_FILE_VERSION_PREFIX)) {
+            if (!SUPPORTED_LOCAL_ACHIEVEMENT_FILE_VERSION_PREFIX_LIST.Any(v => content[0].StartsWith(v))) {
                 throw new Exception("Invalid local achievement file version: " + content[0]);
             }
 
@@ -135,10 +134,9 @@ namespace LAHEE {
             RegisterOrMergeGame(gameId, data);
         }
 
-        private static int GetGameIdFromFilename(string fname) {
-            int gameId = 0;
-            if (!Int32.TryParse(fname.Split('-')[0], out gameId)) {
-                Log.Data.LogWarning("No valid gameid found in filename: {F}", fname);
+        private static int GetGameIdFromFilename(string fileName) {
+            if (!Int32.TryParse(fileName.Split('-')[0], out int gameId)) {
+                Log.Data.LogWarning("No valid game id found in filename: {F}", fileName);
             }
             return gameId;
         }
@@ -202,14 +200,14 @@ namespace LAHEE {
         }
 
         public static GameData FindGameDataByHash(String str) {
-            return gameData.Where(r => r.Value.ROMHashes.Contains(str)).FirstOrDefault().Value;
+            return gameData.FirstOrDefault(r => r.Value.ROMHashes.Contains(str)).Value;
         }
 
         public static GameData FindGameDataByName(string str, bool partial) {
             if (partial) {
-                return gameData.Where(r => r.Value.Title.Contains(str)).FirstOrDefault().Value;
+                return gameData.FirstOrDefault(r => r.Value.Title.Contains(str)).Value;
             } else {
-                return gameData.Where(r => r.Value.Title.Equals(str)).FirstOrDefault().Value;
+                return gameData.FirstOrDefault(r => r.Value.Title.Equals(str)).Value;
             }
         }
 

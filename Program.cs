@@ -1,14 +1,11 @@
 ﻿using LAHEE.Data;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic.FileIO;
-using System.Diagnostics;
-using System.IO;
 using System.Reflection;
 using System.Text;
 
 namespace LAHEE {
-
-    internal class Program {
+    class Program {
 
         public static readonly String NAME;
 
@@ -22,7 +19,7 @@ namespace LAHEE {
             NAME = assemblyInfo.Name + "/" + assemblyInfo.Version + "-" + gitHash + " - Akechi Haruka";
         }
 
-        static void Main(string[] args) {
+        private static void Main(string[] args) {
 
             Console.Title = NAME;
 
@@ -40,6 +37,11 @@ namespace LAHEE {
 #endif
                 Console.ReadLine();
                 return;
+            }
+
+            string badgeDirectory = Configuration.Get("LAHEE", "BadgeDirectory");
+            if (!File.Exists(badgeDirectory)) {
+                Directory.CreateDirectory(badgeDirectory);
             }
 
             Log.Initialize();
@@ -79,15 +81,16 @@ namespace LAHEE {
             switch (args[0]) {
                 case "help":
                     Console.WriteLine(@"
-help                                                            Show this help
-exit                                                            Exit LAHEE
-stop                                                            Exit LAHEE
-listach <gamename>                                              Lists all achievements for game
-unlock <username> <gamename> <achievementname> <hardcore 1/0>   Grant an achievement
-lock <username> <gamename> <achievementname> <hardcore 1/0>     Remove an achievement
-lockall <username> <gamename>                                   Remove ALL achievements
-reload                                                          Reloads achievement data
-reloaduser                                                      Reloads user data
+help                                                                  Show this help
+exit                                                                  Exit LAHEE
+stop                                                                  Exit LAHEE
+listach <gamename>                                                    Lists all achievements for game
+unlock <username> <gamename> <achievementname> <hardcore 1/0>         Grant an achievement
+lock <username> <gamename> <achievementname> <hardcore 1/0>           Remove an achievement
+lockall <username> <gamename>                                         Remove ALL achievements
+fetch <gameid> [override_gameid] [unofficial 1/0] [copy_unlocks_to]   Copies game and achievement data from official server
+reload                                                                Reloads achievement data
+reloaduser                                                            Reloads user data
 ");
                     break;
                 case "exit":
@@ -112,6 +115,9 @@ reloaduser                                                      Reloads user dat
                     break;
                 case "reloaduser":
                     ReloadUserFromConsole();
+                    break;
+                case "fetch":
+                    RaOfficialServer.FetchData(args[1], args.Length >= 3 ? args[2] : null, args.Length >= 4 && args[3] == "1", args.Length >= 5 ? args[4] : null);
                     break;
                 default:
                     Log.Main.LogWarning("Unknown command: {arg}", args[0]);

@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace LAHEE {
-    internal class UserManager {
+    class UserManager {
 
         public static string UserDataDirectory { get; private set; }
 

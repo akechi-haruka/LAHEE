@@ -1,14 +1,9 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web;
 using WatsonWebserver.Core;
 
 namespace LAHEE {
-    internal static class Extensions {
+    static class Extensions {
 
         private const int CHUNK_SIZE = 250_000;
 

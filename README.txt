@@ -47,7 +47,7 @@ Achievement definitions must be placed in <root>\<Data>\<gameid>-<optional_label
    (ex. 3885-FFCCSubsetRareItems.json)
  - For core sets, simply copy the ####.json file from RAIntegration\Data.
  - For user sets, simply copy the ####-User.txt file from RAIntegration\Data.
-  - Latest supported RAIntegration version: 1.3.0.
+  - Latest supported RAIntegration version: 1.3.1.
 Game hash defitions must be placed in <root>\<Data>\<gameid>-<optional_label>.zhash
  - Every line should depict one valid hash for this game+achievement set combo
 Progress is saved in <root>\User\<username>.json
