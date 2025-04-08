@@ -39,6 +39,13 @@ function lahee_postinit(res) {
 
     lahee_data = res;
 
+    lahee_data.users.sort(function (a, b) {
+        return a.UserName.localeCompare(b.UserName);
+    });
+    lahee_data.games.sort(function (a, b) {
+        return a.Title.localeCompare(b.Title);
+    });
+
     document.getElementById("lahee_version").innerText = res.version;
 
     var users = "";
@@ -118,6 +125,7 @@ function lahee_change_game() {
     lahee_build_achievements(user, game);
     lahee_build_leaderboards(user, game);
     lahee_change_lb();
+    lahee_update_game_status();
 }
 
 function lahee_build_achievements(user, game) {
