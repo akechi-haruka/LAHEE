@@ -12,7 +12,7 @@ What???
 This allows local/offline/modded progression of RetroAchievements.
 
 Screenshot:
-https://puu.sh/KrrG0/12a0dc0431.jpg
+https://github.com/akechi-haruka/LAHEE/blob/master/screenshot.jpg
 
 Features:
 * Obtain achievements without an internet connection.
