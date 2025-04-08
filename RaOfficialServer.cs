@@ -59,9 +59,10 @@ public static class RaOfficialServer {
         if (patch == null) {
             return;
         }
+        GameData gameData = patch.PatchData;
 
         List<string> hashes = new List<string>();
-        hashes.AddRange(patch.PatchData.ROMHashes);
+        hashes.AddRange(gameData.ROMHashes);
 
         RAApiHashesResponse hashResponse = Query<RAApiHashesResponse>(HttpMethod.Get, url, "API/API_GetGameHashes.php?y=" + apiWeb + "&i=" + fetchId, null);
         if (hashResponse == null) {
@@ -73,19 +74,35 @@ public static class RaOfficialServer {
                 hashes.Add(h.MD5);
             }
         }
+        
+        Dictionary<String, String> imageDownloads = new Dictionary<string, string>();
+        imageDownloads.Add(gameData.ImageIcon, gameData.ImageIconURL);
+        foreach (AchievementData ad in gameData.Achievements) {
+            imageDownloads.Add(ad.BadgeName, ad.BadgeURL);
+            imageDownloads.Add(Path.GetFileNameWithoutExtension(ad.BadgeName) + "_locked.png", ad.BadgeLockedURL);
+        }
 
+        // Achievement data modifications:
+        
+        // apply overridden ID for set merges
+        gameData.ID = overrideId;
+        // re-route image URLs to local
+        gameData.ImageIconURL = StaticDataManager.LocalifyUrl(gameData.ImageIconURL);
+        foreach (AchievementData ad in gameData.Achievements) {
+            ad.BadgeURL = StaticDataManager.LocalifyUrl(ad.BadgeURL);
+            ad.BadgeLockedURL = StaticDataManager.LocalifyUrl(ad.BadgeLockedURL);
+        }
+        // remove "unsupported emulator"
+        gameData.Achievements = gameData.Achievements.Where(a => a.ID != StaticDataManager.UNSUPPORTED_EMULATOR_ACHIEVEMENT_ID).ToArray();
+        
         Log.RCheevos.LogInformation("Finished getting data from \"{u}\"", url);
 
-        patch.PatchData.ID = overrideId;
-
-        patch.PatchData.Achievements = patch.PatchData.Achievements.Where(a => a.ID != StaticDataManager.UNSUPPORTED_EMULATOR_ACHIEVEMENT_ID).ToArray();
-
-        String fileBase = "Data\\" + overrideId + "-" + new string(patch.PatchData.Title.Where(ch => !INVALID_FILE_NAME_CHARS.Contains(ch)).ToArray());
+        String fileBase = "Data\\" + overrideId + "-" + new string(gameData.Title.Where(ch => !INVALID_FILE_NAME_CHARS.Contains(ch)).ToArray());
         String fileData = fileBase + ".json";
         String fileHash = fileBase + ".zhash";
         if (!File.Exists(fileData)) {
             Log.RCheevos.LogInformation("Creating file {f}", fileData);
-            File.WriteAllText(fileData, JsonConvert.SerializeObject(patch.PatchData));
+            File.WriteAllText(fileData, JsonConvert.SerializeObject(gameData));
         } else {
             Log.RCheevos.LogWarning("File {f} already exists, not overwriting! Delete to force an update!", fileData);
         }
@@ -97,15 +114,13 @@ public static class RaOfficialServer {
             Log.RCheevos.LogWarning("File {f} already exists, not overwriting! Delete to force an update!", fileHash);
         }
 
-        Log.RCheevos.LogInformation("Finished copying achievement definition data for \"{n}\"", patch.PatchData.Title);
+        Log.RCheevos.LogInformation("Finished copying achievement definition data for \"{n}\"", gameData.Title);
 
-        CheckAndQueryImage(patch.PatchData.ImageIcon, patch.PatchData.ImageIconURL);
-        foreach (AchievementData a in patch.PatchData.Achievements) {
-            CheckAndQueryImage(a.BadgeName, a.BadgeURL);
-            CheckAndQueryImage(Path.GetFileNameWithoutExtension(a.BadgeName) + "_locked.png", a.BadgeLockedURL);
+        foreach (KeyValuePair<string, string> image in imageDownloads) {
+            CheckAndQueryImage(image.Key, image.Value);
         }
 
-        Log.RCheevos.LogInformation("Finished copying achievement image data for \"{n}\"", patch.PatchData.Title);
+        Log.RCheevos.LogInformation("Finished copying achievement image data for \"{n}\"", gameData.Title);
 
         StaticDataManager.InitializeAchievements();
 

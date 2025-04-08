@@ -214,6 +214,12 @@ namespace LAHEE {
         internal static GameData[] GetAllGameData() {
             return gameData.Values.ToArray();
         }
+
+        public static string LocalifyUrl(string url) {
+            return url
+                .Replace("https://media.retroachievements.org", "")
+                .Replace("https://retroachievements.org", "");
+        }
     }
 
 }
