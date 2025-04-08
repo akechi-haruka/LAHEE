@@ -41,6 +41,8 @@ namespace LAHEE {
         public class RAStartSessionAchievementData {
             public int ID;
             public long When;
+            
+            public RAStartSessionAchievementData(){}
 
             public RAStartSessionAchievementData(UserAchievementData userAchievement, bool isHardcore) {
                 ID = userAchievement.AchievementID;

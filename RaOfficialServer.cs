@@ -132,7 +132,7 @@ public static class RaOfficialServer {
                 userGameData = user.RegisterGame(game);
             }
 
-            RAStartSessionResponse al = Query<RAStartSessionResponse>(HttpMethod.Get, url, "dorequest.php?r=startsession&u=" + username + "&t=" + login.Token + "&h=0&l=11.4&m=", null);
+            RAStartSessionResponse al = Query<RAStartSessionResponse>(HttpMethod.Get, url, "dorequest.php?r=startsession&u=" + username + "&t=" + login.Token + "&h=0&l=11.4&g="+fetchId+"&m=", null);
             if (al != null) {
                 foreach (RAStartSessionResponse.RAStartSessionAchievementData ad in al.Unlocks) {
                     userGameData.UnlockAchievement(ad.ID, false, ad.When);
