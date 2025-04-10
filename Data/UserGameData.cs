@@ -11,10 +11,10 @@
         public DateTime PlayTimeLastPing;
         public TimeSpan PlayTimeApprox;
 
-        public void UnlockAchievement(int achievementId, bool isHardcore, long achieveDate = 0) {
+        public UserAchievementData UnlockAchievement(int achievementId, bool isHardcore, long achieveDate = 0) {
 
             if (achievementId == StaticDataManager.UNSUPPORTED_EMULATOR_ACHIEVEMENT_ID) { // "Unsupported Emulator"
-                return;
+                return null;
             }
 
             if (!Achievements.TryGetValue(achievementId, out UserAchievementData userAchievementData)) {
@@ -45,6 +45,8 @@
                     userAchievementData.AchievePlaytimeSoftcore = PlayTimeApprox + (DateTime.Now - PlayTimeLastPing);
                 }
             }
+
+            return userAchievementData;
         }
     }
 }

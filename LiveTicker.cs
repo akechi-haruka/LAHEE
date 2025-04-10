@@ -1,5 +1,7 @@
 ﻿
+using LAHEE.Data;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using WebSocketSharp;
 using WebSocketSharp.Server;
 
@@ -22,7 +24,16 @@ namespace LAHEE {
             lock (connecteds) {
                 Log.Network.LogDebug("Pinging {n} websockets...", connecteds.Count);
                 foreach (LiveTickerWS ws in connecteds) {
-                    ws.SendMessage("{}");
+                    ws.SendMessage(new LiveTickerEventPing());
+                }
+            }
+        }
+
+        public static void BroadcastUnlock(int gameId, UserAchievementData userAchievementData) {
+            lock (connecteds) {
+                Log.Network.LogDebug("Sending unlock to {n} websockets...", connecteds.Count);
+                foreach (LiveTickerWS ws in connecteds) {
+                    ws.SendMessage(new LiveTickerEventUnlock(gameId, userAchievementData));
                 }
             }
         }
@@ -58,6 +69,33 @@ namespace LAHEE {
                 Send(str);
             }
 
+            public void SendMessage(object obj) {
+                Send(JsonConvert.SerializeObject(obj));
+            }
+
+        }
+
+        public abstract class LiveTickerEvent {
+            public String type;
+
+            protected LiveTickerEvent(string type) {
+                this.type = type;
+            }
+        }
+
+        public class LiveTickerEventPing : LiveTickerEvent {
+            public LiveTickerEventPing() : base("ping") {
+            }
+        }
+        
+        public class LiveTickerEventUnlock : LiveTickerEvent {
+            public int gameId;
+            public UserAchievementData userAchievementData;
+            
+            public LiveTickerEventUnlock(int gameId, UserAchievementData userAchievementData) : base("unlock") {
+                this.gameId = gameId;
+                this.userAchievementData = userAchievementData;
+            }
         }
     }
 }

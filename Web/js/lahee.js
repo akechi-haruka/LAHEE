@@ -4,6 +4,17 @@ var lahee_user;
 var lahee_game;
 
 function lahee_init() {
+    if (Lobibox && Lobibox.notify) {
+        Lobibox.notify.DEFAULTS.position = "top right";
+        Lobibox.notify.DEFAULTS.delay = 30000;
+        Lobibox.notify.DEFAULTS.soundExt = ".mp3";
+        Lobibox.notify.OPTIONS.info = {
+            'class': 'lobibox-notify-info',
+            'title': 'Achievement Unlocked!',
+            sound: '162482__kastenfrosch__achievement'
+        };
+    }
+    
     LAHEE_URL = "http://"+window.location.host+"/dorequest.php";
     lahee_request("r=laheeinfo", lahee_postinit);
 }
@@ -264,7 +275,7 @@ function lahee_connect_liveticker() {
 
     socket.onmessage = function (event) {
         console.log(`[message] Data received from server: ${event.data}`);
-        lahee_update_game_status();
+        lahee_liveticker_update(JSON.parse(event.data));
     };
 
     socket.onclose = function (event) {
@@ -282,22 +293,35 @@ function lahee_connect_liveticker() {
     };
 }
 
+function lahee_liveticker_update(data){
+    if (data.type == "ping"){
+        lahee_update_game_status();
+    } else if (data.type == "unlock"){
+        lahee_play_unlock_sound(data.gameId, data.userAchievementData);
+    } else {
+        console.warn("unknown event: " + data.type);
+    }
+}
+
 function lahee_build_leaderboards(user, game) {
     var list = "";
+    
+    var has_leaderboards = game.Leaderboards && game.Leaderboards.length != 0;
 
-    for (var le of game.Leaderboards) {
-        list += "<option value='" + le.ID + "'>" + le.Title + "</option>";
-    }
-    if (game.Leaderboards.length == 0){
+    if (has_leaderboards) {
+        for (var le of game.Leaderboards) {
+            list += "<option value='" + le.ID + "'>" + le.Title + "</option>";
+        }
+    } else {
         list += "<option value=''>No entries exist for this game.</option>";
     }
 
     var lb = document.getElementById("lb_id");
     lb.innerHTML = list;
-    lb.disabled = game.Leaderboards.length == 0;
+    lb.disabled = !has_leaderboards;
     
     var lt = document.getElementById("lb_table");
-    lt.style.display = game.Leaderboards.length > 0 ? "table": "none";
+    lt.style.display = has_leaderboards ? "table": "none";
 }
 
 function lahee_change_lb() {
@@ -307,10 +331,12 @@ function lahee_change_lb() {
     var ul = (lahee_user.GameData[lahee_game.ID]?.LeaderboardEntries ?? [])[lb_id] ?? [];  
     var gl = null;
 
-    for (var glb of lahee_game.Leaderboards) {
-        if (glb.ID == lb_id) {
-            gl = glb;
-            break;
+    if (lahee_game.Leaderboards) {
+        for (var glb of lahee_game.Leaderboards) {
+            if (glb.ID == lb_id) {
+                gl = glb;
+                break;
+            }
         }
     }
     if (!gl) {
@@ -350,4 +376,28 @@ function lahee_change_lb() {
 
     document.getElementById("lb_content").innerHTML = list;
     document.getElementById("lb_desc").innerHTML = gl.Description;
+}
+
+function lahee_play_unlock_sound(gid, uad){
+    var ach = null;
+    for (var a of lahee_game.Achievements) {
+        if (a.ID == uad.AchievementID) {
+            ach = a;
+            break;
+        }
+    }
+
+    if (ach) {
+        lahee_select_ach(gid, ach.ID);
+
+        if (Lobibox) {
+            Lobibox.notify(
+                "info",
+                {
+                    "img": ach.BadgeURL,
+                    "msg": ach.Title + " (" + ach.Points + ")"
+                }
+            );
+        }
+    }
 }

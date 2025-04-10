@@ -269,7 +269,8 @@ namespace LAHEE {
 
             Log.User.LogInformation("{user} has unlocked \"{ach}\" in \"{game}\" in {mode} mode!", user, ach, game, hardcoreFlag == 1 ? "Hardcore" : "Softcore");
             UserManager.Save();
-
+            
+            LiveTicker.BroadcastUnlock(game.ID, userAchievementData);
             LiveTicker.BroadcastPing();
 
             int totalAchievementCount = game.Achievements.Length;
@@ -430,14 +431,14 @@ namespace LAHEE {
                 return;
             }
 
-            UserGameData userGameData = userData.GameData[gameid];
+            userData.GameData.TryGetValue(gameid, out UserGameData userGameData);
 
             LaheeUserResponse response = new LaheeUserResponse() {
                 currentgameid = userData.CurrentGameId,
                 gamestatus = userGameData?.LastPresence,
                 lastping = userGameData?.PlayTimeLastPing,
                 playtime = userGameData?.PlayTimeApprox,
-                achievements = userGameData.Achievements
+                achievements = userGameData?.Achievements ?? []
             };
 
             await ctx.Response.SendJson(response);

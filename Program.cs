@@ -185,29 +185,11 @@ reloaduser                                                            Reloads us
                 Log.Main.LogError("User has no data recorded for this game.");
                 return;
             }
-            if (!userGameData.Achievements.TryGetValue(ach.ID, out UserAchievementData userAchievementData)){
-                userAchievementData = new UserAchievementData() {
-                    AchievementID = ach.ID
-                };
-                userGameData.Achievements.Add(ach.ID, userAchievementData);
-            }
+            UserAchievementData userAchievementData = userGameData.UnlockAchievement(ach.ID, hardcore);
 
-            if (unlock) {
-                if (hardcore) {
-                    userAchievementData.Status = UserAchievementData.StatusFlag.HardcoreUnlock;
-                    userAchievementData.AchieveDate = Util.CurrentUnixSeconds;
-                } else {
-                    userAchievementData.Status = UserAchievementData.StatusFlag.SoftcoreUnlock;
-                    userAchievementData.AchieveDateSoftcore = Util.CurrentUnixSeconds;
-                }
-            } else {
-                userAchievementData.Status = UserAchievementData.StatusFlag.Locked;
-                userAchievementData.AchieveDate = 0;
-                userAchievementData.AchieveDateSoftcore = 0;
-            }
-
-            Log.Main.LogInformation("Successfully set achievement \"{ach}\" of \"{game}\" for {user} to {status}", ach, game, user, userAchievementData.Status);
+            Log.Main.LogInformation("Successfully set achievement \"{ach}\" of \"{game}\" for {user} to {status}", ach, game, user, userAchievementData?.Status);
             UserManager.Save();
+            LiveTicker.BroadcastUnlock(game.ID, userAchievementData);
             LiveTicker.BroadcastPing();
         }
 
