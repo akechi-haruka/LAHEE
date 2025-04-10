@@ -80,7 +80,12 @@ namespace LAHEE {
         }
 
         internal static async Task PostRouting(HttpContextBase ctx) {
-            Log.Network.LogInformation("{Method} {Url} ({RAPath}): {ResponseCode} {ResponseLength} {UserAgent}", ctx.Request.Method, ctx.Request.Url.RawWithQuery, ctx.Response.Headers.Get(Network.RA_ROUTE_HEADER) ?? "N/A", ctx.Response.StatusCode, ctx.Response.ContentLength, ctx.Request.Useragent);
+            String raRoute = ctx.Response.Headers.Get(Network.RA_ROUTE_HEADER);
+            if (raRoute != null) {
+                Log.Network.LogInformation("{Method} {Url} ({RAPath}): {ResponseCode} {ResponseLength} {UserAgent}", ctx.Request.Method, ctx.Request.Url.RawWithQuery, raRoute, ctx.Response.StatusCode, ctx.Response.ContentLength, ctx.Request.Useragent);
+            } else {
+                Log.Network.LogDebug("{Method} {Url}: {ResponseCode} {ResponseLength} {UserAgent}", ctx.Request.Method, ctx.Request.Url.RawWithQuery, ctx.Response.StatusCode, ctx.Response.ContentLength, ctx.Request.Useragent);
+            }
         }
 
         internal static async Task RARequestRoute(HttpContextBase ctx) {
