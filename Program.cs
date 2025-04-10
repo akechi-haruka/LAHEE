@@ -161,7 +161,7 @@ reloaduser                                                            Reloads us
             }
 
             foreach (AchievementData ach in game.Achievements) {
-                Console.WriteLine(ach);
+                Log.Main.LogInformation("{a}", ach);
             }
         }
 
