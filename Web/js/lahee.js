@@ -14,6 +14,9 @@ function lahee_init() {
             sound: '162482__kastenfrosch__achievement'
         };
     }
+    if (Notification.permission == "default"){
+        Notification.requestPermission();
+    }
     
     LAHEE_URL = "http://"+window.location.host+"/dorequest.php";
     lahee_request("r=laheeinfo", lahee_postinit);
@@ -398,6 +401,10 @@ function lahee_play_unlock_sound(gid, uad){
                     "msg": ach.Title + " (" + ach.Points + ")"
                 }
             );
+        }
+        
+        if (Notification.permission == "granted"){
+            new Notification("Achievement Unlocked!", { body: ach.Title + " (" + ach.Points + ")", icon: ach.BadgeURL });
         }
     }
 }
