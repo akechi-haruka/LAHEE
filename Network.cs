@@ -270,7 +270,7 @@ namespace LAHEE {
                 }
             }
 
-            userGameData.UnlockAchievement(achievementid, hardcoreFlag == 1);
+            userAchievementData = userGameData.UnlockAchievement(achievementid, hardcoreFlag == 1);
 
             Log.User.LogInformation("{user} has unlocked \"{ach}\" in \"{game}\" in {mode} mode!", user, ach, game, hardcoreFlag == 1 ? "Hardcore" : "Softcore");
             UserManager.Save();
