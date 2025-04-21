@@ -2,21 +2,13 @@ var LAHEE_URL;
 var lahee_data;
 var lahee_user;
 var lahee_game;
+var lahee_last_audio = 0;
 
 function lahee_init() {
-    if (Lobibox && Lobibox.notify) {
-        Lobibox.notify.DEFAULTS.position = "top right";
-        Lobibox.notify.DEFAULTS.delay = 30000;
-        Lobibox.notify.DEFAULTS.soundExt = ".mp3";
-        Lobibox.notify.OPTIONS.info = {
-            'class': 'lobibox-notify-info',
-            'title': 'Achievement Unlocked!',
-            sound: '162482__kastenfrosch__achievement'
-        };
-    }
     if (Notification.permission == "default"){
         Notification.requestPermission();
     }
+    lahee_audio_play("540121__jj_om__blank-sound.ogg");
     
     LAHEE_URL = "http://"+window.location.host+"/dorequest.php";
     lahee_request("r=laheeinfo", lahee_postinit);
@@ -95,6 +87,9 @@ function lahee_update_game_status() {
         }
         document.getElementById("ingame").innerText = msg;
 
+        if (!lahee_user.GameData[lahee_game.ID]){
+            lahee_user.GameData[lahee_game.ID] = {};
+        }
         lahee_user.GameData[lahee_game.ID].Achievements = res.achievements;
 
         lahee_build_achievements(lahee_user, lahee_game);
@@ -392,19 +387,24 @@ function lahee_play_unlock_sound(gid, uad){
 
     if (ach) {
         lahee_select_ach(gid, ach.ID);
-
-        if (Lobibox) {
-            Lobibox.notify(
-                "info",
-                {
-                    "img": ach.BadgeURL,
-                    "msg": ach.Title + " (" + ach.Points + ")"
-                }
-            );
-        }
         
         if (Notification.permission == "granted"){
             new Notification("Achievement Unlocked!", { body: ach.Title + " (" + ach.Points + ")", icon: ach.BadgeURL });
+            lahee_audio_play("162482__kastenfrosch__achievement.mp3");
         }
     }
+}
+
+function lahee_audio_play(audio){
+    if (Date.now() < lahee_last_audio + 1000){
+        console.log("not playing audio, too close to previous audio");
+        return;
+    }
+    try {
+        var sound = new Audio("sounds/" + audio);
+        sound.play();
+    }catch (e){
+        console.warn("Failed playing audio", e);
+    }
+    lahee_last_audio = Date.now();
 }

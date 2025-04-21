@@ -73,3 +73,11 @@ Web Viewer
 -------------------------------------------------
 
 Open http://localhost:8000/Web/ in your browser to see locked/unlocked achievements, records, presence and score.
+
+To enable notifications and sound effects, allow them in your browser.
+
+-------------------------------------------------
+Attribution
+-------------------------------------------------
+achievement.mp3 by Kastenfrosch -- https://freesound.org/s/162482/ -- License: Creative Commons 0
+blank-sound.ogg by JJ_OM -- https://freesound.org/s/540121/ -- License: Creative Commons 0
