@@ -25,6 +25,8 @@ Features:
 
 THIS DOES NOT FORWARD ACHIEVEMENTS TO THE REAL SITE. EVERYTHING IS LOCAL.
 
+Latest build download: https://nightly.link/akechi-haruka/LAHEE/workflows/dotnet/master
+
 -------------------------------------------------
 Usage
 -------------------------------------------------
