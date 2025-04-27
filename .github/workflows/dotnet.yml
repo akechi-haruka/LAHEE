@@ -24,7 +24,7 @@ jobs:
         dotnet publish .\LAHEE.csproj --configuration Release /p:PublishProfile=.\LAHEE.pubxml
     - name: Copy Web Files
       run: |
-        xcopy Web LAHEE\publish\Web /E
+        xcopy Web\ bin\Release\net8.0\publish\Web\ /E
     - name: Upload
       uses: actions/upload-artifact@v4.3.3
       with:
