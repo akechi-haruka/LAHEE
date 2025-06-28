@@ -40,6 +40,14 @@ main.container {
     border-color: red !important;
 }
 
+.ach_type_progression {
+    border-color: lightskyblue !important;
+}
+
+.ach_type_win_condition {
+    border-color: lime !important;
+}
+
 .ach_status_1 {
     border-color: transparent !important; /* override missable type */
 }

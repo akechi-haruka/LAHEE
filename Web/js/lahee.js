@@ -263,6 +263,8 @@ function lahee_select_ach(gid, aid) {
     var img = document.getElementById("adetail_img");
     img.src = ua.Status ? a.BadgeURL : a.BadgeLockedURL;
     img.classList.remove("ach_type_missable");
+    img.classList.remove("ach_type_progression");
+    img.classList.remove("ach_type_win_condition");
     for (var i = 0; i < 4; i++) {
         img.classList.remove("ach_status_" + i);
     }
