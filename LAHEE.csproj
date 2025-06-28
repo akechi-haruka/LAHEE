@@ -13,9 +13,9 @@
 		<Authors>Akechi Haruka</Authors>
 		<Company />
 		<Description>RetroAchievements API Emulator</Description>
-		<Copyright>2024 Akechi Haruka</Copyright>
+		<Copyright>2024-2025 Akechi Haruka</Copyright>
 		<IncludeSourceRevisionInInformationalVersion>true</IncludeSourceRevisionInInformationalVersion>
-		<AssemblyVersion>1.5.2</AssemblyVersion>
+		<AssemblyVersion>1.5.3</AssemblyVersion>
 		<FileVersion>$(AssemblyVersion)</FileVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>

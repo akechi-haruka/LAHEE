@@ -67,6 +67,7 @@ function lahee_postinit(res) {
     document.getElementById("game_select").innerHTML = games;
 
     lahee_set_page("page_achievements");
+    lahee_autoselect_based_on_most_recent_achievement();
     lahee_change_game();
     lahee_change_lb();
     lahee_connect_liveticker();
@@ -135,6 +136,32 @@ function lahee_change_game() {
     lahee_build_leaderboards(user, game);
     lahee_change_lb();
     lahee_update_game_status();
+}
+
+function lahee_autoselect_based_on_most_recent_achievement(){
+    var last_user = null;
+    var last_game = null;
+    var last_time = 0;
+    for (var u of lahee_data.users) {
+        for (var gid of Object.keys(u.GameData)) {
+            var g = u.GameData[gid];
+            for (var aid of Object.keys(g.Achievements)){
+                var a = g.Achievements[aid];
+                var time = Math.max(a.AchieveDateSoftcore, a.AchieveDate);
+                if (time > last_time){
+                    last_user = u.ID;
+                    last_game = gid;
+                    last_time = time;
+                }
+            }
+        }
+    }
+    
+    if (last_user != null && last_game != null){
+        document.getElementById("user_select").value = last_user;
+        document.getElementById("game_select").value = last_game;
+        console.log("Latest Achievement was from " + last_time + " from UID " + last_user + " in " + last_game);
+    }
 }
 
 function lahee_build_achievements(user, game) {
@@ -213,7 +240,9 @@ function lahee_build_achievements(user, game) {
     document.getElementById("adetail_info").style.display = "block";
 
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl, {
+        trigger : 'hover'
+    }));
 }
 
 function lahee_select_ach(gid, aid) {
