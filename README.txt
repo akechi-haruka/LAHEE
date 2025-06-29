@@ -25,6 +25,8 @@ Features:
 
 THIS DOES NOT FORWARD ACHIEVEMENTS TO THE REAL SITE. EVERYTHING IS LOCAL.
 
+Latest build download: https://nightly.link/akechi-haruka/LAHEE/workflows/dotnet/master
+
 -------------------------------------------------
 Usage
 -------------------------------------------------
@@ -38,7 +40,7 @@ HostUrl = http://localhost:8000/
 
 Afterwards, navigate to Tools > Achievements, and type in any desired username. (password is ignored).
 
-An avatar can be placed in <root>\lahee\UserPic\<username>.png
+An avatar can be placed in <root>\UserPic\<username>.png
 
 -------------------------------------------------
 Adding achievements (from real site)
