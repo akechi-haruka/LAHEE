@@ -477,11 +477,16 @@ namespace LAHEE {
                 return;
             }
 
-            if (!RaOfficialServer.FetchComments(gameid, ach.ID)) {
+            try {
+                RaOfficialServer.FetchComments(gameid, ach.ID);
+            } catch (ProtocolException e) {
+                Log.RCheevos.LogError(e.Message);
+                await ctx.Response.SendJson(new RAErrorResponse(e.Message));
+            } catch (Exception e) {
                 await ctx.Response.SendJson(new RAErrorResponse("Downloading comments from official RA server failed"));
                 return;
             }
-            
+
             LaheeFetchCommentsResponse response = new LaheeFetchCommentsResponse() {
                 Success = true,
                 Comments = StaticDataManager.GetAllUserComments()

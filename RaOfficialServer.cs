@@ -211,28 +211,27 @@ public static class RaOfficialServer {
         }
     }
 
-    public static bool FetchComments(int gameId, int achievementId) {
+    public static void FetchComments(int gameId, int achievementId) {
         GameData game = StaticDataManager.FindGameDataById(gameId);
         if (game == null) {
-            Log.Main.LogError("Unknown game id: " + gameId);
-            return false;
+            throw new ProtocolException("Unknown game id: " + gameId);
         }
 
         string url = Configuration.Get("LAHEE", "RAFetch", "Url");
         string apiWeb = Configuration.Get("LAHEE", "RAFetch", "WebApiKey");
 
         if (String.IsNullOrWhiteSpace(url)) {
-            Log.Main.LogError("Invalid RAFetch Url in configuration.");
-            return false;
+            throw new ProtocolException("Invalid RAFetch Url in configuration.");
         }
 
         if (String.IsNullOrWhiteSpace(apiWeb)) {
-            Log.Main.LogError("Invalid RAFetch WebApiKey in configuration. Get it from here: {u}", url + "/settings");
-            return false;
+            throw new ProtocolException("Invalid RAFetch WebApiKey in configuration. Get it from here: " + url + "/settings");
         }
 
         RAApiCommentsResponse resp = Query<RAApiCommentsResponse>(HttpMethod.Get, url, "API/API_GetComments.php?y=" + apiWeb + "&t=2&i=" + achievementId + "&sort=-submitted", null);
         if (resp != null) {
+
+            bool addedComments = false;
             foreach (UserComment uc in resp.Results) {
                 if (uc.ULID.Equals(SERVER_ACCOUNT_USER_ID)) {
                     continue;
@@ -241,13 +240,16 @@ public static class RaOfficialServer {
                 uc.AchievementID = achievementId;
                 uc.LaheeUUID = Guid.NewGuid();
                 StaticDataManager.AddComment(uc, game, false);
+                addedComments = true;
+            }
+
+            if (!addedComments) {
+                throw new ProtocolException("No comments exist for this achievement on the official RA website.");
             }
 
             StaticDataManager.SaveCommentFile(game);
-            return true;
         } else {
-            Log.RCheevos.LogError("Failed to fetch comments for {a}", achievementId);
-            return false;
+            throw new ProtocolException("Failed to fetch comments for " + achievementId);
         }
     }
 }
