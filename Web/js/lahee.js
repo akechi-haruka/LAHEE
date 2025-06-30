@@ -506,6 +506,11 @@ function lahee_load_comments(aid) {
 function lahee_show_comment_editor() {
     lahee_popup = new bootstrap.Modal(document.getElementById('writeCommentModal'), {});
     lahee_popup.show();
+    var editor = document.getElementById("comment_body");
+    editor.value = "";
+    setTimeout(function() {
+        editor.focus();
+    }, 100);
 }
 
 function lahee_write_comment() {
@@ -550,5 +555,13 @@ function lahee_delete_comment(id) {
         }, function (e) {
             alert("Error occurred while deleting comment: " + e);
         });
+    }
+}
+
+function lahee_comment_editor_onkeyup(event){
+    if (event.ctrlKey && event.which == 13){
+        lahee_write_comment();
+    } else if (event.which == 17){
+        lahee_popup.hide();
     }
 }

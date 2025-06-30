@@ -209,11 +209,11 @@
                     <h5 class="modal-title" id="exampleModalLabel">Write Note</h5>
                 </div>
                 <div class="modal-body">
-                    <textarea id="comment_body" class="w-100 form-control" rows="15"></textarea>
+                    <textarea id="comment_body" class="w-100 form-control" rows="15" onkeyup="lahee_comment_editor_onkeyup(event);"></textarea>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="lahee_popup.hide();">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="lahee_write_comment();">Add Notes</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="lahee_popup.hide();">Close (Esc)</button>
+                    <button type="button" class="btn btn-primary" onclick="lahee_write_comment();">Add Notes (Ctrl+Enter)</button>
                 </div>
             </div>
         </div>
