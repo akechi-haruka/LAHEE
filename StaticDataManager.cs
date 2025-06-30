@@ -12,6 +12,7 @@ namespace LAHEE {
         public const int UNSUPPORTED_EMULATOR_ACHIEVEMENT_ID = 101000001;
 
         private static Dictionary<int, GameData> gameData;
+        private static Dictionary<int, List<UserComment>> commentData;
 
         public static void Initialize() {
             InitializeAchievements();
@@ -21,6 +22,7 @@ namespace LAHEE {
 
         public static void InitializeAchievements() {
             gameData = new Dictionary<int, GameData>();
+            commentData = new Dictionary<int, List<UserComment>>();
 
             string dir = Configuration.Get("LAHEE", "DataDirectory");
             if (!Directory.Exists(dir)) {
@@ -34,7 +36,10 @@ namespace LAHEE {
                 Log.Data.LogDebug("Detected file: {F}", file);
                 try {
                     String fname = Path.GetFileNameWithoutExtension(file);
-                    if (file.EndsWith(".json")) {
+                    if (file.EndsWith("comments.json")) {
+                        int gameId = GetGameIdFromFilename(fname);
+                        ParseCommentDataJson(gameId, File.ReadAllText(file));
+                    } else if (file.EndsWith(".json")) {
                         int gameId = GetGameIdFromFilename(fname);
                         ParseAchievementJson(gameId, File.ReadAllText(file));
                     } else if (file.EndsWith(".txt")) {
@@ -221,6 +226,93 @@ namespace LAHEE {
                 .Replace("https://retroachievements.org", "")
                 .Replace("/Images/", "/Badge/")
                 ;
+        }
+        
+        private static void ParseCommentDataJson(int gameId, string content) {
+            Log.Data.LogDebug("Starting to process comment data file for game ID {ID}", gameId);
+            List<UserComment> data = JsonConvert.DeserializeObject<List<UserComment>>(content);
+            commentData[gameId] = data;
+        }
+
+        public static List<UserComment> FindCommentDataByGameId(int gameId) {
+            if (commentData.TryGetValue(gameId, out List<UserComment> value)) {
+                return value;
+            } else {
+                return null;
+            }
+        }
+
+        internal static UserComment[] GetAllUserComments() {
+            List<UserComment> list = new List<UserComment>();
+            foreach (List<UserComment> gameList in commentData.Values) {
+                list.AddRange(gameList);
+            }
+
+            return list.ToArray();
+        }
+
+        public static void AddComment(UserComment comment, GameData game, bool saveData = true) {
+            List<UserComment> comments = FindCommentDataByGameId(game.ID);
+            if (comments == null) {
+                Log.Data.LogDebug("Created comment object for game {ID}", game.ID);
+                comments = new List<UserComment>();
+                commentData[game.ID] = comments;
+            }
+
+            if (!comments.Any(c => c.Submitted.Equals(comment.Submitted) && c.ULID.Equals(comment.ULID))) {
+                comments.Add(comment);
+                Log.Data.LogInformation("Added comment from {u} for game {g}", comment.User, game.Title);
+            }
+
+            if (saveData) {
+                SaveCommentFile(game);
+            }
+        }
+
+        public static void AddComment(UserData userData, GameData game, AchievementData ach, string comment, bool saveData = true) {
+            AddComment(new UserComment() {
+                User = userData.UserName,
+                Submitted = DateTime.Now.ToUniversalTime(),
+                ULID = "LAHEE" + userData.ID + "-" + game.ID + "-" + DateTime.Now.ToString("s"),
+                CommentText = comment,
+                AchievementID = ach.ID,
+                IsLocal = true,
+                LaheeUUID = Guid.NewGuid()
+            }, game, saveData);
+        }
+
+        public static void SaveCommentFile(GameData game) {
+            String fileBase = Configuration.Get("LAHEE", "DataDirectory") + "\\" + game.ID + "-" + new string(game.Title.Where(ch => !Program.INVALID_FILE_NAME_CHARS.Contains(ch)).ToArray());
+            String fileData = fileBase + "-comments.json";
+
+            List<UserComment> comments = FindCommentDataByGameId(game.ID);
+            
+            File.WriteAllText(fileData, JsonConvert.SerializeObject(comments));
+            Log.Data.LogInformation("Comment data was saved for " + game);
+            
+        }
+
+        public static bool DeleteComment(GameData game, string uuidString) {
+            Guid uuid = Guid.Parse(uuidString);
+            List<UserComment> comments = commentData[game.ID];
+            if (comments != null) {
+                UserComment c = comments.FirstOrDefault(c => c.LaheeUUID.Equals(uuid));
+                if (c != null) {
+                    comments.Remove(c);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static void SaveAllCommentFiles() {
+            foreach (int id in commentData.Keys) {
+                GameData game = FindGameDataById(id);
+                if (game != null) {
+                    SaveCommentFile(game);
+                }
+            }
         }
     }
 

@@ -32,6 +32,9 @@ namespace LAHEE {
             }
 
             foreach (string file in Directory.GetFiles(dir)) {
+                if (file.EndsWith(".bak")) {
+                    continue;
+                }
                 String username = Path.GetFileNameWithoutExtension(file);
                 try {
                     Log.User.LogDebug("Reading {f}", file);
@@ -78,7 +81,14 @@ namespace LAHEE {
 
             foreach (UserData data in userData.Values) {
                 if (data.AllowUse) {
-                    File.WriteAllText(Path.Combine(dir, data.UserName + ".json"), JsonConvert.SerializeObject(data));
+                    string outputFile = Path.Combine(dir, data.UserName + ".json");
+                    string backupFile = Path.Combine(dir, data.UserName + ".bak");
+                    File.Copy(outputFile, backupFile, true);
+                    string output = JsonConvert.SerializeObject(data);
+                    if (String.IsNullOrWhiteSpace(output)) {
+                        throw new IOException("Attempted to write empty/null user save data for " + data);
+                    }
+                    File.WriteAllText(outputFile, output);
                     Log.User.LogDebug("Saved user data for " + data.UserName);
                 } else {
                     Log.User.LogWarning("Not saving {User}, because data loading has failed!", data);

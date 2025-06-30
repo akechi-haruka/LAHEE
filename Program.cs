@@ -6,6 +6,8 @@ using System.Text;
 
 namespace LAHEE {
     class Program {
+        
+        internal static readonly char[] INVALID_FILE_NAME_CHARS = Path.GetInvalidFileNameChars();
 
         public static readonly String NAME;
 
@@ -209,6 +211,7 @@ reloaduser                                                            Reloads us
             Log.Main.LogInformation("Requested closing!");
             Network.Stop();
             UserManager.Save();
+            StaticDataManager.SaveAllCommentFiles();
             Environment.Exit(0);
 
         }

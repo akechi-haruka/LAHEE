@@ -72,7 +72,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarCollapse">
-                <ul class="navbar-nav me-auto mb-2 mb-md-0">
+                <ul id="main_nav" style="visibility: hidden;" class="navbar-nav me-auto mb-2 mb-md-0">
                     <li class="nav-item">
                         <a class="nav-link" href="javascript:lahee_set_page('page_achievements')">Achievements</a>
                     </li>
@@ -80,7 +80,7 @@
                         <a class="nav-link" href="javascript:lahee_set_page('page_leaderboards')">Records</a>
                     </li>
                 </ul>
-                <form class="d-flex" onsubmit="lahee_change_game(); return false;">
+                <form id="main_data_selector" style="visibility: hidden;" class="d-flex" onsubmit="lahee_change_game(); return false;">
                     <img id="useravatar" src="" height="48" />
                     <select id="user_select" class="form-select me-2">
                         <option>Loading...</option>
@@ -95,7 +95,7 @@
                         <option value="2">Sort: Unlocked</option>
                         <option value="3">Sort: Missable</option>
                     </select>
-                    <input class="form-control me-2 page_achievements_controls page-controls" type="text" id="filter" placeholder="Filter by name/description" />
+                    <input class="form-control me-2 page_achievements_controls page-controls" type="text" id="filter" placeholder="Filter by name/desc." />
                     <select id="lbsort_select" class="form-select me-2 page-controls page_leaderboards_controls">
                         <option value="0">Sort: Best</option>
                         <option value="1">Sort: Recent</option>
@@ -143,6 +143,20 @@
                         </table>
                     </div>
                     <hr />
+                    <div id="comment_controls" style="display: none;">
+                        <div class="row">
+                            <div class="col">
+                                <input type="button" class="btn btn-primary w-100" value="Add Notes" onclick="lahee_show_comment_editor();" />
+                            </div>
+                            <div class="col">
+                                <input id="ra_download_btn" type="button" onclick="lahee_download_comments();" class="btn btn-secondary w-100" value="Copy from RA" />
+                            </div>
+                        </div>
+                        <div id="comment_container">
+                            
+                        </div>
+                        <hr />
+                    </div>
                     <div class="row">
                         <div class="col">
                             <h2 id="gamept">0/0</h2>
@@ -187,6 +201,23 @@
             <span class="text-body-secondary float-end" id="lahee_version">LAHEE</span>
         </div>
     </footer>
+
+    <div class="modal fade" id="writeCommentModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Write Note</h5>
+                </div>
+                <div class="modal-body">
+                    <textarea id="comment_body" class="w-100 form-control" rows="15"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="lahee_popup.hide();">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="lahee_write_comment();">Add Notes</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="js/bootstrap.bundle.min.js"></script>
     <script src="js/lahee.js"></script>

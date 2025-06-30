@@ -35,6 +35,9 @@ namespace LAHEE {
             raRoutes = new Dictionary<string, Func<HttpContextBase, Task>>();
             AddRARoute("laheeinfo", Routes.LaheeInfo);
             AddRARoute("laheeuserinfo", Routes.LaheeUserInfo);
+            AddRARoute("laheefetchcomments", Routes.LaheeFetchComments);
+            AddRARoute("laheewritecomment", Routes.LaheeWriteComment);
+            AddRARoute("laheedeletecomment", Routes.LaheeDeleteComment);
             AddRARoute("login", Routes.RALogin);
             AddRARoute("login2", Routes.RALogin);
             AddRARoute("gameid", Routes.RAGameId);
@@ -414,6 +417,7 @@ namespace LAHEE {
                 version = Program.NAME,
                 games = StaticDataManager.GetAllGameData(),
                 users = UserManager.GetAllUserData(),
+                comments = StaticDataManager.GetAllUserComments()
             };
 
             await ctx.Response.SendJson(response);
@@ -446,6 +450,99 @@ namespace LAHEE {
                 achievements = userGameData?.Achievements ?? []
             };
 
+            await ctx.Response.SendJson(response);
+        }
+
+        internal static async Task LaheeFetchComments(HttpContextBase ctx) {
+
+            String user = ctx.Request.GetParameter("user");
+            int gameid = Int32.Parse(ctx.Request.GetParameter("gameid"));
+            int achievementId = Int32.Parse(ctx.Request.GetParameter("aid"));
+            
+            UserData userData = UserManager.GetUserData(user);
+            if (userData == null) {
+                await ctx.Response.SendJson(new RAErrorResponse("User does not exist!"));
+                return;
+            }
+
+            GameData game = StaticDataManager.FindGameDataById(gameid);
+            if (game == null) {
+                await ctx.Response.SendJson(new RAErrorResponse("Game ID is not registered!"));
+                return;
+            }
+
+            AchievementData ach = game.GetAchievementById(achievementId);
+            if (ach == null) {
+                await ctx.Response.SendJson(new RAErrorResponse("Achievement ID not found!"));
+                return;
+            }
+
+            if (!RaOfficialServer.FetchComments(gameid, ach.ID)) {
+                await ctx.Response.SendJson(new RAErrorResponse("Downloading comments from official RA server failed"));
+                return;
+            }
+            
+            LaheeFetchCommentsResponse response = new LaheeFetchCommentsResponse() {
+                Success = true,
+                Comments = StaticDataManager.GetAllUserComments()
+            };
+            await ctx.Response.SendJson(response);
+        }
+
+        internal static async Task LaheeWriteComment(HttpContextBase ctx) {
+
+            String user = ctx.Request.GetParameter("user");
+            int gameid = Int32.Parse(ctx.Request.GetParameter("gameid"));
+            int achievementId = Int32.Parse(ctx.Request.GetParameter("aid"));
+            String comment = ctx.Request.GetParameter("comment");
+            
+            UserData userData = UserManager.GetUserData(user);
+            if (userData == null) {
+                await ctx.Response.SendJson(new RAErrorResponse("User does not exist!"));
+                return;
+            }
+
+            GameData game = StaticDataManager.FindGameDataById(gameid);
+            if (game == null) {
+                await ctx.Response.SendJson(new RAErrorResponse("Game ID is not registered!"));
+                return;
+            }
+
+            AchievementData ach = game.GetAchievementById(achievementId);
+            if (ach == null) {
+                await ctx.Response.SendJson(new RAErrorResponse("Achievement ID not found!"));
+                return;
+            }
+
+            StaticDataManager.AddComment(userData, game, ach, comment);
+            
+            LaheeFetchCommentsResponse response = new LaheeFetchCommentsResponse() {
+                Success = true,
+                Comments = StaticDataManager.GetAllUserComments()
+            };
+            await ctx.Response.SendJson(response);
+        }
+        
+        internal static async Task LaheeDeleteComment(HttpContextBase ctx) {
+
+            String uuid = ctx.Request.GetParameter("uuid");
+            int gameid = Int32.Parse(ctx.Request.GetParameter("gameid"));
+            
+            GameData game = StaticDataManager.FindGameDataById(gameid);
+            if (game == null) {
+                await ctx.Response.SendJson(new RAErrorResponse("Game ID is not registered!"));
+                return;
+            }
+
+            if (!StaticDataManager.DeleteComment(game, uuid)) {
+                await ctx.Response.SendJson(new RAErrorResponse("Comment ID not found"));
+                return;
+            }
+            
+            LaheeFetchCommentsResponse response = new LaheeFetchCommentsResponse() {
+                Success = true,
+                Comments = StaticDataManager.GetAllUserComments()
+            };
             await ctx.Response.SendJson(response);
         }
     }

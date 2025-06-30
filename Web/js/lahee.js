@@ -3,29 +3,45 @@ var lahee_data;
 var lahee_user;
 var lahee_game;
 var lahee_last_audio = 0;
+var lahee_popup;
+var lahee_achievement;
 
 function lahee_init() {
-    if (Notification.permission == "default"){
+    if (Notification.permission == "default") {
         Notification.requestPermission();
     }
     lahee_audio_play("540121__jj_om__blank-sound.ogg");
-    
-    LAHEE_URL = "http://"+window.location.host+"/dorequest.php";
-    lahee_request("r=laheeinfo", lahee_postinit);
+
+    LAHEE_URL = "http://" + window.location.host + "/dorequest.php";
+    lahee_request("r=laheeinfo", lahee_postinit, function () {
+        document.getElementById("page_loading").innerHTML = "An error has occurred while trying to load data.";
+    });
 }
 
-function lahee_request(request, success) {
-    var r = new XMLHttpRequest();
-    r.open("POST", LAHEE_URL, true);
-    r.responseType = "json";
-    r.onreadystatechange = function () {
-        if (r.readyState != 4 || r.status != 200) { return; }
-        if (success) {
-            console.log(r.response);
-            success(r.response);
+async function lahee_request(request, success, failure) {
+    try {
+        console.log("Requesting: " + request);
+        var resp = await fetch(LAHEE_URL, {
+            body: request,
+            method: "POST"
+        });
+
+        if (!resp.ok) {
+            throw new Error("Network request failed: " + resp.status);
         }
-    };
-    r.send(request);
+
+        var data = await resp.json();
+        console.log(data);
+
+        if (success) {
+            success(data);
+        }
+    } catch (e) {
+        console.error(e);
+        if (failure) {
+            failure(e);
+        }
+    }
 }
 
 function lahee_set_page(page) {
@@ -42,6 +58,15 @@ function lahee_set_page(page) {
 }
 
 function lahee_postinit(res) {
+    
+    if (res.users.length == 0){
+        document.getElementById("page_loading").innerHTML = "No user data is registered on LAHEE. Connect your emulator and create user data before attempting to use the web UI.";
+        return;
+    }
+    if (res.games.length == 0){
+        document.getElementById("page_loading").innerHTML = "No game data is registered on LAHEE. Register games and achievements first before attempting to use the web UI. See readme for more information.";
+        return;
+    }
 
     lahee_data = res;
 
@@ -56,7 +81,7 @@ function lahee_postinit(res) {
 
     var users = "";
     for (var user of res.users) {
-        users += "<option value='" + user.ID +"'>"+user.UserName+"</option>";
+        users += "<option value='" + user.ID + "'>" + user.UserName + "</option>";
     }
     document.getElementById("user_select").innerHTML = users;
 
@@ -65,6 +90,8 @@ function lahee_postinit(res) {
         games += "<option value='" + game.ID + "'>" + game.Title + "</option>";
     }
     document.getElementById("game_select").innerHTML = games;
+    document.getElementById("main_nav").style.visibility = "visible";
+    document.getElementById("main_data_selector").style.visibility = "visible";
 
     lahee_set_page("page_achievements");
     lahee_autoselect_based_on_most_recent_achievement();
@@ -88,7 +115,7 @@ function lahee_update_game_status() {
         }
         document.getElementById("ingame").innerText = msg;
 
-        if (!lahee_user.GameData[lahee_game.ID]){
+        if (!lahee_user.GameData[lahee_game.ID]) {
             lahee_user.GameData[lahee_game.ID] = {};
         }
         lahee_user.GameData[lahee_game.ID].Achievements = res.achievements;
@@ -138,17 +165,17 @@ function lahee_change_game() {
     lahee_update_game_status();
 }
 
-function lahee_autoselect_based_on_most_recent_achievement(){
+function lahee_autoselect_based_on_most_recent_achievement() {
     var last_user = null;
     var last_game = null;
     var last_time = 0;
     for (var u of lahee_data.users) {
         for (var gid of Object.keys(u.GameData)) {
             var g = u.GameData[gid];
-            for (var aid of Object.keys(g.Achievements)){
+            for (var aid of Object.keys(g.Achievements)) {
                 var a = g.Achievements[aid];
                 var time = Math.max(a.AchieveDateSoftcore, a.AchieveDate);
-                if (time > last_time){
+                if (time > last_time) {
                     last_user = u.ID;
                     last_game = gid;
                     last_time = time;
@@ -156,8 +183,8 @@ function lahee_autoselect_based_on_most_recent_achievement(){
             }
         }
     }
-    
-    if (last_user != null && last_game != null){
+
+    if (last_user != null && last_game != null) {
         document.getElementById("user_select").value = last_user;
         document.getElementById("game_select").value = last_game;
         console.log("Latest Achievement was from " + last_time + " from UID " + last_user + " in " + last_game);
@@ -241,7 +268,7 @@ function lahee_build_achievements(user, game) {
 
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl, {
-        trigger : 'hover'
+        trigger: 'hover'
     }));
 }
 
@@ -257,6 +284,8 @@ function lahee_select_ach(gid, aid) {
         console.error("AID not found: " + aid);
         return;
     }
+
+    lahee_achievement = aid;
 
     var ua = lahee_user.GameData[gid]?.Achievements[aid] ?? {};
 
@@ -281,21 +310,31 @@ function lahee_select_ach(gid, aid) {
     var unlockTime = "Locked";
     if (ua.Status == 2) {
         status = "Hardcore Unlocked";
-        unlockDate = Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'short' }).format(new Date(ua.AchieveDate * 1000));
+        unlockDate = Intl.DateTimeFormat(undefined, {
+            dateStyle: 'short',
+            timeStyle: 'short'
+        }).format(new Date(ua.AchieveDate * 1000));
         unlockTime = TimeSpan.parse(ua.AchievePlaytime).toStringWithoutMs();
     } else if (ua.Status == 1) {
         status = "Unlocked";
-        unlockDate = Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'short' }).format(new Date(ua.AchieveDateSoftcore * 1000));
+        unlockDate = Intl.DateTimeFormat(undefined, {
+            dateStyle: 'short',
+            timeStyle: 'short'
+        }).format(new Date(ua.AchieveDateSoftcore * 1000));
         unlockTime = TimeSpan.parse(ua.AchievePlaytimeSoftcore).toStringWithoutMs();
     }
 
     document.getElementById("adetail_status").innerText = status;
     document.getElementById("adetail_unlock").innerText = unlockDate;
     document.getElementById("adetail_unlock_pt").innerText = unlockTime;
+
+    document.getElementById("comment_controls").style.display = "block";
+
+    lahee_load_comments(aid);
 }
 
 function lahee_connect_liveticker() {
-    var socket = new WebSocket("ws://" + (window.location.hostname != "" ? window.location.hostname : "localhost")+":8001");
+    var socket = new WebSocket("ws://" + (window.location.hostname != "" ? window.location.hostname : "localhost") + ":8001");
 
     socket.onopen = function (e) {
         console.log("[open] Connection established");
@@ -322,10 +361,10 @@ function lahee_connect_liveticker() {
     };
 }
 
-function lahee_liveticker_update(data){
-    if (data.type == "ping"){
+function lahee_liveticker_update(data) {
+    if (data.type == "ping") {
         lahee_update_game_status();
-    } else if (data.type == "unlock"){
+    } else if (data.type == "unlock") {
         lahee_play_unlock_sound(data.gameId, data.userAchievementData);
     } else {
         console.warn("unknown event: " + data.type);
@@ -334,7 +373,7 @@ function lahee_liveticker_update(data){
 
 function lahee_build_leaderboards(user, game) {
     var list = "";
-    
+
     var has_leaderboards = game.Leaderboards && game.Leaderboards.length != 0;
 
     if (has_leaderboards) {
@@ -348,16 +387,16 @@ function lahee_build_leaderboards(user, game) {
     var lb = document.getElementById("lb_id");
     lb.innerHTML = list;
     lb.disabled = !has_leaderboards;
-    
+
     var lt = document.getElementById("lb_table");
-    lt.style.display = has_leaderboards ? "table": "none";
+    lt.style.display = has_leaderboards ? "table" : "none";
 }
 
 function lahee_change_lb() {
 
     var lb_id = document.getElementById("lb_id").value;
 
-    var ul = (lahee_user.GameData[lahee_game.ID]?.LeaderboardEntries ?? [])[lb_id] ?? [];  
+    var ul = (lahee_user.GameData[lahee_game.ID]?.LeaderboardEntries ?? [])[lb_id] ?? [];
     var gl = null;
 
     if (lahee_game.Leaderboards) {
@@ -388,7 +427,7 @@ function lahee_change_lb() {
     var list = "";
 
     if (ul.length > 0) {
-        var format = Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'short' });
+        var format = Intl.DateTimeFormat(undefined, {dateStyle: 'short', timeStyle: 'short'});
         for (var e of arr) {
             list += `
             <tr>
@@ -407,7 +446,7 @@ function lahee_change_lb() {
     document.getElementById("lb_desc").innerHTML = gl.Description;
 }
 
-function lahee_play_unlock_sound(gid, uad){
+function lahee_play_unlock_sound(gid, uad) {
     var ach = null;
     for (var a of lahee_game.Achievements) {
         if (a.ID == uad.AchievementID) {
@@ -418,24 +457,98 @@ function lahee_play_unlock_sound(gid, uad){
 
     if (ach) {
         lahee_select_ach(gid, ach.ID);
-        
-        if (Notification.permission == "granted"){
-            new Notification("Achievement Unlocked!", { body: ach.Title + " (" + ach.Points + ")", icon: ach.BadgeURL });
+
+        if (Notification.permission == "granted") {
+            new Notification("Achievement Unlocked!", {body: ach.Title + " (" + ach.Points + ")", icon: ach.BadgeURL});
             lahee_audio_play("162482__kastenfrosch__achievement.mp3");
         }
     }
 }
 
-function lahee_audio_play(audio){
-    if (Date.now() < lahee_last_audio + 1000){
+function lahee_audio_play(audio) {
+    if (Date.now() < lahee_last_audio + 1000) {
         console.log("not playing audio, too close to previous audio");
         return;
     }
     try {
         var sound = new Audio("sounds/" + audio);
         sound.play();
-    }catch (e){
+    } catch (e) {
         console.warn("Failed playing audio", e);
     }
     lahee_last_audio = Date.now();
+}
+
+function lahee_load_comments(aid) {
+    var str = "";
+
+    if (lahee_data.comments) {
+        comments = lahee_data.comments.sort(function (a, b) {
+            return new Date(b.Submitted) - new Date(a.Submitted);
+        });
+        for (var c of comments) {
+            if (c.AchievementID == aid) {
+                str += `<div>
+                <hr />
+                <b>${c.IsLocal ? c.User : "<i>" + c.User + "</i>"}:</b> <a class="small" href="javascript:lahee_delete_comment('${c.LaheeUUID}')">Delete</a><br />
+                <p>${c.CommentText.replaceAll("\n", "<br />")}</p>
+            </div>
+            `;
+            }
+        }
+    }
+
+    var cc = document.getElementById("comment_container");
+    cc.innerHTML = str;
+    cc.style.display = str != "" ? "block" : "none";
+}
+
+function lahee_show_comment_editor() {
+    lahee_popup = new bootstrap.Modal(document.getElementById('writeCommentModal'), {});
+    lahee_popup.show();
+}
+
+function lahee_write_comment() {
+    lahee_request("r=laheewritecomment&user=" + lahee_user.UserName + "&gameid=" + lahee_game.ID + "&aid=" + lahee_achievement + "&comment=" + encodeURIComponent(document.getElementById("comment_body").value), function (ret) {
+        if (ret.Success) {
+            lahee_data.comments = ret.Comments;
+            lahee_load_comments(lahee_achievement);
+            lahee_popup.hide();
+        } else {
+            throw new Error(ret.Error);
+        }
+    }, function (e) {
+        alert("Error occurred while adding comment: " + e);
+    });
+}
+
+function lahee_download_comments() {
+    document.getElementById("ra_download_btn").disabled = true;
+    lahee_request("r=laheefetchcomments&user=" + lahee_user.UserName + "&gameid=" + lahee_game.ID + "&aid=" + lahee_achievement, function (ret) {
+        document.getElementById("ra_download_btn").disabled = false;
+        if (ret.Success) {
+            lahee_data.comments = ret.Comments;
+            lahee_load_comments(lahee_achievement);
+        } else {
+            throw new Error(ret.Error);
+        }
+    }, function (e) {
+        document.getElementById("ra_download_btn").disabled = false;
+        alert("Error occurred while downloading RA data: " + e);
+    });
+}
+
+function lahee_delete_comment(id) {
+    if (confirm("Are you sure that you want to delete a comment?")) {
+        lahee_request("r=laheedeletecomment&uuid=" + id + "&gameid=" + lahee_game.ID, function (ret) {
+            if (ret.Success) {
+                lahee_data.comments = ret.Comments;
+                lahee_load_comments(lahee_achievement);
+            } else {
+                throw new Error(ret.Error);
+            }
+        }, function (e) {
+            alert("Error occurred while deleting comment: " + e);
+        });
+    }
 }

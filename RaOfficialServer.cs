@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 namespace LAHEE;
 
 public static class RaOfficialServer {
-    private static readonly char[] INVALID_FILE_NAME_CHARS = Path.GetInvalidFileNameChars();
+    private const string SERVER_ACCOUNT_USER_ID = "019Z8BMP7E37YNRVDSP8SV266G";
 
     public static void FetchData(string gameIdStr, string overrideIdStr, bool includeUnofficial, String copyToUsername) {
         string url = Configuration.Get("LAHEE", "RAFetch", "Url");
@@ -59,6 +59,7 @@ public static class RaOfficialServer {
         if (patch == null) {
             return;
         }
+
         GameData gameData = patch.PatchData;
 
         List<string> hashes = new List<string>();
@@ -74,7 +75,7 @@ public static class RaOfficialServer {
                 hashes.Add(h.MD5);
             }
         }
-        
+
         Dictionary<String, String> imageDownloads = new Dictionary<string, string>();
         imageDownloads.Add(gameData.ImageIcon, gameData.ImageIconURL);
         foreach (AchievementData ad in gameData.Achievements) {
@@ -83,7 +84,7 @@ public static class RaOfficialServer {
         }
 
         // Achievement data modifications:
-        
+
         // apply overridden ID for set merges
         gameData.ID = overrideId;
         // re-route image URLs to local
@@ -92,12 +93,13 @@ public static class RaOfficialServer {
             ad.BadgeURL = StaticDataManager.LocalifyUrl(ad.BadgeURL);
             ad.BadgeLockedURL = StaticDataManager.LocalifyUrl(ad.BadgeLockedURL);
         }
+
         // remove "unsupported emulator"
         gameData.Achievements = gameData.Achievements.Where(a => a.ID != StaticDataManager.UNSUPPORTED_EMULATOR_ACHIEVEMENT_ID).ToArray();
-        
+
         Log.RCheevos.LogInformation("Finished getting data from \"{u}\"", url);
 
-        String fileBase = "Data\\" + overrideId + "-" + (fetchId != overrideId ? "zz-" : "") + new string(gameData.Title.Where(ch => !INVALID_FILE_NAME_CHARS.Contains(ch)).ToArray());
+        String fileBase = Configuration.Get("LAHEE", "DataDirectory") + "\\" + overrideId + "-" + (fetchId != overrideId ? "zz-" : "") + new string(gameData.Title.Where(ch => !Program.INVALID_FILE_NAME_CHARS.Contains(ch)).ToArray());
         String fileData = fileBase + ".json";
         String fileHash = fileBase + ".zhash";
         if (!File.Exists(fileData)) {
@@ -132,7 +134,7 @@ public static class RaOfficialServer {
                 userGameData = user.RegisterGame(game);
             }
 
-            RAStartSessionResponse al = Query<RAStartSessionResponse>(HttpMethod.Get, url, "dorequest.php?r=startsession&u=" + username + "&t=" + login.Token + "&h=0&l=11.4&g="+fetchId+"&m=", null);
+            RAStartSessionResponse al = Query<RAStartSessionResponse>(HttpMethod.Get, url, "dorequest.php?r=startsession&u=" + username + "&t=" + login.Token + "&h=0&l=11.4&g=" + fetchId + "&m=", null);
             if (al != null) {
                 foreach (RAStartSessionResponse.RAStartSessionAchievementData ad in al.Unlocks) {
                     userGameData.UnlockAchievement(ad.ID, false, ad.When);
@@ -206,6 +208,46 @@ public static class RaOfficialServer {
         } catch (Exception ex) {
             Log.Network.LogError(ex, "Network error");
             return null;
+        }
+    }
+
+    public static bool FetchComments(int gameId, int achievementId) {
+        GameData game = StaticDataManager.FindGameDataById(gameId);
+        if (game == null) {
+            Log.Main.LogError("Unknown game id: " + gameId);
+            return false;
+        }
+
+        string url = Configuration.Get("LAHEE", "RAFetch", "Url");
+        string apiWeb = Configuration.Get("LAHEE", "RAFetch", "WebApiKey");
+
+        if (String.IsNullOrWhiteSpace(url)) {
+            Log.Main.LogError("Invalid RAFetch Url in configuration.");
+            return false;
+        }
+
+        if (String.IsNullOrWhiteSpace(apiWeb)) {
+            Log.Main.LogError("Invalid RAFetch WebApiKey in configuration. Get it from here: {u}", url + "/settings");
+            return false;
+        }
+
+        RAApiCommentsResponse resp = Query<RAApiCommentsResponse>(HttpMethod.Get, url, "API/API_GetComments.php?y=" + apiWeb + "&t=2&i=" + achievementId + "&sort=-submitted", null);
+        if (resp != null) {
+            foreach (UserComment uc in resp.Results) {
+                if (uc.ULID.Equals(SERVER_ACCOUNT_USER_ID)) {
+                    continue;
+                }
+
+                uc.AchievementID = achievementId;
+                uc.LaheeUUID = Guid.NewGuid();
+                StaticDataManager.AddComment(uc, game, false);
+            }
+
+            StaticDataManager.SaveCommentFile(game);
+            return true;
+        } else {
+            Log.RCheevos.LogError("Failed to fetch comments for {a}", achievementId);
+            return false;
         }
     }
 }

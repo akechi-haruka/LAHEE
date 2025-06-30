@@ -15,7 +15,7 @@
 		<Description>RetroAchievements API Emulator</Description>
 		<Copyright>2024-2025 Akechi Haruka</Copyright>
 		<IncludeSourceRevisionInInformationalVersion>true</IncludeSourceRevisionInInformationalVersion>
-		<AssemblyVersion>1.5.4</AssemblyVersion>
+		<AssemblyVersion>1.6.0</AssemblyVersion>
 		<FileVersion>$(AssemblyVersion)</FileVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
@@ -29,18 +29,27 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Compile Remove="Web\**" />
-	  <EmbeddedResource Remove="Web\**" />
-	  <None Remove="Web\**" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<None Remove="LICENSE.txt" />
 		<None Remove="README.txt" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Content Include="icon.ico" />
+		<Content Include="Web\css\bootstrap.css" />
+		<Content Include="Web\css\bootstrap.css.map" />
+		<Content Include="Web\css\bootstrap.min.css" />
+		<Content Include="Web\css\bootstrap.min.css.map" />
+		<Content Include="Web\css\lahee.css" />
+		<Content Include="Web\favicon.ico" />
+		<Content Include="Web\index.html" />
+		<Content Include="Web\js\bootstrap.bundle.min.js" />
+		<Content Include="Web\js\bootstrap.bundle.min.js.map" />
+		<Content Include="Web\js\color-modes.js" />
+		<Content Include="Web\js\lahee.js" />
+		<Content Include="Web\js\TimeSpan.js" />
+		<Content Include="Web\lahee.png" />
+		<Content Include="Web\sounds\162482__kastenfrosch__achievement.mp3" />
+		<Content Include="Web\sounds\540121__jj_om__blank-sound.ogg" />
 	</ItemGroup>
 
 	<ItemGroup>

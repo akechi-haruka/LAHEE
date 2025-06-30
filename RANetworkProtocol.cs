@@ -86,6 +86,7 @@ namespace LAHEE {
         public String version;
         public UserData[] users;
         public GameData[] games;
+        public UserComment[] comments;
     }
 
     class LaheeUserResponse {
@@ -105,5 +106,19 @@ namespace LAHEE {
             public String[] Labels;
             public String PatchUrl;
         }
+    }
+
+    class RAApiCommentsResponse {
+        public int Count;
+        public int Total;
+        public UserComment[] Results;
+    }
+    
+    class LaheeFetchCommentsResponse : RAAnyResponse {
+        public UserComment[] Comments;
+    }
+
+    class LaheeWriteCommentResponse : LaheeFetchCommentsResponse {
+        
     }
 }
