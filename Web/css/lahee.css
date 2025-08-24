@@ -70,5 +70,5 @@ table {
 
 .ach_flag_important {
     border-color: deeppink !important;
-    filter: sepia(100%) saturate(4000%) brightness(100%) hue-rotate(273deg);
+    filter: sepia(100%) saturate(1000%) brightness(100%) hue-rotate(273deg);
 }
