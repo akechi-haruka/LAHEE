@@ -94,6 +94,7 @@
                         <option value="1">Sort: Locked</option>
                         <option value="2">Sort: Unlocked</option>
                         <option value="3">Sort: Missable</option>
+                        <option value="4">Sort: Flagged</option>
                     </select>
                     <input class="form-control me-2 page_achievements_controls page-controls" type="text" id="filter" placeholder="Filter by name/desc." />
                     <select id="lbsort_select" class="form-select me-2 page-controls page_leaderboards_controls">
@@ -144,9 +145,14 @@
                     </div>
                     <hr />
                     <div id="comment_controls" style="display: none;">
-                        <div class="row">
+                        <div class="row my-2">
                             <div class="col">
                                 <input type="button" class="btn btn-primary w-100" value="Add Notes" onclick="lahee_show_comment_editor();" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <input type="button" class="btn btn-warning w-100" value="Flag" onclick="lahee_flag_important();" />
                             </div>
                             <div class="col">
                                 <input id="ra_download_btn" type="button" onclick="lahee_download_comments();" class="btn btn-secondary w-100" value="Copy from RA" />

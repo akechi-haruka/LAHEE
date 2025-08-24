@@ -67,3 +67,8 @@ table {
 #adetail_title {
     word-break: break-word;
 }
+
+.ach_flag_important {
+    border-color: deeppink !important;
+    filter: sepia(100%) saturate(4000%) brightness(100%) hue-rotate(273deg);
+}

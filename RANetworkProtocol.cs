@@ -121,4 +121,8 @@ namespace LAHEE {
     class LaheeWriteCommentResponse : LaheeFetchCommentsResponse {
         
     }
+
+    class LaheeFlagImportantResponse : RAAnyResponse {
+        public List<int> Flagged;
+    }
 }

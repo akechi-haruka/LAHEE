@@ -22,7 +22,8 @@
                 PresenceHistory = new List<PresenceHistory>(),
                 FirstPlay = DateTime.Now,
                 LastPlay = DateTime.Now,
-                PlayTimeLastPing = DateTime.Now
+                PlayTimeLastPing = DateTime.Now,
+                FlaggedAchievements = new List<int>()
             };
             GameData.Add(game.ID, ugd);
             return ugd;

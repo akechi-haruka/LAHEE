@@ -38,6 +38,7 @@ namespace LAHEE {
             AddRARoute("laheefetchcomments", Routes.LaheeFetchComments);
             AddRARoute("laheewritecomment", Routes.LaheeWriteComment);
             AddRARoute("laheedeletecomment", Routes.LaheeDeleteComment);
+            AddRARoute("laheeflagimportant", Routes.LaheeFlagImportant);
             AddRARoute("login", Routes.RALogin);
             AddRARoute("login2", Routes.RALogin);
             AddRARoute("gameid", Routes.RAGameId);
@@ -547,6 +548,51 @@ namespace LAHEE {
             LaheeFetchCommentsResponse response = new LaheeFetchCommentsResponse() {
                 Success = true,
                 Comments = StaticDataManager.GetAllUserComments()
+            };
+            await ctx.Response.SendJson(response);
+        }
+        
+        internal static async Task LaheeFlagImportant(HttpContextBase ctx) {
+            
+            String user = ctx.Request.GetParameter("user");
+            int gameid = Int32.Parse(ctx.Request.GetParameter("gameid"));
+            int achievementId = Int32.Parse(ctx.Request.GetParameter("aid"));
+            
+            UserData userData = UserManager.GetUserData(user);
+            if (userData == null) {
+                await ctx.Response.SendJson(new RAErrorResponse("User does not exist!"));
+                return;
+            }
+
+            GameData game = StaticDataManager.FindGameDataById(gameid);
+            if (game == null) {
+                await ctx.Response.SendJson(new RAErrorResponse("Game ID is not registered!"));
+                return;
+            }
+
+            AchievementData ach = game.GetAchievementById(achievementId);
+            if (ach == null) {
+                await ctx.Response.SendJson(new RAErrorResponse("Achievement ID not found!"));
+                return;
+            }
+
+            UserGameData userGameData = userData.GameData[game.ID];
+            if (userGameData.FlaggedAchievements == null) {
+                userGameData.FlaggedAchievements = new List<int>();
+            }
+
+            bool isFlagged = userGameData.FlaggedAchievements.Contains(ach.ID);
+            if (isFlagged) {
+                userGameData.FlaggedAchievements.Remove(ach.ID);
+            } else {
+                userGameData.FlaggedAchievements.Add(ach.ID);
+            }
+
+            UserManager.Save();
+            
+            LaheeFlagImportantResponse response = new LaheeFlagImportantResponse() {
+                Success = true,
+                Flagged = userGameData.FlaggedAchievements
             };
             await ctx.Response.SendJson(response);
         }

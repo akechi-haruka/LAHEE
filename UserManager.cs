@@ -40,6 +40,7 @@ namespace LAHEE {
                     Log.User.LogDebug("Reading {f}", file);
 
                     UserData data = JsonConvert.DeserializeObject<UserData>(File.ReadAllText(file));
+                    Migrate(data);
                     userData[data.UserName] = data;
 
                     Log.User.LogDebug("Loaded data for \"{User}\"", data);
@@ -49,6 +50,14 @@ namespace LAHEE {
                         UserName = username,
                         AllowUse = false
                     };
+                }
+            }
+        }
+
+        private static void Migrate(UserData data) {
+            foreach (UserGameData ugd in data.GameData.Values) {
+                if (ugd.FlaggedAchievements == null) {
+                    ugd.FlaggedAchievements = new List<int>();
                 }
             }
         }

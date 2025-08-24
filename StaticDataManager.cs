@@ -231,6 +231,9 @@ namespace LAHEE {
         private static void ParseCommentDataJson(int gameId, string content) {
             Log.Data.LogDebug("Starting to process comment data file for game ID {ID}", gameId);
             List<UserComment> data = JsonConvert.DeserializeObject<List<UserComment>>(content);
+            if (data == null) {
+                data = new List<UserComment>();
+            }
             commentData[gameId] = data;
         }
 

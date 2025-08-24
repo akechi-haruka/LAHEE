@@ -6,6 +6,7 @@
         public Dictionary<int, UserAchievementData> Achievements;
         public Dictionary<int, List<UserLeaderboardData>> LeaderboardEntries;
         public List<PresenceHistory> PresenceHistory;
+        public List<int> FlaggedAchievements;
         public DateTime FirstPlay;
         public DateTime LastPlay;
         public DateTime PlayTimeLastPing;
