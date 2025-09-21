@@ -79,8 +79,8 @@ public static class RaOfficialServer {
         Dictionary<String, String> imageDownloads = new Dictionary<string, string>();
         imageDownloads.Add(gameData.ImageIcon, gameData.ImageIconURL);
         foreach (AchievementData ad in gameData.Achievements) {
-            imageDownloads.Add(ad.BadgeName, ad.BadgeURL);
-            imageDownloads.Add(Path.GetFileNameWithoutExtension(ad.BadgeName) + "_lock.png", ad.BadgeLockedURL);
+            imageDownloads[ad.BadgeName] = ad.BadgeURL;
+            imageDownloads[Path.GetFileNameWithoutExtension(ad.BadgeName) + "_lock.png"] = ad.BadgeLockedURL;
         }
 
         // Achievement data modifications:
