@@ -210,7 +210,7 @@ function lahee_build_achievements(user, game) {
     }
 
     arr.sort(function (a, b) {
-        var ua = ug?.Achievements[a.ID] ?? {};
+        var ua = (ug?.Achievements ?? [])[a.ID] ?? {};
         if (sort == 1) {
             if (!ua.AchieveDate && !ua.AchieveDateSoftcore) {
                 return 0;
