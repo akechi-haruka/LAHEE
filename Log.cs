@@ -10,6 +10,7 @@ namespace LAHEE {
         public static ILogger Data { get; private set; }
         public static ILogger User { get; private set; }
         public static ILogger RCheevos { get; private set; }
+        public static ILogger Websocket { get; private set; }
 
         public static void Initialize() {
 
@@ -29,6 +30,7 @@ namespace LAHEE {
             Data = factory.CreateLogger("Data");
             User = factory.CreateLogger("User");
             RCheevos = factory.CreateLogger("Rche");
+            Websocket = factory.CreateLogger("Webs");
 
             Main.LogInformation("Logging started.");
             Main.LogInformation("Local Achievements Home Enhanced Edition " + Program.NAME);

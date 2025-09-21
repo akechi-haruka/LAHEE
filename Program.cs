@@ -51,6 +51,7 @@ namespace LAHEE {
             StaticDataManager.Initialize();
             Network.Initialize();
             LiveTicker.Initialize();
+            CaptureManager.Initialize();
 
             Log.Main.LogInformation("Initialization complete.");
             Console.WriteLine("Type \"stop\" to save and exit.\nType \"help\" for console commands.\nPoint your emulator to: " + Network.LOCAL_URL);
@@ -107,7 +108,7 @@ reloaduser                                                            Reloads us
                     UnlockAchievementFromConsole(args[1], args[2], args[3], args[4] == "1", true);
                     break;
                 case "lock":
-                    UnlockAchievementFromConsole(args[1], args[2], args[3], args[4] == "1", false);
+                    UnlockAchievementFromConsole(args[1], args[2], args[3], false, false);
                     break;
                 case "lockall":
                     LockAllAchievementsFromConsole(args[1], args[2]);
@@ -187,11 +188,29 @@ reloaduser                                                            Reloads us
                 Log.Main.LogError("User has no data recorded for this game.");
                 return;
             }
-            UserAchievementData userAchievementData = userGameData.UnlockAchievement(ach.ID, hardcore);
+
+            UserAchievementData userAchievementData;
+            if (unlock) {
+                userAchievementData = userGameData.UnlockAchievement(ach.ID, hardcore);
+
+                LiveTicker.BroadcastUnlock(game.ID, userAchievementData);
+                CaptureManager.StartCapture(game, user, ach);
+            } else {
+                if (!userGameData.Achievements.TryGetValue(ach.ID, out userAchievementData)) {
+                    Log.Main.LogError("User does not have this achievement.");
+                    return;
+                }
+
+                userAchievementData.AchieveDateSoftcore = 0;
+                userAchievementData.AchieveDate = 0;
+                userAchievementData.AchievePlaytime = TimeSpan.Zero;
+                userAchievementData.AchievePlaytimeSoftcore = TimeSpan.Zero;
+                userAchievementData.Status = UserAchievementData.StatusFlag.Locked;
+            }
 
             Log.Main.LogInformation("Successfully set achievement \"{ach}\" of \"{game}\" for {user} to {status}", ach, game, user, userAchievementData?.Status);
             UserManager.Save();
-            LiveTicker.BroadcastUnlock(game.ID, userAchievementData);
+            
             LiveTicker.BroadcastPing();
         }
 

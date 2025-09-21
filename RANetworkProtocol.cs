@@ -1,128 +1,133 @@
 ﻿using LAHEE.Data;
 
-namespace LAHEE {
-    class RAAnyResponse {
-        public bool Success;
+// these are defined by RA, therefore disable checks
+
+// ReSharper disable All
+#pragma warning disable CS0649 // Field is never assigned to, and will always have its default value
+
+namespace LAHEE;
+
+class RAAnyResponse {
+    public bool Success;
+}
+
+class RAErrorResponse : RAAnyResponse {
+    public string Error;
+    public int Code;
+
+    public RAErrorResponse(string error) {
+        Error = error;
     }
+}
 
-    class RAErrorResponse : RAAnyResponse {
-        public string Error;
-        public int Code;
+class RALoginResponse : RAAnyResponse {
+    public string User;
+    public string Token;
+    public int Score;
+    public int SoftcoreScore;
+    public int Messages;
+    public int Permissions;
+    public string AccountType;
+    public string DisplayName;
+}
 
-        public RAErrorResponse(string error) {
-            Error = error;
+class RAGameIDResponse : RAAnyResponse {
+    public int GameID;
+}
+
+class RAPatchResponse : RAAnyResponse {
+    public GameData PatchData;
+}
+
+class RAStartSessionResponse : RAAnyResponse {
+    public RAStartSessionAchievementData[] Unlocks;
+    public RAStartSessionAchievementData[] HardcoreUnlocks;
+    public long ServerNow;
+
+    public class RAStartSessionAchievementData {
+        public int ID;
+        public long When;
+
+        public RAStartSessionAchievementData() {
+        }
+
+        public RAStartSessionAchievementData(UserAchievementData userAchievement, bool isHardcore) {
+            ID = userAchievement.AchievementID;
+            When = isHardcore ? userAchievement.AchieveDate : userAchievement.AchieveDateSoftcore;
         }
     }
+}
 
-    class RALoginResponse : RAAnyResponse {
-        public string User;
-        public string Token;
+class RAAchievementListResponse : RAAnyResponse {
+    public int[] UserUnlocks;
+    public int GameId;
+    public bool HardcoreMode;
+}
+
+class RAUnlockResponse : RAAnyResponse {
+    public int Score;
+    public int SoftcoreScore;
+    public int AchievementID;
+    public int AchievementsRemaining;
+}
+
+class RALeaderboardResponse : RAAnyResponse {
+    public int Score;
+    public int BestScore;
+    public RankObject RankInfo;
+    public TopObject[] TopEntries;
+
+    public class RankObject {
+        public int Rank;
+        public int NumEntries;
+    }
+
+    public class TopObject {
+        public String User;
+        public int Rank;
         public int Score;
-        public int SoftcoreScore;
-        public int Messages;
-        public int Permissions;
-        public string AccountType;
-        public string DisplayName;
     }
+}
 
-    class RAGameIDResponse : RAAnyResponse {
-        public int GameID;
+class LaheeResponse {
+    public String version;
+    public UserData[] users;
+    public GameData[] games;
+    public UserComment[] comments;
+}
+
+class LaheeUserResponse {
+    public int currentgameid;
+    public DateTime? lastping;
+    public TimeSpan? playtime;
+    public String gamestatus;
+    public Dictionary<int, UserAchievementData> achievements;
+}
+
+class RAApiHashesResponse {
+    public Hash[] Results;
+
+    internal class Hash {
+        public String MD5;
+        public String Name;
+        public String[] Labels;
+        public String PatchUrl;
     }
+}
 
-    class RAPatchResponse : RAAnyResponse {
-        public GameData PatchData;
-    }
+class RAApiCommentsResponse {
+    public int Count;
+    public int Total;
+    public UserComment[] Results;
+}
 
-    class RAStartSessionResponse : RAAnyResponse {
-        public RAStartSessionAchievementData[] Unlocks;
-        public RAStartSessionAchievementData[] HardcoreUnlocks;
-        public long ServerNow;
+class LaheeFetchCommentsResponse : RAAnyResponse {
+    public UserComment[] Comments;
+}
 
-        public class RAStartSessionAchievementData {
-            public int ID;
-            public long When;
-            
-            public RAStartSessionAchievementData(){}
+class LaheeWriteCommentResponse : LaheeFetchCommentsResponse {
+}
 
-            public RAStartSessionAchievementData(UserAchievementData userAchievement, bool isHardcore) {
-                ID = userAchievement.AchievementID;
-                When = isHardcore ? userAchievement.AchieveDate : userAchievement.AchieveDateSoftcore;
-            }
-        }
-    }
-
-    class RAAchievementListResponse : RAAnyResponse {
-        public int[] UserUnlocks;
-        public int GameId;
-        public bool HardcoreMode;
-    }
-
-    class RAUnlockResponse : RAAnyResponse {
-        public int Score;
-        public int SoftcoreScore;
-        public int AchievementID;
-        public int AchievementsRemaining;
-    }
-
-    class RALeaderboardResponse : RAAnyResponse {
-        public int Score;
-        public int BestScore;
-        public RankObject RankInfo;
-        public TopObject[] TopEntries;
-
-        public class RankObject {
-            public int Rank;
-            public int NumEntries;
-        }
-
-        public class TopObject {
-            public String User;
-            public int Rank;
-            public int Score;
-        }
-    }
-
-    class LaheeResponse {
-        public String version;
-        public UserData[] users;
-        public GameData[] games;
-        public UserComment[] comments;
-    }
-
-    class LaheeUserResponse {
-        public int currentgameid;
-        public DateTime? lastping;
-        public TimeSpan? playtime;
-        public String gamestatus;
-        public Dictionary<int, UserAchievementData> achievements;
-    }
-
-    class RAApiHashesResponse {
-        public Hash[] Results;
-
-        internal class Hash {
-            public String MD5;
-            public String Name;
-            public String[] Labels;
-            public String PatchUrl;
-        }
-    }
-
-    class RAApiCommentsResponse {
-        public int Count;
-        public int Total;
-        public UserComment[] Results;
-    }
-    
-    class LaheeFetchCommentsResponse : RAAnyResponse {
-        public UserComment[] Comments;
-    }
-
-    class LaheeWriteCommentResponse : LaheeFetchCommentsResponse {
-        
-    }
-
-    class LaheeFlagImportantResponse : RAAnyResponse {
-        public List<int> Flagged;
-    }
+class LaheeFlagImportantResponse : RAAnyResponse {
+    public List<int> Flagged;
 }

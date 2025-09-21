@@ -1,4 +1,6 @@
-﻿namespace LAHEE.Data {
+﻿using LAHEE.Util;
+
+namespace LAHEE.Data {
 
     public class UserGameData {
         public int GameID;
@@ -29,7 +31,7 @@
                 userAchievementData.Status = UserAchievementData.StatusFlag.HardcoreUnlock;
                 
                 if (userAchievementData.AchieveDate == 0) {
-                    userAchievementData.AchieveDate = achieveDate > 0 ? achieveDate : Util.CurrentUnixSeconds;
+                    userAchievementData.AchieveDate = achieveDate > 0 ? achieveDate : Utils.CurrentUnixSeconds;
                 }
 
                 if (userAchievementData.AchievePlaytime == TimeSpan.Zero) {
@@ -39,7 +41,7 @@
                 userAchievementData.Status = UserAchievementData.StatusFlag.SoftcoreUnlock;
                 
                 if (userAchievementData.AchieveDateSoftcore == 0) {
-                    userAchievementData.AchieveDateSoftcore = achieveDate > 0 ? achieveDate : Util.CurrentUnixSeconds;
+                    userAchievementData.AchieveDateSoftcore = achieveDate > 0 ? achieveDate : Utils.CurrentUnixSeconds;
                 }
 
                 if (userAchievementData.AchievePlaytimeSoftcore == TimeSpan.Zero) {

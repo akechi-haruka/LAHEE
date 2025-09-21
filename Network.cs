@@ -1,4 +1,5 @@
 ﻿using LAHEE.Data;
+using LAHEE.Util;
 using Microsoft.Extensions.Logging;
 using WatsonWebserver.Core;
 using WatsonWebserver.Lite;
@@ -226,7 +227,7 @@ namespace LAHEE {
 
             RAStartSessionResponse response = new RAStartSessionResponse() {
                 Success = true,
-                ServerNow = Util.CurrentUnixSeconds,
+                ServerNow = Utils.CurrentUnixSeconds,
                 Unlocks = softcore.ToArray(),
                 HardcoreUnlocks = hardcore.ToArray()
             };
@@ -281,6 +282,7 @@ namespace LAHEE {
             
             LiveTicker.BroadcastUnlock(game.ID, userAchievementData);
             LiveTicker.BroadcastPing();
+            CaptureManager.StartCapture(game, user, ach);
 
             int totalAchievementCount = game.Achievements.Length;
             int userAchieved = userGameData.Achievements.Count(a => a.Value.Status == (hardcoreFlag == 1 ? UserAchievementData.StatusFlag.HardcoreUnlock : UserAchievementData.StatusFlag.SoftcoreUnlock));
@@ -389,7 +391,7 @@ namespace LAHEE {
             userGameData.LeaderboardEntries[leaderboardId].Add(new UserLeaderboardData() {
                 LeaderboardID = leaderboardId,
                 Score = score,
-                RecordDate = Util.CurrentUnixSeconds,
+                RecordDate = Utils.CurrentUnixSeconds,
                 PlayTime = userGameData.PlayTimeApprox + (DateTime.Now - userGameData.PlayTimeLastPing)
             });
 
@@ -484,6 +486,7 @@ namespace LAHEE {
                 Log.RCheevos.LogError(e.Message);
                 await ctx.Response.SendJson(new RAErrorResponse(e.Message));
             } catch (Exception e) {
+                Log.RCheevos.LogError(e, "Exception while downloading comments for {g}/{a}", game, ach);
                 await ctx.Response.SendJson(new RAErrorResponse("Downloading comments from official RA server failed"));
                 return;
             }

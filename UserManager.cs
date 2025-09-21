@@ -1,5 +1,6 @@
 ﻿
 using LAHEE.Data;
+using LAHEE.Util;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -110,7 +111,7 @@ namespace LAHEE {
 
         public static string RegisterSessionToken(UserData user) {
             Log.User.LogDebug("Registering random session token");
-            return RegisterSessionToken(user, Util.RandomString(32));
+            return RegisterSessionToken(user, Utils.RandomString(32));
         }
 
         public static string RegisterSessionToken(UserData user, String token) {

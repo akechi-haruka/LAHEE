@@ -1,0 +1,148 @@
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Net.WebSockets;
+using System.Text;
+using JetBrains.Annotations;
+using LAHEE.Data;
+using LAHEE.Util;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using WindowsInput;
+using WindowsInput.Native;
+
+namespace LAHEE;
+
+public class CaptureManager {
+
+    public enum CaptureTrigger {
+        Invalid, Screenshot, Keystroke, OBSWebsocket
+    }
+    
+    public class CaptureAction {
+        public CaptureTrigger Trigger;
+        public int Delay;
+        public String Parameter;
+    }
+
+    public const String DIRECTORY = "Capture";
+
+    private static List<CaptureAction> actions;
+    private static InputSimulator input;
+
+    public static void Initialize() {
+        if (!Directory.Exists(DIRECTORY)) {
+            Directory.CreateDirectory(DIRECTORY);
+        }
+
+        input = new InputSimulator();
+
+        actions = new List<CaptureAction>();
+        IEnumerable<IConfigurationSection> ca = Configuration.Current.GetSection("LAHEE").GetSection("Capture").GetChildren();
+        foreach (IConfigurationSection c in ca) {
+            CaptureAction a = new CaptureAction() {
+                Delay = Int32.Parse(c.GetSection("Delay").Value ?? "0"),
+                Trigger = Enum.Parse<CaptureTrigger>(c.GetSection("Trigger").Value ?? "Invalid"),
+                Parameter = c.GetSection("Parameter").Value
+            };
+            actions.Add(a);
+        }
+        Log.Main.LogInformation("{n} capture actions configured.", actions.Count);
+    }
+
+    private static String SanitizePath(string path) {
+        foreach (char c in Path.GetInvalidFileNameChars()) { 
+            path = path.Replace(c, '-'); 
+        }
+        return path;
+    }
+
+    public static void StartCapture(GameData game, UserData user, AchievementData ach) {
+        if (actions.Count == 0) {
+            return;
+        }
+        Log.Main.LogDebug("Starting Capture thread for " + user + " / " + game + " / " + ach);
+        new Thread(() => StartCaptureT(game, user, ach)) {
+            Name = "Capture Thread: " + user + " / " + game + " / " + ach
+        }.Start();
+    }
+
+    private static void StartCaptureT(GameData game, UserData user, AchievementData ach) {
+        int time = 0;
+        foreach (CaptureAction a in actions) {
+            Log.Main.LogTrace("Wait {n}", a.Delay - time);
+            Thread.Sleep(Math.Max(a.Delay - time, 0));
+            time += a.Delay;
+            DoCaptureAction(a.Trigger, a.Parameter, game, user, ach);
+        }
+        Log.Main.LogDebug("Capture thread finished for " + user + " / " + game + " / " + ach);
+    }
+
+    private static void DoCaptureAction(CaptureTrigger trigger, string parameter, GameData game, UserData user, AchievementData ach) {
+        if (trigger == CaptureTrigger.Screenshot) {
+            DoScreenshot(parameter, game, user, ach);
+        } else if (trigger == CaptureTrigger.Keystroke) {
+            DoKeystroke(parameter, game, user, ach);
+        } else if (trigger == CaptureTrigger.OBSWebsocket) {
+            DoWebsocket(parameter, game, user, ach);
+        } else {
+            Log.Main.LogError("Unknown capture action: {a}", trigger);
+        }
+    }
+
+    private static void DoWebsocket(string parameter, GameData game, UserData user, AchievementData ach) {
+        Log.Main.LogDebug("Connecting to OBS websocket...");
+        
+        Uri uri = new Uri(Configuration.Get("LAHEE", "OBSWebsocketUrl"));
+        new OBSWebsocket(uri).ConnectAndSendAsync(parameter);
+    }
+
+    private static void DoScreenshot(string parameter, GameData game, UserData user, AchievementData ach) {
+        if (!OperatingSystem.IsWindowsVersionAtLeast(6, 1)) {
+            Log.Main.LogError("Screenshot feature is only supported on Windows.");
+            return;
+        }
+
+        String path = Path.Combine(DIRECTORY, SanitizePath(user.UserName), SanitizePath(game.Title), SanitizePath(DateTime.Now + "_" + ach.Title + ".png"));
+
+        try {
+            String parent = Directory.GetParent(path)?.FullName;
+            if (parent == null) {
+                throw new ArgumentException("Invalid path: " + path);
+            }
+            if (!Directory.Exists(parent)) {
+                Directory.CreateDirectory(parent);
+            }
+            
+            Bitmap image;
+            switch (parameter) {
+                case "Desktop":
+                    image = ScreenCapture.CaptureDesktop();
+                    break;
+                case "Window":
+                    image = ScreenCapture.CaptureActiveWindow();
+                    break;
+                default:
+                    Log.Main.LogWarning("Unknown parameter for screenshot capture: {p}, defaulting to Desktop.", parameter);
+                    image = ScreenCapture.CaptureDesktop();
+                    break;
+            }
+
+            image.Save(path, ImageFormat.Png);
+            Log.Main.LogInformation("Screenshot saved to: {p}", path);
+        } catch (Exception ex) {
+            Log.Main.LogCritical(ex, "Failed creating screenshot to {p}", path);
+        }
+    }
+
+    private static void DoKeystroke(string parameter, GameData game, UserData user, AchievementData ach) {
+        if (!OperatingSystem.IsWindows()) {
+            Log.Main.LogError("Keystroke feature is only supported on Windows.");
+            return;
+        }
+        string[] parts = parameter.Split(";");
+        VirtualKeyCode[] modifiers = parts[0].Split(",").Select(Enum.Parse<VirtualKeyCode>).ToArray();
+        VirtualKeyCode[] keys = parts[1].Split(",").Select(Enum.Parse<VirtualKeyCode>).ToArray();
+        Log.Main.LogDebug("Sending modifiers {m} and keys {k}", String.Join(',',  modifiers), String.Join(',', keys));
+        input.Keyboard.ModifiedKeyStroke(modifiers, keys);
+    }
+}

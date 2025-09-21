@@ -79,6 +79,30 @@ Open http://localhost:8000/Web/ in your browser to see locked/unlocked achieveme
 To enable notifications and sound effects, allow them in your browser.
 
 -------------------------------------------------
+Capture Triggers
+-------------------------------------------------
+
+To define events (like screenshots or messages to OBS), define entries in appsettings.json under "Capture" as follow:
+
+{
+    "Trigger": string,
+    "Parameter": string,
+    "Delay": number
+}
+
+Delay is the amount of milliseconds since the achievement trigger when this event should happen. Events can happen multiple times as well, i.e. you can make a screenshot at 0ms and another one at 2000ms.
+
+Trigger: Screenshot
+Parameters: "Desktop" or "Window"
+
+Take a screenshot from either the entire desktop or the currently active Window. Screenshots are saved in the Capture directory next to LAHEE.
+
+Trigger: OBSWebsocket
+Parameters: The messageType to be sent to obs-websocket. See OBS' websocket's documentation for more information.
+
+Sends a message to OBS, mostly used with parameter "SaveReplayBuffer".
+
+-------------------------------------------------
 Attribution
 -------------------------------------------------
 achievement.mp3 by Kastenfrosch -- https://freesound.org/s/162482/ -- License: Creative Commons 0
