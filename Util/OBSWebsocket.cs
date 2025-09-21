@@ -15,51 +15,6 @@ public class OBSWebsocket {
         Uri = uri;
     }
 
-    private class OBSMessage<T> {
-        public int op;
-        public T d;
-    }
-
-    private class OBSHello {
-        public String obsStudioVersion;
-        public String obsWebSocketVersion;
-        public int rpcVersion;
-        public Authentication authentication;
-
-        public class Authentication {
-            public String challenge;
-            public String salt;
-        }
-    }
-
-    private class OBSIdentify {
-        public int rpcVersion;
-        public String authentication;
-        public int eventSubscriptions;
-    }
-
-    private class OBSIdentified {
-        public int negotiatedRpcVersion;
-    }
-
-    private class OBSRequest<T> {
-        public String requestType;
-        public String requestId;
-        public T requestData;
-    }
-
-    private class OBSResponse {
-        public String requestType;
-        public String requestId;
-        public Status requestStatus;
-
-        public class Status {
-            public bool result;
-            public int code;
-            public String comment;
-        }
-    }
-
     private async Task<T> ReadMessage<T>() {
         byte[] bytes = new byte[1024];
         WebSocketReceiveResult result = await ws.ReceiveAsync(bytes, CancellationToken.None);
