@@ -8,7 +8,7 @@ namespace LAHEE;
 public static class RaOfficialServer {
     private const string SERVER_ACCOUNT_USER_ID = "019Z8BMP7E37YNRVDSP8SV266G";
 
-    public static void FetchData(string gameIdStr, string overrideIdStr, bool includeUnofficial, String copyToUsername) {
+    public static void FetchData(string gameIdStr, string overrideIdStr, bool includeUnofficial, String copyToUsername = null) {
         string url = Configuration.Get("LAHEE", "RAFetch", "Url");
         string apiWeb = Configuration.Get("LAHEE", "RAFetch", "WebApiKey");
         string username = Configuration.Get("LAHEE", "RAFetch", "Username");

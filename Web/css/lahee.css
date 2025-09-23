@@ -72,3 +72,29 @@ table {
     border-color: deeppink !important;
     filter: sepia(100%) saturate(1000%) brightness(100%) hue-rotate(273deg);
 }
+
+.stats_details {
+    .game_img {
+        border: 2px solid transparent;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .ach_img {
+        border: 2px solid transparent;
+        display: block;
+        margin: 0 auto;
+    }
+}
+
+.bg-hardcore {
+    --bs-bg-opacity: 1;
+    background-color: gold !important;
+}
+.bg-softcore {
+    --bs-bg-opacity: 1;
+    background-color: silver !important;
+}
+.stats_small_text {
+    font-size: 12px;
+}

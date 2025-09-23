@@ -91,7 +91,7 @@ listach <gamename>                                                    Lists all 
 unlock <username> <gamename> <achievementname> <hardcore 1/0>         Grant an achievement
 lock <username> <gamename> <achievementname> <hardcore 1/0>           Remove an achievement
 lockall <username> <gamename>                                         Remove ALL achievements
-fetch <gameid> [override_gameid] [unofficial 1/0] [copy_unlocks_to]   Copies game and achievement data from official server
+fetch <gameid> [override_gameid/0] [unofficial 1/0] [copy_unlocks_to]   Copies game and achievement data from official server
 reload                                                                Reloads achievement data
 reloaduser                                                            Reloads user data
 ");
@@ -120,7 +120,7 @@ reloaduser                                                            Reloads us
                     ReloadUserFromConsole();
                     break;
                 case "fetch":
-                    RaOfficialServer.FetchData(args[1], args.Length >= 3 ? args[2] : null, args.Length >= 4 && args[3] == "1", args.Length >= 5 ? args[4] : null);
+                    RaOfficialServer.FetchData(args[1], args.Length >= 3 && args[2] != "0" ? args[2] : null, args.Length >= 4 && args[3] == "1", args.Length >= 5 ? args[4] : null);
                     break;
                 default:
                     Log.Main.LogWarning("Unknown command: {arg}", args[0]);
@@ -211,7 +211,7 @@ reloaduser                                                            Reloads us
             Log.Main.LogInformation("Successfully set achievement \"{ach}\" of \"{game}\" for {user} to {status}", ach, game, user, userAchievementData?.Status);
             UserManager.Save();
             
-            LiveTicker.BroadcastPing();
+            LiveTicker.BroadcastPing(LiveTicker.LiveTickerEventPing.PingType.AchievementUnlock);
         }
 
         private static string[] ParseConsoleCommand(string line) {

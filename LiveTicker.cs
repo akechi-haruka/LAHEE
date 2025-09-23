@@ -20,11 +20,11 @@ namespace LAHEE {
             Log.Network.LogDebug("Websocket initialized.");
         }
 
-        public static void BroadcastPing() {
+        public static void BroadcastPing(LiveTickerEventPing.PingType type) {
             lock (connecteds) {
                 Log.Network.LogDebug("Pinging {n} websockets...", connecteds.Count);
                 foreach (LiveTickerWS ws in connecteds) {
-                    ws.SendMessage(new LiveTickerEventPing());
+                    ws.SendMessage(new LiveTickerEventPing(type));
                 }
             }
         }
@@ -84,7 +84,16 @@ namespace LAHEE {
         }
 
         public class LiveTickerEventPing : LiveTickerEvent {
-            public LiveTickerEventPing() : base("ping") {
+            public PingType pingType;
+
+            public enum PingType {
+                Time,
+                AchievementUnlock,
+                LeaderboardRecorded
+            }
+            
+            public LiveTickerEventPing(PingType type) : base("ping") {
+                pingType = type;
             }
         }
         

@@ -7,15 +7,13 @@ using LAHEE.Data;
 using LAHEE.Util;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using WindowsInput;
-using WindowsInput.Native;
 
 namespace LAHEE;
 
 public class CaptureManager {
 
     public enum CaptureTrigger {
-        Invalid, Screenshot, Keystroke, OBSWebsocket
+        Invalid, Screenshot, OBSWebsocket
     }
     
     public class CaptureAction {
@@ -27,14 +25,11 @@ public class CaptureManager {
     public const String DIRECTORY = "Capture";
 
     private static List<CaptureAction> actions;
-    private static InputSimulator input;
-
+    
     public static void Initialize() {
         if (!Directory.Exists(DIRECTORY)) {
             Directory.CreateDirectory(DIRECTORY);
         }
-
-        input = new InputSimulator();
 
         actions = new List<CaptureAction>();
         IEnumerable<IConfigurationSection> ca = Configuration.Current.GetSection("LAHEE").GetSection("Capture").GetChildren();
@@ -80,8 +75,6 @@ public class CaptureManager {
     private static void DoCaptureAction(CaptureTrigger trigger, string parameter, GameData game, UserData user, AchievementData ach) {
         if (trigger == CaptureTrigger.Screenshot) {
             DoScreenshot(parameter, game, user, ach);
-        } else if (trigger == CaptureTrigger.Keystroke) {
-            DoKeystroke(parameter, game, user, ach);
         } else if (trigger == CaptureTrigger.OBSWebsocket) {
             DoWebsocket(parameter, game, user, ach);
         } else {
@@ -134,15 +127,4 @@ public class CaptureManager {
         }
     }
 
-    private static void DoKeystroke(string parameter, GameData game, UserData user, AchievementData ach) {
-        if (!OperatingSystem.IsWindows()) {
-            Log.Main.LogError("Keystroke feature is only supported on Windows.");
-            return;
-        }
-        string[] parts = parameter.Split(";");
-        VirtualKeyCode[] modifiers = parts[0].Split(",").Select(Enum.Parse<VirtualKeyCode>).ToArray();
-        VirtualKeyCode[] keys = parts[1].Split(",").Select(Enum.Parse<VirtualKeyCode>).ToArray();
-        Log.Main.LogDebug("Sending modifiers {m} and keys {k}", String.Join(',',  modifiers), String.Join(',', keys));
-        input.Keyboard.ModifiedKeyStroke(modifiers, keys);
-    }
 }

@@ -79,14 +79,17 @@
                     <li class="nav-item">
                         <a class="nav-link" href="javascript:lahee_set_page('page_leaderboards')">Records</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="javascript:lahee_set_page('page_stats')">Stats</a>
+                    </li>
                 </ul>
                 <form id="main_data_selector" style="visibility: hidden;" class="d-flex" onsubmit="lahee_change_game(); return false;">
                     <img id="useravatar" src="" height="48" />
                     <select id="user_select" class="form-select me-2">
                         <option>Loading...</option>
                     </select>
-                    <img id="gameavatar" src="" height="48" />
-                    <select id="game_select" class="form-select me-2">
+                    <img id="gameavatar" src="" height="48" class="page_achievements_controls page_leaderboards_controls page-controls" />
+                    <select id="game_select" class="form-select me-2 page_achievements_controls page_leaderboards_controls page-controls">
                         <option>Loading...</option>
                     </select>
                     <select id="sort_select" class="form-select me-2 page_achievements_controls page-controls">
@@ -108,8 +111,12 @@
     </nav>
 
     <main class="container">
-        <div id="page_loading" class="lahee-page" style="display: block;">
-            <p>Now Loading...</p>
+        <div id="page_loading" class="lahee-page text-center" style="display: block;">
+            <img src="lahee.png" />
+            <h1>L.A.H.E.E.</h1>
+            <h4>Local Achievements Home Edition Enhanced</h4>
+            <hr />
+            <h3>Now Loading...</h3>
             <p>Depending on the number of games or achievements, this may take a moment.</p>
         </div>
         <div id="page_achievements" class="lahee-page">
@@ -138,7 +145,7 @@
                                 <td id="adetail_unlock"></td>
                             </tr>
                             <tr>
-                                <td>Play Time</td>
+                                <td>Playtime</td>
                                 <td id="adetail_unlock_pt"></td>
                             </tr>
                         </table>
@@ -193,17 +200,135 @@
                         <th>Attempt #</th>
                         <th>Score</th>
                         <th>Record Date</th>
-                        <th>Play Time</th>
+                        <th>Playtime</th>
                     </tr>
                 </thead>
                 <tbody id="lb_content"></tbody>
             </table>
         </div>
+        <div id="page_stats" class="lahee-page">
+            <div id="stats_unavailable">
+                <p>Stats are not yet available for this user. Play at least one game and obtain at least one achievement.</p>
+            </div>
+            <div id="stats_available">
+                <div class="row mb-5">
+                    <div class="col-12 col-sm-3 text-center stats_details">
+                        <h1>Most Played</h1>
+                        <p><img id="game_img_l" class="game_img" /></p>
+                        <p id="game_title_l">NAME</p>
+                        <h4 id="game_time_l">0 days 00:00:00</h4>
+                    </div>
+                    <div class="col-12 col-sm-3 text-center">
+                        <h1>Least Played</h1>
+                        <p><img id="game_img_s" class="game_img" /></p>
+                        <p id="game_title_s">NAME</p>
+                        <h4 id="game_time_s">0.00:00:00</h4>
+                    </div>
+                    <div class="col-12 col-sm-6 text-center">
+                        <h1>Totals</h1>
+                        <table class="table">
+                            <tr>
+                                <td>Total Time</td>
+                                <td id="total_time">0.00:00:00</td>
+                            </tr>
+                            <tr>
+                                <td>Games<br><small class="stats_small_text">Registered / Played / Beaten / Completed</small></td>
+                                <td id="total_counts">0 / 0 / 0 / 0</td>
+                            </tr>
+                            <tr>
+                                <td>Achievements<br><small class="stats_small_text">Possible / Obtained / Hardcore</small></td>
+                                <td id="total_ach">0 / 0 / 0</td>
+                            </tr>
+                            <tr>
+                                <td>Score<br><small class="stats_small_text">Possible / Obtained / Hardcore</small></td>
+                                <td id="total_score">0 / 0 / 0</td>
+                            </tr>
+                            <tr>
+                                <td>Started using LAHEE</td>
+                                <td id="total_started">0000-00-00 00:00:00</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="row mb-5">
+                    <div class="col-12 col-sm-3 text-center">
+                        <h1>Fastest 100%</h1>
+                        <p><img id="game_img_f1" class="game_img" /></p>
+                        <p id="game_title_f1">NAME</p>
+                        <h4 id="game_time_f1">0.00:00:00</h4>
+                    </div>
+                    <div class="col-12 col-sm-3 text-center">
+                        <h1>Slowest 100%</h1>
+                        <p><img id="game_img_s1" class="game_img" /></p>
+                        <p id="game_title_s1">NAME</p>
+                        <h4 id="game_time_s1">0.00:00:00</h4>
+                    </div>
+                    <div class="col-12 col-sm-3 text-center">
+                        <h1>Fastest Beat</h1>
+                        <p><img id="game_img_fb" class="game_img" /></p>
+                        <p id="game_title_fb">NAME</p>
+                        <h4 id="game_time_fb">0.00:00:00</h4>
+                    </div>
+                    <div class="col-12 col-sm-3 text-center">
+                        <h1>Slowest Beat</h1>
+                        <p><img id="game_img_sb" class="game_img" /></p>
+                        <p id="game_title_sb">NAME</p>
+                        <h4 id="game_time_sb">0.00:00:00</h4>
+                    </div>
+                </div>
+                <div class="row mb-5">
+                    <div class="col-12 col-sm-4 text-center">
+                        <h1>The First</h1>
+                        <p><img id="ach_img_tf" class="ach_img" /></p>
+                        <p><span id="ach_title_tf">NAME</span><br><i id="ach_game_tf">GAMENAME</i></p>
+                        <p id="ach_description_tf">TEXT TEXT TEXT</p>
+                        <h4 id="ach_time_tf">0.00:00:00</h4>
+                        <h4 id="ach_dtime_tf">0.00:00:00</h4>
+                        <small>First achievement obtained.</small>
+                    </div>
+                    <div class="col-12 col-sm-4 text-center">
+                        <h1>The Nut</h1>
+                        <p><img id="ach_img_tn" class="ach_img" /></p>
+                        <p><span id="ach_title_tn">NAME</span><br><i id="ach_game_tn">GAMENAME</i></p>
+                        <p id="ach_description_tn">TEXT TEXT TEXT</p>
+                        <h4 id="ach_time_tn">0.00:00:00</h4>
+                        <h4 id="ach_dtime_tn">0.00:00:00</h4>
+                        <small>Achievement with the longest time in-between the achievement before it.</small>
+                    </div>
+                    <div class="col-12 col-sm-4 text-center">
+                        <h1>The Grind</h1>
+                        <p><img id="ach_img_tg" class="ach_img" /></p>
+                        <p><span id="ach_title_tg">NAME</span><br><i id="ach_game_tg">GAMENAME</i></p>
+                        <p id="ach_description_tg">TEXT TEXT TEXT</p>
+                        <h4 id="ach_time_tg">0.00:00:00</h4>
+                        <h4 id="ach_dtime_tg">0.00:00:00</h4>
+                        <small>Highest value achievement obtained after longest amount of playtime.</small>
+                    </div>
+                </div>
+                <div class="row mb-5">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th><!-- Image --></th>
+                                <th>Game</th>
+                                <th>Progress</th>
+                                <th>Points</th>
+                                <th>Started</th>
+                                <th>Playtime</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stats_table">
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </main>
 
     <footer class="footer mt-auto py-3 bg-body-tertiary">
         <div class="container">
-            <span class="text-body-secondary" id="ingame">Live Ticker: Connecting...</span>
+            <span class="text-body-secondary" id="ingame"></span>
             <span class="text-body-secondary float-end" id="lahee_version">LAHEE</span>
         </div>
     </footer>

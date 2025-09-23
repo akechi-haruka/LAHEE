@@ -40,6 +40,7 @@ namespace LAHEE {
             AddRARoute("laheewritecomment", Routes.LaheeWriteComment);
             AddRARoute("laheedeletecomment", Routes.LaheeDeleteComment);
             AddRARoute("laheeflagimportant", Routes.LaheeFlagImportant);
+            AddRARoute("laheetriggerfetch", Routes.LaheeTriggerFetch);
             AddRARoute("login", Routes.RALogin);
             AddRARoute("login2", Routes.RALogin);
             AddRARoute("gameid", Routes.RAGameId);
@@ -281,7 +282,7 @@ namespace LAHEE {
             UserManager.Save();
             
             LiveTicker.BroadcastUnlock(game.ID, userAchievementData);
-            LiveTicker.BroadcastPing();
+            LiveTicker.BroadcastPing(LiveTicker.LiveTickerEventPing.PingType.AchievementUnlock);
             CaptureManager.StartCapture(game, user, ach);
 
             int totalAchievementCount = game.Achievements.Length;
@@ -340,7 +341,7 @@ namespace LAHEE {
 
             UserManager.Save();
 
-            LiveTicker.BroadcastPing();
+            LiveTicker.BroadcastPing(LiveTicker.LiveTickerEventPing.PingType.Time);
 
             RAErrorResponse response = new RAErrorResponse(null) {
                 Success = true
@@ -398,7 +399,7 @@ namespace LAHEE {
             Log.User.LogInformation("{user} recorded a score of {score} on the leaderboard \"{lb}\" in \"{game}\"", user, score, leaderboardData, game);
             UserManager.Save();
 
-            LiveTicker.BroadcastPing();
+            LiveTicker.BroadcastPing(LiveTicker.LiveTickerEventPing.PingType.LeaderboardRecorded);
 
             RALeaderboardResponse response = new RALeaderboardResponse() {
                 Success = true,
@@ -596,6 +597,20 @@ namespace LAHEE {
             LaheeFlagImportantResponse response = new LaheeFlagImportantResponse() {
                 Success = true,
                 Flagged = userGameData.FlaggedAchievements
+            };
+            await ctx.Response.SendJson(response);
+        }
+        
+        internal static async Task LaheeTriggerFetch(HttpContextBase ctx) {
+            
+            String gameid = ctx.Request.GetParameter("gameid");
+            String @override = ctx.Request.GetParameter("override");
+            bool unofficial = ctx.Request.GetParameter("unofficial") == "true";
+            
+            RaOfficialServer.FetchData(gameid, @override, unofficial);
+            
+            RAAnyResponse response = new RAAnyResponse() {
+                Success = true
             };
             await ctx.Response.SendJson(response);
         }

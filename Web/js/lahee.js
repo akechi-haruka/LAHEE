@@ -1,3 +1,5 @@
+// noinspection EqualityComparisonWithCoercionJS,JSUnresolvedReference
+
 var LAHEE_URL;
 var lahee_data;
 var lahee_user;
@@ -6,6 +8,8 @@ var lahee_last_audio = 0;
 var lahee_popup;
 var lahee_achievement;
 
+var tooltipList;
+
 function lahee_init() {
     if (Notification.permission == "default") {
         Notification.requestPermission();
@@ -13,8 +17,12 @@ function lahee_init() {
     lahee_audio_play("540121__jj_om__blank-sound.ogg");
 
     LAHEE_URL = "http://" + window.location.host + "/dorequest.php";
-    lahee_request("r=laheeinfo", lahee_postinit, function () {
-        document.getElementById("page_loading").innerHTML = "An error has occurred while trying to load data.";
+    lahee_request("r=laheeinfo", lahee_postinit, function (e) {
+        document.getElementById("page_loading").innerHTML = `
+            <p>An error has occurred while trying to load data.</p>
+            <p><small>${e}</small></p>
+            <p><input type="button" value="Retry" class="btn btn-primary" onclick="window.location.reload();" /></p>
+        `;
     });
 }
 
@@ -89,18 +97,20 @@ function lahee_postinit(res) {
     for (var game of res.games) {
         games += "<option value='" + game.ID + "'>" + game.Title + "</option>";
     }
-    document.getElementById("game_select").innerHTML = games;
-    document.getElementById("main_nav").style.visibility = "visible";
-    document.getElementById("main_data_selector").style.visibility = "visible";
 
-    lahee_set_page("page_achievements");
-    lahee_autoselect_based_on_most_recent_achievement();
-    lahee_change_game();
-    lahee_change_lb();
     lahee_connect_liveticker();
+    setTimeout(function(){
+        document.getElementById("game_select").innerHTML = games;
+        document.getElementById("main_nav").style.visibility = "visible";
+        document.getElementById("main_data_selector").style.visibility = "visible";
+        lahee_autoselect_based_on_most_recent_achievement();
+        lahee_change_game();
+        lahee_change_lb();
+        lahee_set_page("page_achievements");
+    }, 1000);
 }
 
-function lahee_update_game_status() {
+function lahee_update_game_status(ping_type) {
     lahee_request("r=laheeuserinfo&user=" + lahee_user.UserName + "&gameid=" + lahee_game.ID, function (res) {
         var msg;
         if (res.currentgameid == lahee_game.ID) {
@@ -120,7 +130,9 @@ function lahee_update_game_status() {
         }
         lahee_user.GameData[lahee_game.ID].Achievements = res.achievements;
 
-        lahee_build_achievements(lahee_user, lahee_game);
+        if (ping_type != "Time") {
+            lahee_build_achievements(lahee_user, lahee_game);
+        }
     });
 }
 
@@ -163,6 +175,7 @@ function lahee_change_game() {
     lahee_build_leaderboards(user, game);
     lahee_change_lb();
     lahee_update_game_status();
+    lahee_create_stats(user);
 }
 
 function lahee_autoselect_based_on_most_recent_achievement() {
@@ -255,6 +268,12 @@ function lahee_build_achievements(user, game) {
 
         content += `<img src="${status != 0 ? a.BadgeURL : a.BadgeLockedURL}" class="ach_type_${a.Type} ach_status_${status} ${ug.FlaggedAchievements?.includes(a.ID) ? "ach_flag_important" : ""}" onclick="lahee_select_ach(${game.ID}, ${a.ID});" loading="lazy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-title="<b>${a.Title.replaceAll("\"", "&quot;")}</b> (${a.Points})<hr />${a.Description.replaceAll("\"", "&quot;")}" />`;
     }
+    
+    if (tooltipList){
+        for (var t of tooltipList){
+            t.dispose();
+        }
+    }
 
     document.getElementById("achievementgrid").innerHTML = content + "</div>";
 
@@ -276,7 +295,7 @@ function lahee_build_achievements(user, game) {
     document.getElementById("adetail_info").style.display = "block";
 
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl, {
+    tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl, {
         trigger: 'hover'
     }));
 }
@@ -377,7 +396,7 @@ function lahee_connect_liveticker() {
 
 function lahee_liveticker_update(data) {
     if (data.type == "ping") {
-        lahee_update_game_status();
+        lahee_update_game_status(data.pingType);
     } else if (data.type == "unlock") {
         lahee_play_unlock_sound(data.gameId, data.userAchievementData);
     } else {
@@ -593,4 +612,282 @@ function lahee_flag_important() {
     }, function (e) {
         alert("Error communicating with LAHEE: " + e);
     });
+}
+
+function lahee_create_stats(user) {
+    if (!user || !user.AllowUse || !user.GameData || Object.keys(user.GameData).length == 0) {
+        console.warn("Cannot create stats, no user data");
+        document.getElementById("stats_unavailable").style.display = "block";
+        document.getElementById("stats_available").style.display = "none";
+        return;
+    }
+
+    document.getElementById("stats_unavailable").style.display = "none";
+    document.getElementById("stats_available").style.display = "block";
+
+    var total_time = 0;
+    var game_counts = [0, 0, 0, 0];
+    var ach_counts = [0, 0, 0];
+    var score_counts = [0, 0, 0];
+    var table_str = "";
+
+    var longest_pt = {id: 0, v: 0};
+    var shortest_pf = {id: 0, v: 9999999999999};
+    var fastest_100 = {id: 0, v: 9999999999999};
+    var slowest_100 = {id: 0, v: 0};
+    var fastest_beat = {id: 0, v: 9999999999999};
+    var slowest_beat = {id: 0, v: 0};
+    var first_achievement = {id: 0, gid: 0, v: 9999999999999};
+    var nut_achievement = {id: 0, gid: 0, v: 0, g: "No Data"};
+    var grind_achievement = {id: 0, gid: 0, p: 0, v: 0};
+    var first_play = new Date();
+
+    game_counts[0] = lahee_data.games.length;
+
+    for (var ug of Object.values(user.GameData)) {
+        var game = null;
+        for (var g of lahee_data.games) {
+            if (g.ID == ug.GameID) {
+                game = g;
+                break;
+            }
+        }
+        console.log("Checking: " + game?.Title + "(" + game?.ID + ")");
+        var uat = Object.values(ug.Achievements);
+
+        var total_achievements = game?.Achievements.length ?? -1;
+        var hardcore_achievements = uat.filter(a => a.Status == 2).length;
+        var softcore_achievements = uat.filter(a => a.Status == 1).length;
+        var completion_ids = game?.Achievements.filter(a => a.Type == "win_condition").map(a => a.ID) ?? [];
+
+        var playtime = TimeSpan.parse(ug.PlayTimeApprox);
+
+        if (playtime.valueOf() > longest_pt.v) {
+            longest_pt.id = ug.GameID;
+            longest_pt.v = playtime.valueOf();
+        }
+        if (playtime.valueOf() < shortest_pf.v && playtime.valueOf() > 0) {
+            shortest_pf.id = ug.GameID;
+            shortest_pf.v = playtime.valueOf();
+        }
+        if ((hardcore_achievements + softcore_achievements) >= total_achievements && playtime.valueOf() < fastest_100.v && playtime.valueOf() > 0) {
+            fastest_100.id = ug.GameID;
+            fastest_100.v = playtime.valueOf();
+        }
+        if ((hardcore_achievements + softcore_achievements) >= total_achievements && playtime.valueOf() > slowest_100.v && playtime.valueOf() > 0) {
+            slowest_100.id = ug.GameID;
+            slowest_100.v = playtime.valueOf();
+        }
+
+        var beat = null;
+        for (var completion_achievement_id of completion_ids) {
+            var ua = ug.Achievements[completion_achievement_id];
+            if (ua && ua.Status > 0) {
+                var at = TimeSpan.parse(ua.Status == 2 ? ua.AchievePlaytime : ua.AchievePlaytimeSoftcore);
+                if (beat == null || beat.compareTo(at) < 0) {
+                    beat = at;
+                }
+            }
+        }
+
+        if (beat != null) {
+            if (beat.valueOf() < fastest_beat.v && beat.valueOf() > 0 && playtime.valueOf() > 0) {
+                fastest_beat.id = ug.GameID;
+                fastest_beat.v = beat.valueOf();
+            }
+            if (beat.valueOf() > slowest_beat.v) {
+                slowest_beat.id = ug.GameID;
+                slowest_beat.v = beat.valueOf();
+            }
+        }
+
+        var this_first_play = new Date(ug.FirstPlay);
+        if (this_first_play < first_play) {
+            first_play = this_first_play;
+        }
+
+        total_time += playtime.valueOf();
+
+        if (ug) {
+            game_counts[1]++;
+        }
+        if (uat.filter(a => completion_ids.includes(a.AchievementID) && a.Status > 0).length > 0) {
+            game_counts[2]++;
+        }
+        if (hardcore_achievements == total_achievements) {
+            game_counts[3]++;
+        }
+
+        ach_counts[0] += total_achievements;
+        ach_counts[1] += softcore_achievements + hardcore_achievements;
+        ach_counts[2] += hardcore_achievements;
+
+        var arr = Object.values(ug.Achievements).sort(function (a, b) {
+            return Math.max(a.AchieveDate, a.AchieveDateSoftcore) - Math.max(b.AchieveDate, b.AchieveDateSoftcore);
+        });
+        var last_ach_pt = 0;
+        var last_ach_name = "No Data";
+        for (var ua of arr) {
+            var higherPlaytime = TimeSpan.parse(ua.AchieveDate > ua.AchieveDateSoftcore ? ua.AchievePlaytime : ua.AchievePlaytimeSoftcore);
+            if (higherPlaytime.valueOf() <= 0){
+                continue;
+            }
+            var diff = Math.abs(higherPlaytime.valueOf() - last_ach_pt);
+            if (diff > nut_achievement.v) {
+                nut_achievement.id = ua.AchievementID;
+                nut_achievement.gid = ug.GameID;
+                nut_achievement.v = diff;
+                nut_achievement.g = last_ach_name;
+                last_ach_name = game?.Achievements.filter(a => a.ID == ua.AchievementID)[0]?.Title ?? "Unknown Achievement: " + ua.AchievementID;
+            }
+            last_ach_pt = higherPlaytime.valueOf();
+        }
+
+        if (game) {
+            game_pt_total = 0;
+            game_pt_hardcore = 0;
+            game_pt_softcore = 0;
+            for (var a of game.Achievements) {
+                game_pt_total += a.Points;
+                var ua = ug.Achievements[a.ID];
+                if (ua && ua.Status > 0) {
+
+                    if (ua.Status == 2) {
+                        game_pt_hardcore += a.Points;
+                    } else if (ua.Status == 1) {
+                        game_pt_softcore += a.Points;
+                    }
+                    score_counts[ua.Status] += a.Points;
+
+                    var earlierAchieveDate = ua.AchieveDate == 0 || ua.AchieveDateSoftcore < ua.AchieveDate ? ua.AchieveDateSoftcore : ua.AchieveDate;
+                    var higherPlaytime = TimeSpan.parse(ua.AchieveDate > ua.AchieveDateSoftcore ? ua.AchievePlaytime : ua.AchievePlaytimeSoftcore);
+
+                    if (earlierAchieveDate < first_achievement.v && earlierAchieveDate > 0) {
+                        first_achievement.id = a.ID;
+                        first_achievement.gid = game.ID;
+                        first_achievement.v = earlierAchieveDate;
+                    }
+                    if (a.Points >= grind_achievement.p && higherPlaytime > grind_achievement.v) {
+                        grind_achievement.id = a.ID;
+                        grind_achievement.gid = game.ID;
+                        grind_achievement.p = a.Points;
+                        grind_achievement.v = higherPlaytime.valueOf();
+                    }
+                }
+
+            }
+
+            score_counts[0] += game_pt_total;
+
+            table_str += `
+                <tr>
+                    <td><img src="${game.ImageIconURL}" height="48" /></td>
+                    <td>${game.Title}</td>
+                    <td class="text-center">
+                        ${softcore_achievements + hardcore_achievements} / ${total_achievements}
+                        <div class="progress">
+                            <div class="progress-bar bg-hardcore" role="progressbar" style="width: ${hardcore_achievements / total_achievements * 100}%"></div>
+                            <div class="progress-bar bg-softcore" role="progressbar" style="width: ${softcore_achievements / total_achievements * 100}%"></div>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        ${(game_pt_softcore + game_pt_hardcore).toLocaleString()} / ${game_pt_total.toLocaleString()}
+                        <div class="progress">
+                            <div class="progress-bar bg-hardcore" role="progressbar" style="width: ${game_pt_hardcore / game_pt_total * 100}%"></div>
+                            <div class="progress-bar bg-softcore" role="progressbar" style="width: ${game_pt_softcore / game_pt_total * 100}%"></div>
+                        </div>
+                    </td>
+                    <td>${new Date(ug.FirstPlay).toLocaleString()}</td>
+                    <td>${TimeSpan.parse(ug.PlayTimeApprox).toStringWithoutMs()}</td>
+                </tr>
+            `;
+        }
+    }
+
+    lahee_stats_render_game("l", user, longest_pt.id);
+    lahee_stats_render_game("s", user, shortest_pf.id);
+    lahee_stats_render_game("f1", user, fastest_100.id);
+    lahee_stats_render_game("s1", user, slowest_100.id);
+    lahee_stats_render_game("fb", user, fastest_beat.id, fastest_beat.v);
+    lahee_stats_render_game("sb", user, slowest_beat.id, slowest_beat.v);
+    lahee_stats_render_ach("tf", user, first_achievement.id, first_achievement.gid);
+    lahee_stats_render_ach("tn", user, nut_achievement.id, nut_achievement.gid, TimeSpan.fromMilliseconds(nut_achievement.v).toStringWithoutMs() + "<br><small class='stats_small_text'>since "+nut_achievement.g+"</small>");
+    lahee_stats_render_ach("tg", user, grind_achievement.id, grind_achievement.gid);
+
+    var tt = TimeSpan.fromMilliseconds(total_time);
+    document.getElementById("total_time").innerText = tt.toStringWithoutMs() + " (" + Math.floor(tt.totalHours) + "h.)";
+    document.getElementById("total_counts").innerText = game_counts.map(n => n.toLocaleString()).join(" / ");
+    document.getElementById("total_ach").innerText = ach_counts.map(n => n.toLocaleString()).join(" / ");
+    document.getElementById("total_score").innerText = score_counts.map(n => n.toLocaleString()).join(" / ");
+    document.getElementById("total_started").innerText = first_play.toLocaleDateString();
+    document.getElementById("stats_table").innerHTML = table_str;
+}
+
+function lahee_stats_render_game(suffix, user, gameid, time) {
+    var game = null;
+    for (var g of lahee_data.games) {
+        if (g.ID == gameid) {
+            game = g;
+            break;
+        }
+    }
+    var ug = user?.GameData[gameid];
+
+    var total_achievements = game?.Achievements.length ?? -1;
+    var achievements_softcore = game && ug ? Object.values(ug.Achievements).filter(a => a.Status == 1).reduce((partialSum, a) => partialSum + a, 0) : -2;
+    var achievements_hardcore = game && ug ? Object.values(ug.Achievements).filter(a => a.Status == 2).reduce((partialSum, a) => partialSum + a, 0) : -2;
+    var status = 0;
+    if (total_achievements == achievements_hardcore) {
+        status = 2;
+    } else if (total_achievements == achievements_softcore) {
+        status = 1;
+    }
+
+    var img = document.getElementById("game_img_" + suffix);
+    for (var i = 0; i < 4; i++) {
+        img.classList.remove("ach_status_" + i);
+    }
+    img.classList.add("ach_status_" + status);
+    img.src = game ? game.ImageIconURL : "";
+    document.getElementById("game_title_" + suffix).innerText = game ? game.Title : (gameid > 0 ? "Unknown Game: " + gameid : "No Data");
+    document.getElementById("game_time_" + suffix).innerText = time ? TimeSpan.fromMilliseconds(time).toStringWithoutMs() : (ug ? TimeSpan.parse(ug.PlayTimeApprox).toStringWithoutMs() : "--:--:--");
+}
+
+
+function lahee_stats_render_ach(suffix, user, aid, gameid, time) {
+    console.log("stats_render_ach: " + user + ", " + aid + ", " + gameid + ", " + time);
+    var game = null;
+    for (var g of lahee_data.games) {
+        if (g.ID == gameid) {
+            game = g;
+            break;
+        }
+    }
+
+    var a = (game?.Achievements.filter(a => a.ID == aid) ?? [])[0];
+    var ua = user?.GameData[gameid]?.Achievements[aid];
+
+    var earlydate = null;
+    var earlypt = null;
+    if (ua) {
+        if (ua.AchieveDate != 0 && ua.AchieveDate < ua.AchieveDateSoftcore) {
+            earlydate = ua.AchieveDate;
+            earlypt = ua.AchievePlaytime;
+        } else {
+            earlydate = ua.AchieveDateSoftcore;
+            earlypt = ua.AchievePlaytimeSoftcore;
+        }
+    }
+
+    var img = document.getElementById("ach_img_" + suffix);
+    for (var i = 0; i < 4; i++) {
+        img.classList.remove("ach_status_" + i);
+    }
+    img.classList.add("ach_status_" + ua?.Status);
+    img.src = a ? a.BadgeURL : "";
+    document.getElementById("ach_title_" + suffix).innerText = a ? a.Title + " (" + a.Points + ")" : (aid > 0 ? "Unknown Achievement: " + gameid : "No Data");
+    document.getElementById("ach_description_" + suffix).innerText = a ? a.Description : (aid > 0 ? "Unknown Achievement: " + gameid : "No Data");
+    document.getElementById("ach_game_" + suffix).innerText = game ? game.Title : (gameid > 0 ? "Unknown Game: " + gameid : "No Data");
+    document.getElementById("ach_time_" + suffix).innerHTML = time ? time : (ua ? TimeSpan.parse(earlypt).toStringWithoutMs() : "--:--:--");
+    document.getElementById("ach_dtime_" + suffix).innerText = earlydate ? new Date(earlydate * 1000).toLocaleString() : "--:--:--";
 }
