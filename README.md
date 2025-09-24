@@ -1,6 +1,9 @@
 # L.A.H.E.E. - Local Achievements Home Edition Enhanced
+
 RetroAchievements API Emulator
+
 2024-2025 Haruka
+
 Licensed under the SSPL.
 
 No support.
