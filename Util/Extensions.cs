@@ -1,11 +1,9 @@
-﻿using Newtonsoft.Json;
-using System.Web;
+﻿using System.Web;
+using Newtonsoft.Json;
 using WatsonWebserver.Core;
 
-namespace LAHEE {
+namespace LAHEE.Util {
     static class Extensions {
-
-        private const int CHUNK_SIZE = 250_000;
 
         public static string GetParameter(this HttpRequestBase req, string str) {
             return HttpUtility.ParseQueryString(req.DataAsString)[str];
@@ -16,5 +14,16 @@ namespace LAHEE {
             await resp.Send(data);
         }
 
+        public static IEnumerable<Exception> GetInnerExceptions(this Exception ex) {
+            if (ex == null) {
+                throw new ArgumentNullException(nameof(ex));
+            }
+
+            Exception innerException = ex;
+            do {
+                yield return innerException;
+                innerException = innerException.InnerException;
+            } while (innerException != null);
+        }
     }
 }

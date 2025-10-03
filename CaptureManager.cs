@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace LAHEE;
 
-public class CaptureManager {
+public static class CaptureManager {
 
     public enum CaptureTrigger {
         Invalid, Screenshot, OBSWebsocket
@@ -41,6 +41,17 @@ public class CaptureManager {
             };
             actions.Add(a);
         }
+
+        if (actions.Any(a => a.Trigger == CaptureTrigger.OBSWebsocket)) {
+            Log.Main.LogInformation("OBSWebsocket capture trigger found, checking connection...");
+            Task<bool> task = DoWebsocketAsync("GetVersion");
+            task.Wait();
+            if (!task.Result) {
+                Log.Main.LogError("OBSWebsocket capture trigger enabled, but failed to test OBS websocket connectivity. Disabling OBSWebsocket captures!");
+                actions.RemoveAll(a => a.Trigger == CaptureTrigger.OBSWebsocket);
+            }
+        }
+        
         Log.Main.LogInformation("{n} capture actions configured.", actions.Count);
     }
 
@@ -76,17 +87,17 @@ public class CaptureManager {
         if (trigger == CaptureTrigger.Screenshot) {
             DoScreenshot(parameter, game, user, ach);
         } else if (trigger == CaptureTrigger.OBSWebsocket) {
-            DoWebsocket(parameter, game, user, ach);
+            DoWebsocketAsync(parameter).Wait();
         } else {
             Log.Main.LogError("Unknown capture action: {a}", trigger);
         }
     }
 
-    private static void DoWebsocket(string parameter, GameData game, UserData user, AchievementData ach) {
+    private static async Task<bool> DoWebsocketAsync(string parameter) {
         Log.Main.LogDebug("Connecting to OBS websocket...");
         
         Uri uri = new Uri(Configuration.Get("LAHEE", "OBSWebsocketUrl"));
-        new OBSWebsocket(uri).ConnectAndSendAsync(parameter);
+        return await new OBSWebsocket(uri).ConnectAndSendAsync(parameter);
     }
 
     private static void DoScreenshot(string parameter, GameData game, UserData user, AchievementData ach) {
