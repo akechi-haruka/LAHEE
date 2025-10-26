@@ -9,9 +9,8 @@ namespace LAHEE {
     static class Network {
 
         public const String LOCAL_HOST = "localhost";
-        public const int LOCAL_PORT = 8000;
         public const String BASE_DIR = "/";
-        public const String LOCAL_URL = "http://" + LOCAL_HOST + ":8000" + BASE_DIR;
+        public static String LOCAL_URL;
 
         internal const String RA_ROUTE_HEADER = "X-RA-Route";
 
@@ -22,7 +21,10 @@ namespace LAHEE {
 
             Log.Network.LogDebug("Initializing network...");
 
-            server = new WebserverLite(new WebserverSettings("0.0.0.0", LOCAL_PORT), Routes.DefaultNotFoundRoute);
+            int localPort = Configuration.GetInt("LAHEE", "WebPort");
+            LOCAL_URL = "http://" + LOCAL_HOST + ":" + localPort + BASE_DIR;
+
+            server = new WebserverLite(new WebserverSettings("0.0.0.0", localPort), Routes.DefaultNotFoundRoute);
 
             server.Routes.PreAuthentication.Static.Add(HttpMethod.GET, BASE_DIR, Routes.RedirectWeb, Routes.DefaultErrorRoute);
             server.Routes.PreAuthentication.Static.Add(HttpMethod.POST, BASE_DIR + "dorequest.php", Routes.RARequestRoute, Routes.DefaultErrorRoute);
