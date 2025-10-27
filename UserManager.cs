@@ -93,13 +93,16 @@ namespace LAHEE {
                 if (data.AllowUse) {
                     string outputFile = Path.Combine(dir, data.UserName + ".json");
                     string backupFile = Path.Combine(dir, data.UserName + ".bak");
-                    File.Copy(outputFile, backupFile, true);
+                    if (File.Exists(outputFile)) {
+                        File.Copy(outputFile, backupFile, true);
+                    }
+
                     string output = JsonConvert.SerializeObject(data);
                     if (String.IsNullOrWhiteSpace(output)) {
                         throw new IOException("Attempted to write empty/null user save data for " + data);
                     }
                     File.WriteAllText(outputFile, output);
-                    Log.User.LogDebug("Saved user data for " + data.UserName);
+                    Log.User.LogDebug("Saved user data for {user}", data.UserName);
                 } else {
                     Log.User.LogWarning("Not saving {User}, because data loading has failed!", data);
                 }
