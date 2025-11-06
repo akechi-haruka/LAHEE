@@ -51,6 +51,8 @@ namespace LAHEE {
             AddRARoute("awardachievement", Routes.RAAwardAchievement);
             AddRARoute("ping", Routes.RAPing);
             AddRARoute("submitlbentry", Routes.RASubmitLeaderboardEntry);
+            AddRARoute("achievementsets", Routes.RAAchievementSets);
+            AddRARoute("latestintegration", Routes.RALatestIntegration);
 
             Log.Network.LogInformation("Starting webserver on {H}:{P}", server.Settings.Hostname, server.Settings.Port);
             server.Start();
@@ -614,6 +616,63 @@ namespace LAHEE {
             RAAnyResponse response = new RAAnyResponse() {
                 Success = true
             };
+            await ctx.Response.SendJson(response);
+        }
+        
+        internal static async Task RAAchievementSets(HttpContextBase ctx) {
+            String username = ctx.Request.GetParameter("u");
+            String token = ctx.Request.GetParameter("t");
+            String gamehash = ctx.Request.GetParameter("m");
+            int gameid = -1;
+            if (ctx.Request.GetParameter("g") != null) {
+                gameid = Int32.Parse(ctx.Request.GetParameter("g"));
+            }
+
+            GameData game = gameid > -1 ? StaticDataManager.FindGameDataById(gameid) : StaticDataManager.FindGameDataByHash(gamehash);
+            if (game == null) {
+                Log.User.LogWarning("Game {hash} not registered!", gameid > -1 ? gameid : gamehash);
+                await ctx.Response.SendJson(new RAErrorResponse("ROM hash is not registered!"));
+                return;
+            }
+
+            UserData user = UserManager.GetUserDataFromToken(token);
+            if (user == null) {
+                Log.User.LogWarning("Session token not found: {token}!", token);
+                await ctx.Response.SendJson(new RAErrorResponse("Session token not found!"));
+                return;
+            }
+
+            RAPatchResponseV2 response = new RAPatchResponseV2() {
+                Success = true,
+                GameId = game.ID,
+                Title = game.Title,
+                ImageIconUrl = game.ImageIconURL,
+                RichPresenceGameId = game.ID,
+                RichPresencePatch = game.RichPresencePatch,
+                ConsoleId = game.ConsoleID,
+                Sets = new RAPatchResponseV2.SetData[] {
+                    new RAPatchResponseV2.SetData() {
+                        Title = game.Title,
+                        Type = "core",
+                        AchievementSetId = game.ID,
+                        ImageIconUrl = game.ImageIconURL,
+                        Achievements = game.Achievements,
+                        Leaderboards = game.Leaderboards
+                    }
+                }
+            };
+
+            await ctx.Response.SendJson(response);
+        }
+        
+        internal static async Task RALatestIntegration(HttpContextBase ctx) {
+            RALatestIntegrationResponse response = new RALatestIntegrationResponse() {
+                Success = false,
+                LatestVersion = "0.0",
+                MinimumVersion = "0.0",
+                LatestVersionUrl = "",
+                LatestVersionUrlX64 = ""
+            }; // TODO: ?
             await ctx.Response.SendJson(response);
         }
     }

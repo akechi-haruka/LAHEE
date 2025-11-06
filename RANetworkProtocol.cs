@@ -38,6 +38,25 @@ class RAGameIDResponse : RAAnyResponse {
 class RAPatchResponse : RAAnyResponse {
     public GameData PatchData;
 }
+class RAPatchResponseV2 : RAAnyResponse {
+    public int GameId;
+    public String Title;
+    public String ImageIconUrl;
+    public int RichPresenceGameId;
+    public String RichPresencePatch;
+    public int ConsoleId;
+    public SetData[] Sets;
+
+    public class SetData {
+        public String Title;
+        public String Type;
+        public int AchievementSetId;
+        public int GameId;
+        public String ImageIconUrl;
+        public AchievementData[] Achievements;
+        public LeaderboardData[] Leaderboards;
+    }
+}
 
 class RAStartSessionResponse : RAAnyResponse {
     public RAStartSessionAchievementData[] Unlocks;
@@ -130,4 +149,11 @@ class LaheeWriteCommentResponse : LaheeFetchCommentsResponse {
 
 class LaheeFlagImportantResponse : RAAnyResponse {
     public List<int> Flagged;
+}
+
+class RALatestIntegrationResponse : RAAnyResponse {
+    public String MinimumVersion;
+    public String LatestVersion;
+    public String LatestVersionUrl;
+    public String LatestVersionUrlX64;
 }
