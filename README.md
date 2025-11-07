@@ -42,7 +42,13 @@ Latest build download: https://nightly.link/akechi-haruka/LAHEE/workflows/dotnet
 1. Go to `<your user data location>\Config\RetroAchievements.ini`
 and append a new entry named
 `HostUrl = http://localhost:8000/`
-2. Go to the directory where `Dolphin.exe` is located. If there are any `RA_Integration` files, __DELETE__ them. (2025-11, this works around a bug that RAIntegration overrides the custom hostname)
+2. Go to the directory where `Dolphin.exe` is located. If there are any `RA_Integration` files:
+   1. https://github.com/akechi-haruka/hexedit2 and place the .exe next to `Dolphin.exe`.
+   2. Run following:
+   ```
+   hexedit2 multi -t StringASCII RA_Integration.dll RA_Integration.dll https://retroachievements.org http://localhost:8000
+   hexedit2 multi -t StringASCII RA_Integration-x64.dll RA_Integration-x64.dll https://retroachievements.org http://localhost:8000
+   ```
 3. Launch Dolphin, navigate to Tools > Achievements, and type in any desired username and any password.
 
 An avatar can be placed in `<root>\UserPic\<username>.png`
@@ -51,8 +57,8 @@ An avatar can be placed in `<root>\UserPic\<username>.png`
 
 RetroArch has no ability to change the RA server name, so we need to patch that in the good old way.
 
-1. Download https://github.com/akechi-haruka/hexedit2 and place the .exe next to `RetroArch.exe`.
-2. Create a backup copy of `RetroArch.exe`
+1. Download https://github.com/akechi-haruka/hexedit2 and place the .exe next to `retroarch.exe`.
+2. Create a backup copy of `retroarch.exe`
 3. Open a command prompt in the folder where RetroArch is located and execute `hexedit2 multi -t StringASCII retroarch.exe retroarch.exe https://retroachievements.org http://localhost:8000`
 4. Launch RetroArch, navigate to the achievements menu, and type in any desired username and any password.
 
