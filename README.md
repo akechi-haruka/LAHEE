@@ -43,15 +43,13 @@ Latest build download: https://nightly.link/akechi-haruka/LAHEE/workflows/dotnet
 and append a new entry named
 `HostUrl = http://localhost:8000/`
 2. Go to the directory where `Dolphin.exe` is located. If there are any `RA_Integration` files:
-   1. https://github.com/akechi-haruka/hexedit2 and place the .exe next to `Dolphin.exe`.
+   1. Download https://github.com/akechi-haruka/hexedit2 and place the .exe next to `Dolphin.exe`.
    2. Run following:
    ```
    hexedit2 multi -t StringASCII RA_Integration.dll RA_Integration.dll https://retroachievements.org http://localhost:8000
    hexedit2 multi -t StringASCII RA_Integration-x64.dll RA_Integration-x64.dll https://retroachievements.org http://localhost:8000
    ```
 3. Launch Dolphin, navigate to Tools > Achievements, and type in any desired username and any password.
-
-An avatar can be placed in `<root>\UserPic\<username>.png`
 
 ### RetroArch
 
@@ -61,6 +59,12 @@ RetroArch has no ability to change the RA server name, so we need to patch that 
 2. Create a backup copy of `retroarch.exe`
 3. Open a command prompt in the folder where RetroArch is located and execute `hexedit2 multi -t StringASCII retroarch.exe retroarch.exe https://retroachievements.org http://localhost:8000`
 4. Launch RetroArch, navigate to the achievements menu, and type in any desired username and any password.
+
+### Misc. features
+
+If desired, an avatar can be placed in `<lahee root>\UserPic\<username>.png`.
+
+Data is saved in `<lahee root>\User\<username>.json`, if you want to back up your progression data.
 
 ## Adding achievements (from real site)
 
