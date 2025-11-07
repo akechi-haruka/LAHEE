@@ -7,7 +7,6 @@ using HttpMethod = WatsonWebserver.Core.HttpMethod;
 
 namespace LAHEE {
     static class Network {
-
         public const String LOCAL_HOST = "localhost";
         public const String BASE_DIR = "/";
         public static String LOCAL_URL;
@@ -18,7 +17,6 @@ namespace LAHEE {
         internal static Dictionary<string, Func<HttpContextBase, Task>> raRoutes;
 
         public static void Initialize() {
-
             Log.Network.LogDebug("Initializing network...");
 
             int localPort = Configuration.GetInt("LAHEE", "WebPort");
@@ -222,11 +220,14 @@ namespace LAHEE {
 
             foreach (UserAchievementData userAchievement in userGameData.Achievements.Values) {
                 if (userAchievement.Status == UserAchievementData.StatusFlag.SoftcoreUnlock) {
-                    softcore.Add(new RAStartSessionResponse.RAStartSessionAchievementData(userAchievement, true));
-                } else if (userAchievement.Status == UserAchievementData.StatusFlag.SoftcoreUnlock) {
-                    hardcore.Add(new RAStartSessionResponse.RAStartSessionAchievementData(userAchievement, false));
+                    softcore.Add(new RAStartSessionResponse.RAStartSessionAchievementData(userAchievement, false));
+                } else if (userAchievement.Status == UserAchievementData.StatusFlag.HardcoreUnlock) {
+                    hardcore.Add(new RAStartSessionResponse.RAStartSessionAchievementData(userAchievement, true));
                 }
             }
+
+            Log.User.LogDebug("Sending {c} softcore unlocks", softcore.Count);
+            Log.User.LogDebug("Sending {c} hardcore unlocks", hardcore.Count);
 
             Log.User.LogInformation("{user} started a session of \"{game}\" in {mode} mode", user, game, hardcoreFlag == 1 ? "Hardcore" : "Softcore");
 
@@ -284,7 +285,7 @@ namespace LAHEE {
 
             Log.User.LogInformation("{user} has unlocked \"{ach}\" in \"{game}\" in {mode} mode!", user, ach, game, hardcoreFlag == 1 ? "Hardcore" : "Softcore");
             UserManager.Save();
-            
+
             LiveTicker.BroadcastUnlock(game.ID, userAchievementData);
             LiveTicker.BroadcastPing(LiveTicker.LiveTickerEventPing.PingType.AchievementUnlock);
             CaptureManager.StartCapture(game, user, ach);
@@ -336,6 +337,7 @@ namespace LAHEE {
             if (userGameData.PresenceHistory == null) { // 1.0 backcompat
                 userGameData.PresenceHistory = new List<PresenceHistory>();
             }
+
             userGameData.PresenceHistory.Add(new PresenceHistory(DateTime.Now, statusMessage));
 
             int limit = Configuration.GetInt("LAHEE", "PresenceHistoryLimit");
@@ -388,11 +390,13 @@ namespace LAHEE {
             }
 
             if (userGameData.LeaderboardEntries == null) { // backcompat
-                userGameData.LeaderboardEntries = new Dictionary<int, List<UserLeaderboardData>>(); 
+                userGameData.LeaderboardEntries = new Dictionary<int, List<UserLeaderboardData>>();
             }
+
             if (!userGameData.LeaderboardEntries.ContainsKey(leaderboardId)) {
                 userGameData.LeaderboardEntries.Add(leaderboardId, new List<UserLeaderboardData>());
             }
+
             userGameData.LeaderboardEntries[leaderboardId].Add(new UserLeaderboardData() {
                 LeaderboardID = leaderboardId,
                 Score = score,
@@ -420,7 +424,6 @@ namespace LAHEE {
         }
 
         internal static async Task LaheeInfo(HttpContextBase ctx) {
-
             LaheeResponse response = new LaheeResponse() {
                 version = Program.NAME,
                 games = StaticDataManager.GetAllGameData(),
@@ -432,7 +435,6 @@ namespace LAHEE {
         }
 
         internal static async Task LaheeUserInfo(HttpContextBase ctx) {
-
             String user = ctx.Request.GetParameter("user");
             int gameid = Int32.Parse(ctx.Request.GetParameter("gameid"));
 
@@ -462,11 +464,10 @@ namespace LAHEE {
         }
 
         internal static async Task LaheeFetchComments(HttpContextBase ctx) {
-
             String user = ctx.Request.GetParameter("user");
             int gameid = Int32.Parse(ctx.Request.GetParameter("gameid"));
             int achievementId = Int32.Parse(ctx.Request.GetParameter("aid"));
-            
+
             UserData userData = UserManager.GetUserData(user);
             if (userData == null) {
                 await ctx.Response.SendJson(new RAErrorResponse("User does not exist!"));
@@ -504,12 +505,11 @@ namespace LAHEE {
         }
 
         internal static async Task LaheeWriteComment(HttpContextBase ctx) {
-
             String user = ctx.Request.GetParameter("user");
             int gameid = Int32.Parse(ctx.Request.GetParameter("gameid"));
             int achievementId = Int32.Parse(ctx.Request.GetParameter("aid"));
             String comment = ctx.Request.GetParameter("comment");
-            
+
             UserData userData = UserManager.GetUserData(user);
             if (userData == null) {
                 await ctx.Response.SendJson(new RAErrorResponse("User does not exist!"));
@@ -529,19 +529,18 @@ namespace LAHEE {
             }
 
             StaticDataManager.AddComment(userData, game, ach, comment);
-            
+
             LaheeFetchCommentsResponse response = new LaheeFetchCommentsResponse() {
                 Success = true,
                 Comments = StaticDataManager.GetAllUserComments()
             };
             await ctx.Response.SendJson(response);
         }
-        
-        internal static async Task LaheeDeleteComment(HttpContextBase ctx) {
 
+        internal static async Task LaheeDeleteComment(HttpContextBase ctx) {
             String uuid = ctx.Request.GetParameter("uuid");
             int gameid = Int32.Parse(ctx.Request.GetParameter("gameid"));
-            
+
             GameData game = StaticDataManager.FindGameDataById(gameid);
             if (game == null) {
                 await ctx.Response.SendJson(new RAErrorResponse("Game ID is not registered!"));
@@ -552,20 +551,19 @@ namespace LAHEE {
                 await ctx.Response.SendJson(new RAErrorResponse("Comment ID not found"));
                 return;
             }
-            
+
             LaheeFetchCommentsResponse response = new LaheeFetchCommentsResponse() {
                 Success = true,
                 Comments = StaticDataManager.GetAllUserComments()
             };
             await ctx.Response.SendJson(response);
         }
-        
+
         internal static async Task LaheeFlagImportant(HttpContextBase ctx) {
-            
             String user = ctx.Request.GetParameter("user");
             int gameid = Int32.Parse(ctx.Request.GetParameter("gameid"));
             int achievementId = Int32.Parse(ctx.Request.GetParameter("aid"));
-            
+
             UserData userData = UserManager.GetUserData(user);
             if (userData == null) {
                 await ctx.Response.SendJson(new RAErrorResponse("User does not exist!"));
@@ -597,28 +595,27 @@ namespace LAHEE {
             }
 
             UserManager.Save();
-            
+
             LaheeFlagImportantResponse response = new LaheeFlagImportantResponse() {
                 Success = true,
                 Flagged = userGameData.FlaggedAchievements
             };
             await ctx.Response.SendJson(response);
         }
-        
+
         internal static async Task LaheeTriggerFetch(HttpContextBase ctx) {
-            
             String gameid = ctx.Request.GetParameter("gameid");
             String @override = ctx.Request.GetParameter("override");
             bool unofficial = ctx.Request.GetParameter("unofficial") == "true";
-            
+
             RaOfficialServer.FetchData(gameid, @override, unofficial);
-            
+
             RAAnyResponse response = new RAAnyResponse() {
                 Success = true
             };
             await ctx.Response.SendJson(response);
         }
-        
+
         internal static async Task RAAchievementSets(HttpContextBase ctx) {
             String username = ctx.Request.GetParameter("u");
             String token = ctx.Request.GetParameter("t");
@@ -664,7 +661,7 @@ namespace LAHEE {
 
             await ctx.Response.SendJson(response);
         }
-        
+
         internal static async Task RALatestIntegration(HttpContextBase ctx) {
             RALatestIntegrationResponse response = new RALatestIntegrationResponse() {
                 Success = false,
