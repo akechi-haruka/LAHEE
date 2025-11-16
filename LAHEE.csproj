@@ -34,6 +34,9 @@
 		<None Remove="README.txt" />
 		<None Remove="README.md" />
 		<None Remove="screenshot.jpg" />
+        <None Update="appsettings.local.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
 	</ItemGroup>
 
 	<ItemGroup>

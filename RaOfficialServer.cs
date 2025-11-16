@@ -83,6 +83,13 @@ public static class RaOfficialServer {
             imageDownloads[Path.GetFileNameWithoutExtension(ad.BadgeName) + "_lock.png"] = ad.BadgeLockedURL;
         }
 
+        RACodeNotesResponse notes = Query<RACodeNotesResponse>(HttpMethod.Get, url, "dorequest.php?r=codenotes2&u=" + username + "&t=" + login.Token + "&g=" + fetchId, null);
+        if (notes == null) {
+            return;
+        }
+
+        gameData.CodeNotes = notes.CodeNotes;
+
         // Achievement data modifications:
 
         // apply overridden ID for set merges
@@ -118,6 +125,7 @@ public static class RaOfficialServer {
 
         Log.RCheevos.LogInformation("Finished copying achievement definition data for \"{n}\"", gameData.Title);
 
+        Log.RCheevos.LogInformation("Downloading image files... This may take a while...");
         foreach (KeyValuePair<string, string> image in imageDownloads) {
             CheckAndQueryImage(image.Key, image.Value);
         }
@@ -159,7 +167,7 @@ public static class RaOfficialServer {
         String targetPath = path + "\\" + basename;
         Log.RCheevos.LogTrace("Checking image file: {f} at {f2}", basename, targetPath);
         if (!File.Exists(targetPath)) {
-            Log.RCheevos.LogInformation("Downloading image file: " + url);
+            Log.RCheevos.LogDebug("Downloading image file: " + url);
             try {
                 HttpClient http = new HttpClient();
                 HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Get, url);
@@ -230,7 +238,6 @@ public static class RaOfficialServer {
 
         RAApiCommentsResponse resp = Query<RAApiCommentsResponse>(HttpMethod.Get, url, "API/API_GetComments.php?y=" + apiWeb + "&t=2&i=" + achievementId + "&sort=-submitted", null);
         if (resp != null) {
-
             bool addedComments = false;
             foreach (UserComment uc in resp.Results) {
                 if (uc.ULID.Equals(SERVER_ACCOUNT_USER_ID)) {

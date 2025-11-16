@@ -38,6 +38,7 @@ class RAGameIDResponse : RAAnyResponse {
 class RAPatchResponse : RAAnyResponse {
     public GameData PatchData;
 }
+
 class RAPatchResponseV2 : RAAnyResponse {
     public int GameId;
     public String Title;
@@ -156,4 +157,8 @@ class RALatestIntegrationResponse : RAAnyResponse {
     public String LatestVersion;
     public String LatestVersionUrl;
     public String LatestVersionUrlX64;
+}
+
+class RACodeNotesResponse : RAAnyResponse {
+    public List<CodeNote> CodeNotes;
 }

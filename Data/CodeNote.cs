@@ -8,12 +8,8 @@
 
 namespace LAHEE.Data;
 
-public class UserComment {
-    public int AchievementID;
-    public String ULID;
+public class CodeNote {
     public String User;
-    public DateTime Submitted;
-    public String CommentText;
-    public bool IsLocal;
-    public Guid LaheeUUID;
+    public String Address;
+    public String Note;
 }

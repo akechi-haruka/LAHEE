@@ -1,32 +1,39 @@
-﻿namespace LAHEE.Data {
-    public class UserData {
+﻿// ReSharper disable InconsistentNaming
+// ReSharper disable UnassignedField.Global
+// ReSharper disable FieldCanBeMadeReadOnly.Global
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable NotAccessedField.Global
+// ReSharper disable UnusedMember.Global
+// ReSharper disable ClassNeverInstantiated.Global
 
-        public int ID;
-        public bool AllowUse;
-        public String UserName;
-        public Dictionary<int, UserGameData> GameData;
-        public int CurrentGameId;
+namespace LAHEE.Data;
 
-        public override string ToString() {
-            return UserName + " (" + ID + ")";
-        }
+public class UserData {
+    public int ID;
+    public bool AllowUse;
+    public String UserName;
+    public Dictionary<int, UserGameData> GameData;
+    public int CurrentGameId;
 
-        public int GetScore(bool isHardcore) {
-            return 0; // todo
-        }
+    public override string ToString() {
+        return UserName + " (" + ID + ")";
+    }
 
-        public UserGameData RegisterGame(GameData game) {
-            UserGameData ugd = new UserGameData() {
-                GameID = game.ID,
-                Achievements = new Dictionary<int, UserAchievementData>(),
-                PresenceHistory = new List<PresenceHistory>(),
-                FirstPlay = DateTime.Now,
-                LastPlay = DateTime.Now,
-                PlayTimeLastPing = DateTime.Now,
-                FlaggedAchievements = new List<int>()
-            };
-            GameData.Add(game.ID, ugd);
-            return ugd;
-        }
+    public int GetScore(bool isHardcore) {
+        return 0; // todo
+    }
+
+    public UserGameData RegisterGame(GameData game) {
+        UserGameData ugd = new UserGameData() {
+            GameID = game.ID,
+            Achievements = new Dictionary<int, UserAchievementData>(),
+            PresenceHistory = new List<PresenceHistory>(),
+            FirstPlay = DateTime.Now,
+            LastPlay = DateTime.Now,
+            PlayTimeLastPing = DateTime.Now,
+            FlaggedAchievements = new List<int>()
+        };
+        GameData.Add(game.ID, ugd);
+        return ugd;
     }
 }
