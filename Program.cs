@@ -119,7 +119,7 @@ reloaduser                                                            Reloads us
                 ReloadUserFromConsole();
                 break;
             case "fetch":
-                RaOfficialServer.FetchData(args[1], args.Length >= 3 && args[2] != "0" ? args[2] : null, args.Length >= 4 && args[3] == "1", args.Length >= 5 ? args[4] : null);
+                RAOfficialServer.FetchData(args[1], args.Length >= 3 && args[2] != "0" ? args[2] : null, args.Length >= 4 && args[3] == "1", args.Length >= 5 ? args[4] : null);
                 break;
             case "delete":
                 DeleteDataFromConsole(args[1]);

@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 namespace LAHEE;
 
-public static class RaOfficialServer {
+public static class RAOfficialServer {
     private const string SERVER_ACCOUNT_USER_ID = "019Z8BMP7E37YNRVDSP8SV266G";
 
     public static void FetchData(string gameIdStr, string overrideIdStr, bool includeUnofficial, String copyToUsername = null) {

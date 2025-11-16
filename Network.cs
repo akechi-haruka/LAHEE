@@ -492,7 +492,7 @@ static class Routes {
         }
 
         try {
-            RaOfficialServer.FetchComments(gameid, ach.ID);
+            RAOfficialServer.FetchComments(gameid, ach.ID);
         } catch (ProtocolException e) {
             Log.RCheevos.LogError(e.Message);
             await ctx.Response.SendJson(new RAErrorResponse(e.Message));
@@ -613,7 +613,7 @@ static class Routes {
         String @override = ctx.Request.GetParameter("override");
         bool unofficial = ctx.Request.GetParameter("unofficial") == "true";
 
-        RaOfficialServer.FetchData(gameid, @override, unofficial);
+        RAOfficialServer.FetchData(gameid, @override, unofficial);
 
         RAAnyResponse response = new RAAnyResponse() {
             Success = true
