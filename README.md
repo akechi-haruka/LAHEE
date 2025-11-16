@@ -46,7 +46,9 @@ and append a new entry named
    1. Download https://github.com/akechi-haruka/hexedit2 and place the .exe next to `Dolphin.exe`.
    2. Run following:
    ```
+   hexedit2 multi -t StringASCII RA_Integration.dll RA_Integration.dll https://retroachievements.org/dorequest.php http://localhost:8000/dorequest.php
    hexedit2 multi -t StringASCII RA_Integration.dll RA_Integration.dll https://retroachievements.org http://localhost:8000
+   hexedit2 multi -t StringASCII RA_Integration-x64.dll RA_Integration-x64.dll https://retroachievements.org/dorequest.php http://localhost:8000/dorequest.php
    hexedit2 multi -t StringASCII RA_Integration-x64.dll RA_Integration-x64.dll https://retroachievements.org http://localhost:8000
    ```
 3. Launch Dolphin, navigate to Tools > Achievements, and type in any desired username and any password.
