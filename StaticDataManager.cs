@@ -7,7 +7,7 @@ using System.Text;
 namespace LAHEE;
 
 static class StaticDataManager {
-    private static readonly String[] SUPPORTED_LOCAL_ACHIEVEMENT_FILE_VERSION_PREFIX_LIST = new String[] { "1.3.0", "1.3.1" };
+    private static readonly String[] SUPPORTED_LOCAL_ACHIEVEMENT_FILE_VERSION_PREFIX_LIST = new String[] { "1.3.0", "1.3.1", "1.4.0" };
     public const int UNSUPPORTED_EMULATOR_ACHIEVEMENT_ID = 101000001;
 
     private static Dictionary<int, GameData> gameData;
@@ -137,7 +137,7 @@ static class StaticDataManager {
         RegisterOrMergeGame(gameId, data);
     }
 
-    private static int GetGameIdFromFilename(string fileName) {
+    public static int GetGameIdFromFilename(string fileName) {
         if (!Int32.TryParse(fileName.Split('-')[0], out int gameId)) {
             Log.Data.LogWarning("No valid game id found in filename: {F}", fileName);
         }

@@ -90,6 +90,7 @@ unlock <username> <gamename> <achievementname> <hardcore 1/0>         Grant an a
 lock <username> <gamename> <achievementname> <hardcore 1/0>           Remove an achievement
 lockall <username> <gamename>                                         Remove ALL achievements
 fetch <gameid> [override_gameid/0] [unofficial 1/0] [copy_unlocks_to]   Copies game and achievement data from official server
+delete <gamename>                                                     Deletes game and achievement data (not user data!)
 reload                                                                Reloads achievement data
 reloaduser                                                            Reloads user data
 ");
@@ -119,6 +120,9 @@ reloaduser                                                            Reloads us
                 break;
             case "fetch":
                 RaOfficialServer.FetchData(args[1], args.Length >= 3 && args[2] != "0" ? args[2] : null, args.Length >= 4 && args[3] == "1", args.Length >= 5 ? args[4] : null);
+                break;
+            case "delete":
+                DeleteDataFromConsole(args[1]);
                 break;
             default:
                 Log.Main.LogWarning("Unknown command: {arg}", args[0]);
@@ -214,6 +218,30 @@ reloaduser                                                            Reloads us
         UserManager.Save();
 
         LiveTicker.BroadcastPing(LiveTicker.LiveTickerEventPing.PingType.AchievementUnlock);
+    }
+
+    private static void DeleteDataFromConsole(string gamename) {
+        GameData game = StaticDataManager.FindGameDataByName(gamename, true);
+        if (game == null) {
+            Log.Main.LogError("Game not found.");
+            return;
+        }
+
+        int count = 0;
+        Log.Data.LogInformation("Deleting all files belonging to: {g}", game);
+        string dir = Configuration.Get("LAHEE", "DataDirectory");
+        foreach (String file in Directory.EnumerateFiles(dir)) {
+            string fn = Path.GetFileName(file);
+            if (StaticDataManager.GetGameIdFromFilename(fn) == game.ID) {
+                Log.Data.LogInformation("Deleting: {f}", fn);
+                File.Delete(file);
+                count++;
+            }
+        }
+
+        Log.Data.LogInformation("Deleted {n} file(s)", count);
+
+        StaticDataManager.InitializeAchievements();
     }
 
     private static string[] ParseConsoleCommand(string line) {
