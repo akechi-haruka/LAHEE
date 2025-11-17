@@ -74,6 +74,11 @@ Data is saved in `<lahee root>\User\<username>.json`, if you want to back up you
 
 Additionally, you can also install http://localhost:8000/lahee.user.js, if you are running a userscript manager to add a button to the real RetroAchievements website to import sets directly to LAHEE.
 
+## Adding achievements (via RAIntegration)
+
+From LAHEE 1.11 and above, you can use RAIntegration / "RetroAchievements Development" to add and modify achievements
+directly in LAHEE via the Upload/Promote/Demote buttons.
+
 ## Adding achievements (manually / custom)
 
 Achievement definitions must be placed in `<root>\<Data>\<gameid>-<optional_label>.<extension>`
