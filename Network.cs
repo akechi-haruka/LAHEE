@@ -1,4 +1,7 @@
-﻿using LAHEE.Data;
+﻿using System.Drawing;
+using System.Drawing.Imaging;
+using HttpMultipartParser;
+using LAHEE.Data;
 using LAHEE.Util;
 using Microsoft.Extensions.Logging;
 using WatsonWebserver.Core;
@@ -27,6 +30,7 @@ static class Network {
 
         server.Routes.PreAuthentication.Static.Add(HttpMethod.GET, BASE_DIR, Routes.RedirectWeb, Routes.DefaultErrorRoute);
         server.Routes.PreAuthentication.Static.Add(HttpMethod.POST, BASE_DIR + "dorequest.php", Routes.RARequestRoute, Routes.DefaultErrorRoute);
+        server.Routes.PreAuthentication.Static.Add(HttpMethod.POST, BASE_DIR + "doupload.php", Routes.RAUploadRoute, Routes.DefaultErrorRoute);
 
         server.Routes.PreAuthentication.Content.Add(BASE_DIR + "Badge/", true);
         server.Routes.PreAuthentication.Content.Add(BASE_DIR + "UserPic/", true);
@@ -53,6 +57,8 @@ static class Network {
         AddRARoute("achievementsets", Routes.RAAchievementSets);
         AddRARoute("latestintegration", Routes.RALatestIntegration);
         AddRARoute("codenotes2", Routes.RACodeNotes2);
+        AddRARoute("badgeiter", Routes.RABadgeIter);
+        AddRARoute("uploadachievement", Routes.RAUploadAchievement);
 
         Log.Network.LogInformation("Starting webserver on {H}:{P}", server.Settings.Hostname, server.Settings.Port);
         server.Start();
@@ -110,6 +116,51 @@ static class Routes {
         } else {
             Log.Network.LogError("Request route not found: {r}", r);
             await DefaultNotFoundRoute(ctx);
+        }
+    }
+
+    internal static async Task RAUploadRoute(HttpContextBase ctx) {
+        String part = ctx.Request.ContentType.Split('=')[1];
+        Log.Network.LogDebug("Upload request. form-data part = {f}", part);
+        using (MemoryStream ms = new MemoryStream(ctx.Request.DataAsBytes)) {
+            MultipartFormDataParser form = await MultipartFormDataParser.ParseAsync(ms);
+            string r = form.GetParameterValue("r");
+            if (r == null) {
+                r = "uploadbadgeimage";
+            }
+
+            Log.Network.LogDebug("RA Upload Request: {r}", r);
+            ctx.Response.Headers.Add(Network.RA_ROUTE_HEADER, r);
+            if (r == "uploadbadgeimage") {
+                if (OperatingSystem.IsWindowsVersionAtLeast(6, 1)) {
+                    if (form.Files.Count > 0) {
+                        string badgeDirectory = Configuration.Get("LAHEE", "BadgeDirectory");
+                        int badgeId = StaticDataManager.AssignNextCustomAchievementId();
+
+                        Image img = Image.FromStream(form.Files[0].Data);
+                        Bitmap resized = Utils.ResizeImage(img, 64, 64);
+                        resized.Save(Path.Combine(badgeDirectory, badgeId + ".png"), ImageFormat.Png);
+
+                        Bitmap locked = Utils.MakeGrayscale3(resized);
+                        locked.Save(Path.Combine(badgeDirectory, badgeId + "_lock.png"), ImageFormat.Png);
+
+                        Log.Data.LogInformation("Saved uploaded badge image to {id}.png", badgeId);
+                        await ctx.Response.SendJson(new RAUploadFileResponse() {
+                            Success = true,
+                            Response = new RAUploadFileResponse.ResponseClass() {
+                                BadgeIter = badgeId.ToString()
+                            }
+                        });
+                    } else {
+                        await ctx.Response.Send("No file provided.");
+                    }
+                } else {
+                    await ctx.Response.Send("This is only supported on Windows.");
+                }
+            } else {
+                Log.Network.LogError("Request route not found: {r}", r);
+                await DefaultNotFoundRoute(ctx);
+            }
         }
     }
 
@@ -295,7 +346,7 @@ static class Routes {
         LiveTicker.BroadcastPing(LiveTicker.LiveTickerEventPing.PingType.AchievementUnlock);
         CaptureManager.StartCapture(game, user, ach);
 
-        int totalAchievementCount = game.Achievements.Length;
+        int totalAchievementCount = game.Achievements.Count;
         int userAchieved = userGameData.Achievements.Count(a => a.Value.Status == (hardcoreFlag == 1 ? UserAchievementData.StatusFlag.HardcoreUnlock : UserAchievementData.StatusFlag.SoftcoreUnlock));
 
         RAUnlockResponse response = new RAUnlockResponse() {
@@ -690,6 +741,84 @@ static class Routes {
 
         RACodeNotesResponse response = new RACodeNotesResponse() {
             Success = true,
+            CodeNotes = game.CodeNotes
+        };
+        await ctx.Response.SendJson(response);
+    }
+
+    internal static async Task RABadgeIter(HttpContextBase ctx) {
+        RABadgeIterResponse response = new RABadgeIterResponse() {
+            Success = true,
+            FirstBadge = 1,
+            NextBadge = 1
+        }; // TODO: ?????
+        await ctx.Response.SendJson(response);
+    }
+
+    internal static async Task RAUploadAchievement(HttpContextBase ctx) {
+        String token = ctx.Request.GetParameter("t");
+        int gameId = Int32.Parse(ctx.Request.GetParameter("g"));
+
+        GameData game = StaticDataManager.FindGameDataById(gameId);
+        if (game == null) {
+            Log.User.LogWarning("Game ID {id} not registered!", gameId);
+            await ctx.Response.SendJson(new RAErrorResponse("Game ID is not registered!"));
+            return;
+        }
+
+        UserData user = UserManager.GetUserDataFromToken(token);
+        if (user == null) {
+            Log.User.LogWarning("Session token not found: {token}!", token);
+            await ctx.Response.SendJson(new RAErrorResponse("Session token not found!"));
+            return;
+        }
+
+        Log.Data.LogInformation("Updating achievement: {aid}", ctx.Request.GetParameter("a"));
+
+        int achievementId = Int32.Parse(ctx.Request.GetParameter("a") ?? "-1");
+        String title = ctx.Request.GetParameter("n");
+        String text = ctx.Request.GetParameter("d");
+        int points = Int32.Parse(ctx.Request.GetParameter("z"));
+        String type = ctx.Request.GetParameter("x");
+        String code = ctx.Request.GetParameter("m");
+        int flag = Int32.Parse(ctx.Request.GetParameter("f"));
+        String icon = ctx.Request.GetParameter("b");
+
+        if (achievementId <= 0) {
+            achievementId = StaticDataManager.AssignNextCustomAchievementId();
+        }
+
+        string badgeDirectory = Configuration.Get("LAHEE", "BadgeDirectory");
+
+        AchievementData existing = game.GetAchievementById(achievementId);
+
+        AchievementData ach = new AchievementData {
+            ID = achievementId,
+            MemAddr = code,
+            Title = title,
+            Description = text,
+            Points = points,
+            Author = existing?.Author ?? user.UserName,
+            Modified = Utils.CurrentUnixSeconds,
+            Created = existing?.Created ?? Utils.CurrentUnixSeconds,
+            BadgeName = icon,
+            Flags = flag,
+            Type = type,
+            Rarity = existing?.Rarity ?? 0,
+            RarityHardcore = existing?.RarityHardcore ?? 0,
+            BadgeURL = "/" + badgeDirectory + "/" + icon + ".png",
+            BadgeLockedURL = "/" + badgeDirectory + "/" + icon + "_lock.png"
+        };
+
+        game.Achievements.RemoveAll(a => a.ID == achievementId);
+        game.Achievements.Add(ach);
+        StaticDataManager.SaveSingleAchievement(game, ach);
+
+        Log.Network.LogTrace("Response id: {id}", achievementId);
+        RAUploadAchievementResponse response = new RAUploadAchievementResponse() {
+            Success = true,
+            AchievementID = achievementId,
+            Error = ""
         };
         await ctx.Response.SendJson(response);
     }

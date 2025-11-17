@@ -6,10 +6,13 @@
 // ReSharper disable UnusedMember.Global
 // ReSharper disable ClassNeverInstantiated.Global
 
+using Newtonsoft.Json;
+
 namespace LAHEE.Data;
 
 public class GameData {
     private const int CURRENT_DATA_VERSION = 2;
+    private const int CUSTOM_ACHIEVEMENT_OFFSET = 1_000_000;
 
     public int DataVersion;
     public int ID;
@@ -18,17 +21,20 @@ public class GameData {
     public String RichPresencePatch;
     public int ConsoleID;
     public String ImageIconURL;
-    public AchievementData[] Achievements;
+    public List<AchievementData> Achievements;
     public LeaderboardData[] Leaderboards;
     public List<String> ROMHashes = new List<string>();
     public List<CodeNote> CodeNotes = new List<CodeNote>();
+
+    [JsonIgnore] public int NewAchievementOffset;
+    [JsonIgnore] public String SourceFile;
 
     public override string ToString() {
         return Title + " (" + ID + ")";
     }
 
-    public AchievementData GetAchievementById(int achievementid) {
-        return Achievements.Where(a => a.ID == achievementid).FirstOrDefault((AchievementData)null);
+    public AchievementData GetAchievementById(int achievementId) {
+        return Achievements.Where(a => a.ID == achievementId).FirstOrDefault((AchievementData)null);
     }
 
     public LeaderboardData GetLeaderboardById(int leaderboardId) {

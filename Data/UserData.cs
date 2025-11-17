@@ -20,7 +20,7 @@ public class UserData {
     }
 
     public int GetScore(bool isHardcore) {
-        return 0; // todo
+        return (from ugd in GameData.Values from uad in ugd.Achievements.Values where uad.Status == UserAchievementData.StatusFlag.HardcoreUnlock && isHardcore || uad.Status == UserAchievementData.StatusFlag.SoftcoreUnlock && !isHardcore select StaticDataManager.FindGameDataById(ugd.GameID)?.GetAchievementById(uad.AchievementID)?.Points ?? 0).Sum();
     }
 
     public UserGameData RegisterGame(GameData game) {

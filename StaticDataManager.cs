@@ -1,49 +1,60 @@
-﻿using LAHEE.Data;
+﻿using System.Text;
+using LAHEE.Data;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic.FileIO;
 using Newtonsoft.Json;
-using System.Text;
 
 namespace LAHEE;
 
 static class StaticDataManager {
     private static readonly String[] SUPPORTED_LOCAL_ACHIEVEMENT_FILE_VERSION_PREFIX_LIST = new String[] { "1.3.0", "1.3.1", "1.4.0" };
+    private const String CUSTOM_ACHIEVEMENT_COUNTER_FILE = "lahee_custom_achievement_counter.txt";
     public const int UNSUPPORTED_EMULATOR_ACHIEVEMENT_ID = 101000001;
 
     private static Dictionary<int, GameData> gameData;
     private static Dictionary<int, List<UserComment>> commentData;
+    private static int customAchievementIdNext = 5_000_000;
 
     public static void Initialize() {
-        InitializeAchievements();
+        InitializeAchievements(true);
 
-        Log.Data.LogInformation("Finished loading data: {games} Game(s) with {achiev} Achievements total", gameData.Count, gameData.Sum((r) => r.Value.Achievements.Length));
+        Log.Data.LogInformation("Finished loading data: {games} Game(s) with {achiev} Achievements total", gameData.Count, gameData.Sum((r) => r.Value.Achievements.Count));
     }
 
-    public static void InitializeAchievements() {
+    public static String GetDirectory() {
+        return Configuration.Get("LAHEE", "DataDirectory");
+    }
+
+    public static void InitializeAchievements(bool initial = false) {
         gameData = new Dictionary<int, GameData>();
         commentData = new Dictionary<int, List<UserComment>>();
 
-        string dir = Configuration.Get("LAHEE", "DataDirectory");
+        string dir = GetDirectory();
         if (!Directory.Exists(dir)) {
             Directory.CreateDirectory(dir);
             Log.Data.LogTrace("Created directory");
         }
 
-        Log.Data.LogInformation("Starting to read achievement data from {Dir}...", dir);
+        Log.Data.LogInformation(initial ? "Starting to read achievement data from {Dir}..." : "Reloading achievement data from {Dir}...", dir);
 
         foreach (string file in Directory.GetFiles(dir).Order()) {
             Log.Data.LogDebug("Detected file: {F}", file);
             try {
                 String fname = Path.GetFileNameWithoutExtension(file);
-                if (file.EndsWith("comments.json")) {
+                if (file.EndsWith(CUSTOM_ACHIEVEMENT_COUNTER_FILE)) {
+                    ParseAchievementCounterFile(File.ReadAllText(file));
+                } else if (file.EndsWith("comments.json")) {
                     int gameId = GetGameIdFromFilename(fname);
                     ParseCommentDataJson(gameId, File.ReadAllText(file));
+                } else if (file.EndsWith(".ach.json")) {
+                    int gameId = GetGameIdFromFilename(fname);
+                    ParseSingleAchievementJson(gameId, File.ReadAllText(file), file);
                 } else if (file.EndsWith(".json")) {
                     int gameId = GetGameIdFromFilename(fname);
-                    ParseAchievementJson(gameId, File.ReadAllText(file));
+                    ParseAchievementJson(gameId, File.ReadAllText(file), file);
                 } else if (file.EndsWith(".txt")) {
                     int gameId = GetGameIdFromFilename(fname);
-                    ParseAchievementUserTxt(gameId, File.ReadAllLines(file));
+                    ParseAchievementUserTxt(gameId, File.ReadAllLines(file), file);
                 } else if (file.EndsWith(".zzz") || file.EndsWith(".zhash")) {
                     int gameId = GetGameIdFromFilename(fname);
                     ParseAchievementHashFile(gameId, File.ReadAllLines(file));
@@ -69,7 +80,7 @@ static class StaticDataManager {
         Log.Data.LogInformation("Added {n} ROM hashes to \"{game}\", total {n1}", strings.Length, game.Title, game.ROMHashes.Count);
     }
 
-    private static void ParseAchievementUserTxt(int gameId, string[] content) {
+    private static void ParseAchievementUserTxt(int gameId, string[] content, string source) {
         Log.Data.LogDebug("Starting to process user data file for game ID {ID}", gameId);
 
         if (!SUPPORTED_LOCAL_ACHIEVEMENT_FILE_VERSION_PREFIX_LIST.Any(v => content[0].StartsWith(v))) {
@@ -124,17 +135,32 @@ static class StaticDataManager {
             achievements.Add(a);
         }
 
-        data.Achievements = achievements.ToArray();
+        data.Achievements = achievements;
+        data.SourceFile = source;
 
         RegisterOrMergeGame(gameId, data);
     }
 
-    private static void ParseAchievementJson(int gameId, string content) {
+    private static void ParseAchievementJson(int gameId, string content, string source) {
         Log.Data.LogDebug("Starting to process official data file for game ID {ID}", gameId);
         GameData data = JsonConvert.DeserializeObject<GameData>(content);
+        data.SourceFile = source;
         data.Upgrade();
 
         RegisterOrMergeGame(gameId, data);
+    }
+
+    private static void ParseSingleAchievementJson(int gameId, string content, string source) {
+        Log.Data.LogDebug("Starting to process single achievement file for game ID {ID}", gameId);
+
+        if (!gameData.TryGetValue(gameId, out GameData game)) {
+            Log.Data.LogError("Can't add single achievement for game ID {ID}, game does not exist", gameId);
+            return;
+        }
+
+        AchievementData data = JsonConvert.DeserializeObject<AchievementData>(content);
+
+        game.Achievements.Add(data);
     }
 
     public static int GetGameIdFromFilename(string fileName) {
@@ -165,7 +191,7 @@ static class StaticDataManager {
 
     private static void RegisterGame(GameData game) {
         gameData.Add(game.ID, game);
-        Log.Data.LogInformation("Registered \"{Game}\" with {n} achievement(s)", game.Title, game.Achievements.Length);
+        Log.Data.LogInformation("Registered \"{Game}\" with {n} achievement(s)", game.Title, game.Achievements.Count);
     }
 
     private static void MergeGame(GameData game) {
@@ -195,17 +221,13 @@ static class StaticDataManager {
             existing.ConsoleID = game.ConsoleID;
         }
 
-        existing.Achievements = existing.Achievements.Concat(game.Achievements).ToArray();
+        existing.Achievements.AddRange(game.Achievements);
 
-        Log.Data.LogInformation("Merged \"{Game}\" into \"{Game2}\" with {n} achievement(s), total {n2}", game.Title, existing.Title, game.Achievements.Length, existing.Achievements.Length);
+        Log.Data.LogInformation("Merged \"{Game}\" into \"{Game2}\" with {n} achievement(s), total {n2}", game.Title, existing.Title, game.Achievements.Count, existing.Achievements.Count);
     }
 
     public static GameData FindGameDataById(int id) {
-        if (gameData.TryGetValue(id, out GameData value)) {
-            return value;
-        } else {
-            return null;
-        }
+        return gameData.GetValueOrDefault(id);
     }
 
     public static GameData FindGameDataByHash(String str) {
@@ -320,5 +342,25 @@ static class StaticDataManager {
                 SaveCommentFile(game);
             }
         }
+    }
+
+    private static void ParseAchievementCounterFile(String content) {
+        customAchievementIdNext = Int32.Parse(content);
+        Log.Data.LogDebug("Achievement counter initialized to: {c}", customAchievementIdNext);
+    }
+
+    public static int AssignNextCustomAchievementId() {
+        int value = customAchievementIdNext++;
+        String fn = Path.Combine(GetDirectory(), CUSTOM_ACHIEVEMENT_COUNTER_FILE);
+        Log.Data.LogDebug("Writing next custom achievement ID ({id}) to {f}", customAchievementIdNext, fn);
+        File.WriteAllText(fn, customAchievementIdNext.ToString());
+        return value;
+    }
+
+    public static void SaveSingleAchievement(GameData game, AchievementData ach) {
+        String fn = Path.Combine(Configuration.Get("LAHEE", "DataDirectory"), game.ID + "-z" + ach.ID + "-" + new string(game.Title.Where(ch => !Program.INVALID_FILE_NAME_CHARS.Contains(ch)).ToArray()) + "-" + new string(ach.Title.Where(ch => !Program.INVALID_FILE_NAME_CHARS.Contains(ch)).ToArray()) + ".ach.json");
+
+        File.WriteAllText(fn, JsonConvert.SerializeObject(ach));
+        Log.Data.LogInformation("Achievement data was saved for {a}", ach);
     }
 }

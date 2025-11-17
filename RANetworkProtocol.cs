@@ -54,7 +54,7 @@ class RAPatchResponseV2 : RAAnyResponse {
         public int AchievementSetId;
         public int GameId;
         public String ImageIconUrl;
-        public AchievementData[] Achievements;
+        public List<AchievementData> Achievements;
         public LeaderboardData[] Leaderboards;
     }
 }
@@ -161,4 +161,22 @@ class RALatestIntegrationResponse : RAAnyResponse {
 
 class RACodeNotesResponse : RAAnyResponse {
     public List<CodeNote> CodeNotes;
+}
+
+class RABadgeIterResponse : RAAnyResponse {
+    public int FirstBadge;
+    public int NextBadge;
+}
+
+class RAUploadAchievementResponse : RAAnyResponse {
+    public int AchievementID;
+    public String Error;
+}
+
+class RAUploadFileResponse : RAAnyResponse {
+    public ResponseClass Response;
+
+    public class ResponseClass {
+        public String BadgeIter;
+    }
 }

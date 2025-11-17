@@ -102,7 +102,7 @@ public static class RAOfficialServer {
         }
 
         // remove "unsupported emulator"
-        gameData.Achievements = gameData.Achievements.Where(a => a.ID != StaticDataManager.UNSUPPORTED_EMULATOR_ACHIEVEMENT_ID).ToArray();
+        gameData.Achievements = gameData.Achievements.Where(a => a.ID != StaticDataManager.UNSUPPORTED_EMULATOR_ACHIEVEMENT_ID).ToList();
 
         Log.RCheevos.LogInformation("Finished getting data from \"{u}\"", url);
 
