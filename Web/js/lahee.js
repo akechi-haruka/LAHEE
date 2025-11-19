@@ -329,7 +329,7 @@ function lahee_select_ach(gid, aid) {
     }
     img.classList.add("ach_type_" + a.Type);
     img.classList.add("ach_status_" + ua.Status);
-    if (ugd && ugd.FlaggedAchievements.includes(aid)) {
+    if (ugd && ugd.FlaggedAchievements?.includes(aid)) {
         img.classList.add("ach_flag_important");
     }
 
@@ -660,23 +660,26 @@ function lahee_create_stats(user) {
         var softcore_achievements = uat.filter(a => a.Status == 1).length;
         var completion_ids = game?.Achievements.filter(a => a.Type == "win_condition").map(a => a.ID) ?? [];
 
-        var playtime = TimeSpan.parse(ug.PlayTimeApprox);
+        var playtime_ms = 0;
+        if (ug.PlayTimeApprox) {
+            playtime_ms = TimeSpan.parse(ug.PlayTimeApprox).valueOf();
+        }
 
-        if (playtime.valueOf() > longest_pt.v) {
+        if (playtime_ms > longest_pt.v) {
             longest_pt.id = ug.GameID;
-            longest_pt.v = playtime.valueOf();
+            longest_pt.v = playtime_ms;
         }
-        if (playtime.valueOf() < shortest_pf.v && playtime.valueOf() > 0) {
+        if (playtime_ms < shortest_pf.v && playtime_ms > 0) {
             shortest_pf.id = ug.GameID;
-            shortest_pf.v = playtime.valueOf();
+            shortest_pf.v = playtime_ms;
         }
-        if ((hardcore_achievements + softcore_achievements) >= total_achievements && playtime.valueOf() < fastest_100.v && playtime.valueOf() > 0) {
+        if ((hardcore_achievements + softcore_achievements) >= total_achievements && playtime_ms < fastest_100.v && playtime_ms > 0) {
             fastest_100.id = ug.GameID;
-            fastest_100.v = playtime.valueOf();
+            fastest_100.v = playtime_ms;
         }
-        if ((hardcore_achievements + softcore_achievements) >= total_achievements && playtime.valueOf() > slowest_100.v && playtime.valueOf() > 0) {
+        if ((hardcore_achievements + softcore_achievements) >= total_achievements && playtime_ms > slowest_100.v && playtime_ms > 0) {
             slowest_100.id = ug.GameID;
-            slowest_100.v = playtime.valueOf();
+            slowest_100.v = playtime_ms;
         }
 
         var beat = null;
@@ -691,7 +694,7 @@ function lahee_create_stats(user) {
         }
 
         if (beat != null) {
-            if (beat.valueOf() < fastest_beat.v && beat.valueOf() > 0 && playtime.valueOf() > 0) {
+            if (beat.valueOf() < fastest_beat.v && beat.valueOf() > 0 && playtime_ms > 0) {
                 fastest_beat.id = ug.GameID;
                 fastest_beat.v = beat.valueOf();
             }
@@ -701,16 +704,16 @@ function lahee_create_stats(user) {
             }
         }
 
-        var this_first_play = new Date(ug.FirstPlay);
-        if (this_first_play < first_play) {
-            first_play = this_first_play;
+        if (ug.FirstPlay) {
+            var this_first_play = new Date(ug.FirstPlay);
+            if (this_first_play < first_play) {
+                first_play = this_first_play;
+            }
         }
 
-        total_time += playtime.valueOf();
+        total_time += playtime_ms;
 
-        if (ug) {
-            game_counts[1]++;
-        }
+        game_counts[1]++;
         if (uat.filter(a => completion_ids.includes(a.AchievementID) && a.Status > 0).length > 0) {
             game_counts[2]++;
         }
