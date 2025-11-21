@@ -6,6 +6,9 @@
 // ReSharper disable UnusedMember.Global
 // ReSharper disable ClassNeverInstantiated.Global
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
 namespace LAHEE.Data;
 
 public enum AchievementType {
@@ -32,7 +35,10 @@ public class AchievementData {
     public long Created;
     public String BadgeName;
     public AchievementFlags Flags;
+
+    [JsonConverter(typeof(StringEnumConverter))]
     public AchievementType? Type;
+
     public float Rarity;
     public float RarityHardcore;
     public String BadgeURL;
