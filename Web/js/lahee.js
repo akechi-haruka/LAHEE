@@ -641,7 +641,7 @@ function lahee_create_stats(user) {
     document.getElementById("stats_available").style.display = "block";
 
     var total_time = 0;
-    var game_counts = [0, 0, 0, 0];
+    var game_counts = [0, 0, 0, 0, 0];
     var ach_counts = [0, 0, 0];
     var score_counts = [0, 0, 0];
     var table_str = "";
@@ -728,12 +728,19 @@ function lahee_create_stats(user) {
 
         total_time += playtime_ms;
 
+        var status = "";
         game_counts[1]++;
         if (uat.filter(a => completion_ids.includes(a.AchievementID) && a.Status > 0).length > 0) {
+            status = "Beaten";
             game_counts[2]++;
         }
-        if (hardcore_achievements == total_achievements) {
+        if (hardcore_achievements + softcore_achievements == total_achievements) {
+            status = "Completed";
             game_counts[3]++;
+        }
+        if (hardcore_achievements == total_achievements) {
+            status = "Mastered";
+            game_counts[4]++;
         }
 
         ach_counts[0] += total_achievements;
@@ -815,6 +822,7 @@ function lahee_create_stats(user) {
                             <div class="progress-bar bg-softcore" role="progressbar" style="width: ${game_pt_softcore / game_pt_total * 100}%"></div>
                         </div>
                     </td>
+                    <td>${status}</td>
                     <td>${new Date(ug.FirstPlay).toLocaleString()}</td>
                     <td>${TimeSpan.parse(ug.PlayTimeApprox).toStringWithoutMs()}</td>
                 </tr>
