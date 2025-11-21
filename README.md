@@ -22,20 +22,26 @@ This allows local/offline/modded progression of RetroAchievements.
 
 ### Features
 
-* Obtain achievements without an internet connection.
-* Add or Modify achievements (ex. remove single player checks from Final Fantasy Crystal Chronicles achievements)
-* Edit presence text (ex. Add a point counter display to FFCC)
+* Obtain achievements fully offline without an internet connection.
+* Add or modify achievements (ex. remove single player checks from Final Fantasy Crystal Chronicles achievements), presence text (ex. Add a point counter display to FFCC)
 * Merge sub-sets to one set (to play multiple challenges at once)
-* Add custom ROM hashes (to use graphic patches, undubs, etc.)
+* Add custom ROM hashes (to use graphic patches, undubs, mods, etc.)
 * Fetch achievement data and previous online progression from your real RetroAchievements account.
 * Playtime tracking (approximate) and stats.
-* Does not require reading dozens of pages of rules or talking to any person.
+* Switch between multiple accounts and/or multiple progressions in the same game.
+* Freely share your modified achievement data .json files to anyone.
 
-**THIS DOES NOT FORWARD ACHIEVEMENTS TO THE REAL SITE. EVERYTHING IS LOCAL.**
+### What LAHEE doesn't do
 
-Latest build download: https://nightly.link/akechi-haruka/LAHEE/workflows/dotnet/master
+* LAHEE does NOT send achievements you've made on LAHEE to the real RetroAchievement site.
+* LAHEE does NOT have rules you need to be aware of.
+* LAHEE does NOT require you to talk to anyone to create or edit achievements.
+* LAHEE does NOT broadcast your activity to the world.
 
 ## Usage
+
+Latest stable release: https://github.com/akechi-haruka/LAHEE/releases
+Latest unstable development build: https://nightly.link/akechi-haruka/LAHEE/workflows/dotnet/master
 
 ### Dolphin
 
