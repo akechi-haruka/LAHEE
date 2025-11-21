@@ -12,8 +12,8 @@ public class UserData {
     public int ID;
     public bool AllowUse;
     public String UserName;
-    public Dictionary<int, UserGameData> GameData;
-    public int CurrentGameId;
+    public Dictionary<uint, UserGameData> GameData;
+    public uint CurrentGameId;
 
     public override string ToString() {
         return UserName + " (" + ID + ")";

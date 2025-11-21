@@ -18,12 +18,17 @@ function lahee_init() {
 
     LAHEE_URL = "http://" + window.location.host + "/dorequest.php";
     lahee_request("r=laheeinfo", lahee_postinit, function (e) {
-        document.getElementById("page_loading").innerHTML = `
-            <p>An error has occurred while trying to load data.</p>
-            <p><small>${e}</small></p>
-            <p><input type="button" value="Retry" class="btn btn-primary" onclick="window.location.reload();" /></p>
-        `;
+        lahee_init_error(e);
     });
+}
+
+function lahee_init_error(e) {
+    console.error(e);
+    document.getElementById("page_loading").innerHTML = `
+        <p>An error has occurred while trying to load data.</p>
+        <p><small>${e}</small></p>
+        <p><input type="button" value="Retry" class="btn btn-primary" onclick="window.location.reload();" /></p>
+    `;
 }
 
 async function lahee_request(request, success, failure) {
@@ -67,47 +72,55 @@ function lahee_set_page(page) {
 
 function lahee_postinit(res) {
 
-    if (res.users.length == 0) {
-        document.getElementById("page_loading").innerHTML = "No user data is registered on LAHEE. Connect your emulator and create user data before attempting to use the web UI.";
-        return;
+    try {
+        if (res.users.length == 0) {
+            document.getElementById("page_loading").innerHTML = "No user data is registered on LAHEE. Connect your emulator and create user data before attempting to use the web UI.";
+            return;
+        }
+        if (res.games.length == 0) {
+            document.getElementById("page_loading").innerHTML = "No game data is registered on LAHEE. Register games and achievements first before attempting to use the web UI. See readme for more information.";
+            return;
+        }
+
+        lahee_data = res;
+
+        lahee_data.users.sort(function (a, b) {
+            return a.UserName.localeCompare(b.UserName);
+        });
+        lahee_data.games.sort(function (a, b) {
+            return a.Title.localeCompare(b.Title);
+        });
+
+        document.getElementById("lahee_version").innerText = res.version;
+
+        var users = "";
+        for (var user of res.users) {
+            users += "<option value='" + user.ID + "'>" + user.UserName + "</option>";
+        }
+        document.getElementById("user_select").innerHTML = users;
+
+        var games = "";
+        for (var game of res.games) {
+            games += "<option value='" + game.ID + "'>" + game.Title + "</option>";
+        }
+
+        lahee_connect_liveticker();
+        setTimeout(function () {
+            try {
+                document.getElementById("game_select").innerHTML = games;
+                document.getElementById("main_nav").style.visibility = "visible";
+                document.getElementById("main_data_selector").style.visibility = "visible";
+                lahee_autoselect_based_on_most_recent_achievement();
+                lahee_change_game();
+                lahee_change_lb();
+                lahee_set_page("page_achievements");
+            } catch (e) {
+                lahee_init_error(e);
+            }
+        }, 1000);
+    } catch (e) {
+        lahee_init_error(e);
     }
-    if (res.games.length == 0) {
-        document.getElementById("page_loading").innerHTML = "No game data is registered on LAHEE. Register games and achievements first before attempting to use the web UI. See readme for more information.";
-        return;
-    }
-
-    lahee_data = res;
-
-    lahee_data.users.sort(function (a, b) {
-        return a.UserName.localeCompare(b.UserName);
-    });
-    lahee_data.games.sort(function (a, b) {
-        return a.Title.localeCompare(b.Title);
-    });
-
-    document.getElementById("lahee_version").innerText = res.version;
-
-    var users = "";
-    for (var user of res.users) {
-        users += "<option value='" + user.ID + "'>" + user.UserName + "</option>";
-    }
-    document.getElementById("user_select").innerHTML = users;
-
-    var games = "";
-    for (var game of res.games) {
-        games += "<option value='" + game.ID + "'>" + game.Title + "</option>";
-    }
-
-    lahee_connect_liveticker();
-    setTimeout(function(){
-        document.getElementById("game_select").innerHTML = games;
-        document.getElementById("main_nav").style.visibility = "visible";
-        document.getElementById("main_data_selector").style.visibility = "visible";
-        lahee_autoselect_based_on_most_recent_achievement();
-        lahee_change_game();
-        lahee_change_lb();
-        lahee_set_page("page_achievements");
-    }, 1000);
 }
 
 function lahee_update_game_status(ping_type) {
@@ -250,6 +263,8 @@ function lahee_build_achievements(user, game) {
                 return -1;
             }
             return 1;
+        } else if (sort == 5) {
+            return b.Points - a.Points;
         }
     });
 

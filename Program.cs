@@ -1,8 +1,8 @@
-﻿using LAHEE.Data;
+﻿using System.Reflection;
+using System.Text;
+using LAHEE.Data;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic.FileIO;
-using System.Reflection;
-using System.Text;
 
 namespace LAHEE;
 
@@ -12,7 +12,7 @@ class Program {
     public static readonly String NAME;
 
     static Program() {
-        string gitHash = Assembly.Load(typeof(Program).Assembly.FullName)
+        string gitHash = Assembly.Load(typeof(Program).Assembly.FullName!)
             .GetCustomAttributes<AssemblyMetadataAttribute>()
             .FirstOrDefault(attr => attr.Key == "GitHash")?.Value;
 
@@ -20,12 +20,12 @@ class Program {
         NAME = assemblyInfo.Name + "/" + assemblyInfo.Version + "-" + gitHash + " - Akechi Haruka";
     }
 
-    private static void Main(string[] args) {
+    private static void Main() {
         Console.Title = NAME;
 
-        String path = System.Environment.ProcessPath;
+        String path = Environment.ProcessPath;
         if (path != null) {
-            Environment.CurrentDirectory = Path.GetDirectoryName(path);
+            Environment.CurrentDirectory = Path.GetDirectoryName(path)!;
         }
 
         try {
@@ -39,7 +39,7 @@ class Program {
             return;
         }
 
-        string badgeDirectory = Configuration.Get("LAHEE", "BadgeDirectory");
+        string badgeDirectory = Configuration.Get("LAHEE", "BadgeDirectory") ?? "Badge";
         if (!File.Exists(badgeDirectory)) {
             Directory.CreateDirectory(badgeDirectory);
         }
@@ -91,6 +91,7 @@ lock <username> <gamename> <achievementname> <hardcore 1/0>           Remove an 
 lockall <username> <gamename>                                         Remove ALL achievements
 fetch <gameid> [override_gameid/0] [unofficial 1/0] [copy_unlocks_to]   Copies game and achievement data from official server
 delete <gamename>                                                     Deletes game and achievement data (not user data!)
+addhash <gamename> <hash>                                             Adds a ROM hash to a game
 reload                                                                Reloads achievement data
 reloaduser                                                            Reloads user data
 ");
@@ -123,6 +124,9 @@ reloaduser                                                            Reloads us
                 break;
             case "delete":
                 DeleteDataFromConsole(args[1]);
+                break;
+            case "addhash":
+                AddHashFromConsole(args[1], args[2]);
                 break;
             default:
                 Log.Main.LogWarning("Unknown command: {arg}", args[0]);
@@ -166,7 +170,7 @@ reloaduser                                                            Reloads us
             return;
         }
 
-        foreach (AchievementData ach in game.Achievements) {
+        foreach (AchievementData ach in game.GetAllAchievements()) {
             Log.Main.LogInformation("{a}", ach);
         }
     }
@@ -220,8 +224,8 @@ reloaduser                                                            Reloads us
         LiveTicker.BroadcastPing(LiveTicker.LiveTickerEventPing.PingType.AchievementUnlock);
     }
 
-    private static void DeleteDataFromConsole(string gamename) {
-        GameData game = StaticDataManager.FindGameDataByName(gamename, true);
+    private static void DeleteDataFromConsole(string gameName) {
+        GameData game = StaticDataManager.FindGameDataByName(gameName, true);
         if (game == null) {
             Log.Main.LogError("Game not found.");
             return;
@@ -231,9 +235,8 @@ reloaduser                                                            Reloads us
         Log.Data.LogInformation("Deleting all files belonging to: {g}", game);
         string dir = Configuration.Get("LAHEE", "DataDirectory");
         foreach (String file in Directory.EnumerateFiles(dir)) {
-            string fn = Path.GetFileName(file);
-            if (StaticDataManager.GetGameIdFromFilename(fn) == game.ID) {
-                Log.Data.LogInformation("Deleting: {f}", fn);
+            if (StaticDataManager.GetGameIdFromFilePath(file) == game.ID) {
+                Log.Data.LogInformation("Deleting: {f}", file);
                 File.Delete(file);
                 count++;
             }
@@ -242,6 +245,29 @@ reloaduser                                                            Reloads us
         Log.Data.LogInformation("Deleted {n} file(s)", count);
 
         StaticDataManager.InitializeAchievements();
+    }
+
+    private static void AddHashFromConsole(string gameName, string hash) {
+        GameData game = StaticDataManager.FindGameDataByName(gameName, true);
+        if (game == null) {
+            Log.Main.LogError("Game not found.");
+            return;
+        }
+
+        string dir = Configuration.Get("LAHEE", "DataDirectory");
+        String fn = Path.Combine(dir, game.ID + "-CustomHashes.hash.txt");
+        string content = "";
+
+        if (File.Exists(fn)) {
+            content = File.ReadAllText(fn);
+        }
+
+        content += "\r\n" + hash;
+
+        File.WriteAllText(fn, content);
+        game.ROMHashes.Add(hash);
+
+        Log.Data.LogInformation("Added {h} to {g}.", hash, game);
     }
 
     private static string[] ParseConsoleCommand(string line) {

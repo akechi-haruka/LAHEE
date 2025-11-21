@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using LAHEE.Data;
+using LAHEE.Data.File;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic.FileIO;
 using Newtonsoft.Json;
@@ -11,14 +12,23 @@ static class StaticDataManager {
     private const String CUSTOM_ACHIEVEMENT_COUNTER_FILE = "lahee_custom_achievement_counter.txt";
     public const int UNSUPPORTED_EMULATOR_ACHIEVEMENT_ID = 101000001;
 
-    private static Dictionary<int, GameData> gameData;
-    private static Dictionary<int, List<UserComment>> commentData;
+    private enum LoadPriority {
+        GameDataV1,
+        GameDataV1Local,
+        GameDataV2,
+        AchievementData,
+        Comments,
+        Hash
+    }
+
+    private static Dictionary<uint, GameData> gameData;
+    private static Dictionary<uint, List<UserComment>> commentData;
     private static int customAchievementIdNext = 5_000_000;
 
     public static void Initialize() {
         InitializeAchievements(true);
 
-        Log.Data.LogInformation("Finished loading data: {games} Game(s) with {achiev} Achievements total", gameData.Count, gameData.Sum((r) => r.Value.Achievements.Count));
+        Log.Data.LogInformation("Finished loading data: {games} Game(s) with {achiev} Achievements total", gameData.Count, gameData.Sum(r => r.Value.GetAchievementCount()));
     }
 
     public static String GetDirectory() {
@@ -26,10 +36,10 @@ static class StaticDataManager {
     }
 
     public static void InitializeAchievements(bool initial = false) {
-        gameData = new Dictionary<int, GameData>();
-        commentData = new Dictionary<int, List<UserComment>>();
+        gameData = new Dictionary<uint, GameData>();
+        commentData = new Dictionary<uint, List<UserComment>>();
 
-        string dir = GetDirectory();
+        string dir = GetDirectory() ?? "Data";
         if (!Directory.Exists(dir)) {
             Directory.CreateDirectory(dir);
             Log.Data.LogTrace("Created directory");
@@ -37,35 +47,47 @@ static class StaticDataManager {
 
         Log.Data.LogInformation(initial ? "Starting to read achievement data from {Dir}..." : "Reloading achievement data from {Dir}...", dir);
 
+        Dictionary<LoadPriority, List<string>> loadQueue = Enum.GetValues<LoadPriority>().ToDictionary(p => p, _ => new List<string>());
+
         foreach (string file in Directory.GetFiles(dir).Order()) {
             Log.Data.LogDebug("Detected file: {F}", file);
-            try {
-                String fname = Path.GetFileNameWithoutExtension(file);
-                if (file.EndsWith(CUSTOM_ACHIEVEMENT_COUNTER_FILE)) {
-                    ParseAchievementCounterFile(File.ReadAllText(file));
-                } else if (file.EndsWith("comments.json")) {
-                    int gameId = GetGameIdFromFilename(fname);
-                    ParseCommentDataJson(gameId, File.ReadAllText(file));
-                } else if (file.EndsWith(".ach.json")) {
-                    int gameId = GetGameIdFromFilename(fname);
-                    ParseSingleAchievementJson(gameId, File.ReadAllText(file), file);
-                } else if (file.EndsWith(".json")) {
-                    int gameId = GetGameIdFromFilename(fname);
-                    ParseAchievementJson(gameId, File.ReadAllText(file), file);
-                } else if (file.EndsWith(".txt")) {
-                    int gameId = GetGameIdFromFilename(fname);
-                    ParseAchievementUserTxt(gameId, File.ReadAllLines(file), file);
-                } else if (file.EndsWith(".zzz") || file.EndsWith(".zhash")) {
-                    int gameId = GetGameIdFromFilename(fname);
-                    ParseAchievementHashFile(gameId, File.ReadAllLines(file));
-                }
-            } catch (Exception e) {
-                Log.Data.LogError("Error while reading data file {F}: {E}", file, e);
+            if (file.EndsWith(CUSTOM_ACHIEVEMENT_COUNTER_FILE)) {
+                ParseAchievementCounterFile(File.ReadAllText(file));
+            } else if (file.EndsWith("comments.json")) {
+                loadQueue[LoadPriority.Comments].Add(file);
+            } else if (file.EndsWith(".ach.json")) {
+                loadQueue[LoadPriority.AchievementData].Add(file);
+            } else if (file.EndsWith(".set.json")) {
+                loadQueue[LoadPriority.GameDataV2].Add(file);
+            } else if (file.EndsWith(".json")) {
+                loadQueue[LoadPriority.GameDataV1].Add(file);
+            } else if (file.EndsWith(".zzz") || file.EndsWith(".zhash") || file.EndsWith(".hash.txt")) {
+                loadQueue[LoadPriority.Hash].Add(file);
+            } else if (file.EndsWith(".txt")) {
+                loadQueue[LoadPriority.GameDataV1Local].Add(file);
             }
+        }
+
+        loadQueue[LoadPriority.GameDataV1].ForEach(file => Process(file, ParseAchievementJson));
+        loadQueue[LoadPriority.GameDataV1Local].ForEach(file => Process(file, ParseAchievementUserTxt));
+        loadQueue[LoadPriority.GameDataV2].ForEach(file => Process(file, ParseSetAchievementJson));
+        loadQueue[LoadPriority.AchievementData].ForEach(file => Process(file, ParseSingleAchievementJson));
+        loadQueue[LoadPriority.Comments].ForEach(file => Process(file, ParseCommentDataJson));
+        loadQueue[LoadPriority.Hash].ForEach(file => Process(file, ParseAchievementHashFile));
+    }
+
+    private static void Process(string file, Action<uint, string, string> parser) {
+        try {
+            uint gameId = GetGameIdFromFilePath(file);
+            parser(gameId, File.ReadAllText(file), file);
+        } catch (Exception e) {
+            Log.Data.LogError("Error while reading data file {F}: {E}", file, e);
         }
     }
 
-    private static void ParseAchievementHashFile(int gameId, string[] strings) {
+    private static void ParseAchievementHashFile(uint gameId, string filecontent, string file) {
+        string[] strings = filecontent.Split(new String[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+
         if (!gameData.ContainsKey(gameId)) {
             Log.Data.LogError("Can't add hashes for game ID {ID}, game does not exist", gameId);
             return;
@@ -80,16 +102,18 @@ static class StaticDataManager {
         Log.Data.LogInformation("Added {n} ROM hashes to \"{game}\", total {n1}", strings.Length, game.Title, game.ROMHashes.Count);
     }
 
-    private static void ParseAchievementUserTxt(int gameId, string[] content, string source) {
+    private static void ParseAchievementUserTxt(uint gameId, string filecontent, string source) {
         Log.Data.LogDebug("Starting to process user data file for game ID {ID}", gameId);
+        string[] content = filecontent.Split(new String[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
 
         if (!SUPPORTED_LOCAL_ACHIEVEMENT_FILE_VERSION_PREFIX_LIST.Any(v => content[0].StartsWith(v))) {
             throw new Exception("Invalid local achievement file version: " + content[0]);
         }
 
-        GameData data = new GameData() {
+        GameDataJsonV1 data = new GameDataJsonV1() {
             ID = gameId,
-            Title = content[1]
+            Title = content[1],
+            SourceFilePath = source
         };
 
         List<AchievementData> achievements = new List<AchievementData>();
@@ -104,12 +128,16 @@ static class StaticDataManager {
 
             string[] parts;
 
-            using (MemoryStream ms = new MemoryStream(Encoding.ASCII.GetBytes(line))) {
+            using (MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(line))) {
                 using (TextFieldParser tfp = new TextFieldParser(ms)) {
                     tfp.Delimiters = new string[] { ":" };
                     tfp.HasFieldsEnclosedInQuotes = true;
                     parts = tfp.ReadFields();
                 }
+            }
+
+            if (parts == null) {
+                throw new IOException("line read error: " + line);
             }
 
             AchievementData a = new AchievementData() {
@@ -129,28 +157,32 @@ static class StaticDataManager {
                 BadgeName = parts[13],
                 BadgeURL = "/Badge/" + parts[13] + ".png",
                 BadgeLockedURL = "/Badge/" + parts[13] + "_lock.png",
-                Flags = 3, // TODO
+                Flags = AchievementFlags.Always | AchievementFlags.Official,
             };
 
             achievements.Add(a);
         }
 
         data.Achievements = achievements;
-        data.SourceFile = source;
 
         RegisterOrMergeGame(gameId, data);
     }
 
-    private static void ParseAchievementJson(int gameId, string content, string source) {
+    private static void ParseSetAchievementJson(uint gameId, string content, string source) {
         Log.Data.LogDebug("Starting to process official data file for game ID {ID}", gameId);
-        GameData data = JsonConvert.DeserializeObject<GameData>(content);
-        data.SourceFile = source;
-        data.Upgrade();
+        GameData game = JsonConvert.DeserializeObject<GameData>(content);
 
-        RegisterOrMergeGame(gameId, data);
+        RegisterOrMergeGame(gameId, game);
     }
 
-    private static void ParseSingleAchievementJson(int gameId, string content, string source) {
+    private static void ParseAchievementJson(uint gameId, string content, string source) {
+        Log.Data.LogDebug("Starting to process official data file (v1) for game ID {ID}", gameId);
+        GameDataJsonV1 legacy = JsonConvert.DeserializeObject<GameDataJsonV1>(content);
+
+        RegisterOrMergeGame(gameId, legacy);
+    }
+
+    private static void ParseSingleAchievementJson(uint gameId, string content, string source) {
         Log.Data.LogDebug("Starting to process single achievement file for game ID {ID}", gameId);
 
         if (!gameData.TryGetValue(gameId, out GameData game)) {
@@ -159,19 +191,47 @@ static class StaticDataManager {
         }
 
         AchievementData data = JsonConvert.DeserializeObject<AchievementData>(content);
+        SetData set = new SetData() {
+            Achievements = new List<AchievementData>() {
+                data
+            },
+            Leaderboards = new List<LeaderboardData>(),
+            Title = "Single: " + data.Title,
+            AchievementSetId = game.AchievementSets.Count + 1,
+            FileSource = source,
+            GameId = RAIntegrationAssertionWorkaround(game.ID),
+            ImageIconUrl = game.ImageIconURL,
+            Type = SetType.core
+        };
 
-        game.Achievements.Add(data);
+        game.AchievementSets.Add(set);
+        Log.Data.LogInformation("Registered single achievement \"{T}\" for \"{Game}\"", data.Title, game.Title);
     }
 
-    public static int GetGameIdFromFilename(string fileName) {
-        if (!Int32.TryParse(fileName.Split('-')[0], out int gameId)) {
-            Log.Data.LogWarning("No valid game id found in filename: {F}", fileName);
+    public static uint RAIntegrationAssertionWorkaround(uint gameId) {
+        /*
+            Unexpected error
+            Assertion failure at src\data\context\GameContext.cpp: 563
+            ??????????????????????????????????????
+         */
+        return ~gameId;
+    }
+
+    public static uint GetGameIdFromFilePath(string filePath) {
+        if (!UInt32.TryParse(Path.GetFileName(filePath).Split('-')[0], out uint gameId)) {
+            Log.Data.LogWarning("No valid game id found in path: {F}", filePath);
         }
 
         return gameId;
     }
 
-    private static void RegisterOrMergeGame(int gameId, GameData game) {
+    private static void RegisterOrMergeGame(uint gameId, GameDataJsonV1 legacy) {
+        GameData game = new GameData(legacy);
+        game.Upgrade();
+        RegisterOrMergeGame(gameId, game);
+    }
+
+    private static void RegisterOrMergeGame(uint gameId, GameData game) {
         if (gameId == 0) {
             gameId = game.ID;
         } else {
@@ -191,7 +251,7 @@ static class StaticDataManager {
 
     private static void RegisterGame(GameData game) {
         gameData.Add(game.ID, game);
-        Log.Data.LogInformation("Registered \"{Game}\" with {n} achievement(s)", game.Title, game.Achievements.Count);
+        Log.Data.LogInformation("Registered \"{Game}\" with {n} achievement(s)", game.Title, game.GetAchievementCount());
     }
 
     private static void MergeGame(GameData game) {
@@ -221,13 +281,19 @@ static class StaticDataManager {
             existing.ConsoleID = game.ConsoleID;
         }
 
-        existing.Achievements.AddRange(game.Achievements);
+        existing.AchievementSets.ForEach(set => {
+            int removed = set.Achievements.RemoveAll(a => game.GetAchievementById(a.ID) != null);
+            if (removed > 0) {
+                Log.Data.LogWarning("Removed {n} duplicate achievement(s)", removed);
+            }
+        });
+        existing.AchievementSets.AddRange(game.AchievementSets);
 
-        Log.Data.LogInformation("Merged \"{Game}\" into \"{Game2}\" with {n} achievement(s), total {n2}", game.Title, existing.Title, game.Achievements.Count, existing.Achievements.Count);
+        Log.Data.LogInformation("Merged \"{Game}\" into \"{Game2}\" with {n} achievement(s), total {n2}", game.Title, existing.Title, game.GetAchievementCount(), existing.GetAchievementCount());
     }
 
-    public static GameData FindGameDataById(int id) {
-        return gameData.GetValueOrDefault(id);
+    public static GameData FindGameDataById(uint id) {
+        return gameData.GetValueOrDefault(id) ?? gameData.GetValueOrDefault(RAIntegrationAssertionWorkaround(id));
     }
 
     public static GameData FindGameDataByHash(String str) {
@@ -242,8 +308,12 @@ static class StaticDataManager {
         }
     }
 
-    internal static GameData[] GetAllGameData() {
-        return gameData.Values.ToArray();
+    internal static List<GameData> GetAllGameData() {
+        return gameData.Values.ToList();
+    }
+
+    internal static List<GameDataJsonV1> GetAllGameDataAsV1() {
+        return gameData.Values.Select(data => new GameDataJsonV1(data)).ToList();
     }
 
     public static string LocalifyUrl(string url) {
@@ -254,7 +324,7 @@ static class StaticDataManager {
             ;
     }
 
-    private static void ParseCommentDataJson(int gameId, string content) {
+    private static void ParseCommentDataJson(uint gameId, string content, string file) {
         Log.Data.LogDebug("Starting to process comment data file for game ID {ID}", gameId);
         List<UserComment> data = JsonConvert.DeserializeObject<List<UserComment>>(content);
         if (data == null) {
@@ -264,12 +334,8 @@ static class StaticDataManager {
         commentData[gameId] = data;
     }
 
-    public static List<UserComment> FindCommentDataByGameId(int gameId) {
-        if (commentData.TryGetValue(gameId, out List<UserComment> value)) {
-            return value;
-        } else {
-            return null;
-        }
+    public static List<UserComment> FindCommentDataByGameId(uint gameId) {
+        return commentData.GetValueOrDefault(gameId, null);
     }
 
     internal static UserComment[] GetAllUserComments() {
@@ -336,11 +402,8 @@ static class StaticDataManager {
     }
 
     public static void SaveAllCommentFiles() {
-        foreach (int id in commentData.Keys) {
-            GameData game = FindGameDataById(id);
-            if (game != null) {
-                SaveCommentFile(game);
-            }
+        foreach (GameData game in commentData.Keys.Select(FindGameDataById).Where(game => game != null)) {
+            SaveCommentFile(game);
         }
     }
 

@@ -34,14 +34,14 @@ public static class RAOfficialServer {
             return;
         }
 
-        if (!Int32.TryParse(gameIdStr, out int fetchId)) {
+        if (!UInt32.TryParse(gameIdStr, out uint fetchId)) {
             Log.Main.LogError("Not a valid game ID: {i}", gameIdStr);
             return;
         }
 
-        int overrideId = fetchId;
+        uint overrideId = fetchId;
         if (!String.IsNullOrWhiteSpace(overrideIdStr)) {
-            if (!Int32.TryParse(overrideIdStr, out overrideId)) {
+            if (!UInt32.TryParse(overrideIdStr, out overrideId)) {
                 Log.Main.LogError("Not a valid game ID (override ID): {i}", overrideIdStr);
                 return;
             }
@@ -55,15 +55,25 @@ public static class RAOfficialServer {
         Log.RCheevos.LogInformation("Logged into RA server at {u} as {n}", url, login.DisplayName);
 
         int f = includeUnofficial ? 7 : 3;
-        RAPatchResponse patch = Query<RAPatchResponse>(HttpMethod.Get, url, "dorequest.php?r=patch&u=" + username + "&t=" + login.Token + "&f=" + f + "&m=&g=" + fetchId, null);
+        RAPatchResponseV2 patch = Query<RAPatchResponseV2>(HttpMethod.Get, url, "dorequest.php?r=achievementsets&u=" + username + "&t=" + login.Token + "&f=" + f + "&m=&g=" + fetchId, null);
         if (patch == null) {
             return;
         }
 
-        GameData gameData = patch.PatchData;
+        GameData gameData = new GameData() {
+            Title = patch.Title,
+            ID = patch.GameId,
+            ConsoleID = patch.ConsoleId,
+            ImageIconURL = patch.ImageIconUrl,
+            DataVersion = GameData.CURRENT_DATA_VERSION,
+            ImageIcon = patch.ImageIconUrl,
+            CodeNotes = new List<CodeNote>(),
+            ROMHashes = new List<string>(),
+            RichPresencePatch = patch.RichPresencePatch,
+            AchievementSets = patch.Sets
+        };
 
         List<string> hashes = new List<string>();
-        hashes.AddRange(gameData.ROMHashes);
 
         RAApiHashesResponse hashResponse = Query<RAApiHashesResponse>(HttpMethod.Get, url, "API/API_GetGameHashes.php?y=" + apiWeb + "&i=" + fetchId, null);
         if (hashResponse == null) {
@@ -78,7 +88,7 @@ public static class RAOfficialServer {
 
         Dictionary<String, String> imageDownloads = new Dictionary<string, string>();
         imageDownloads.Add(gameData.ImageIcon, gameData.ImageIconURL);
-        foreach (AchievementData ad in gameData.Achievements) {
+        foreach (AchievementData ad in gameData.GetAllAchievements()) {
             imageDownloads[ad.BadgeName] = ad.BadgeURL;
             imageDownloads[Path.GetFileNameWithoutExtension(ad.BadgeName) + "_lock.png"] = ad.BadgeLockedURL;
         }
@@ -96,19 +106,24 @@ public static class RAOfficialServer {
         gameData.ID = overrideId;
         // re-route image URLs to local
         gameData.ImageIconURL = StaticDataManager.LocalifyUrl(gameData.ImageIconURL);
-        foreach (AchievementData ad in gameData.Achievements) {
+        foreach (AchievementData ad in gameData.GetAllAchievements()) {
             ad.BadgeURL = StaticDataManager.LocalifyUrl(ad.BadgeURL);
             ad.BadgeLockedURL = StaticDataManager.LocalifyUrl(ad.BadgeLockedURL);
         }
 
+        // modify game ids in subsets
+        foreach (SetData set in patch.Sets) {
+            set.GameId = StaticDataManager.RAIntegrationAssertionWorkaround(overrideId);
+        }
+
         // remove "unsupported emulator"
-        gameData.Achievements = gameData.Achievements.Where(a => a.ID != StaticDataManager.UNSUPPORTED_EMULATOR_ACHIEVEMENT_ID).ToList();
+        gameData.DeleteAchievementById(StaticDataManager.UNSUPPORTED_EMULATOR_ACHIEVEMENT_ID);
 
         Log.RCheevos.LogInformation("Finished getting data from \"{u}\"", url);
 
         String fileBase = Configuration.Get("LAHEE", "DataDirectory") + "\\" + overrideId + "-" + (fetchId != overrideId ? "zz-" : "") + new string(gameData.Title.Where(ch => !Program.INVALID_FILE_NAME_CHARS.Contains(ch)).ToArray());
-        String fileData = fileBase + ".json";
-        String fileHash = fileBase + ".zhash";
+        String fileData = fileBase + ".set.json";
+        String fileHash = fileBase + ".hash.txt";
         if (!File.Exists(fileData)) {
             Log.RCheevos.LogInformation("Creating file {f}", fileData);
             File.WriteAllText(fileData, JsonConvert.SerializeObject(gameData));
@@ -174,7 +189,12 @@ public static class RAOfficialServer {
                 req.Headers.Add("User-Agent", Program.NAME);
 
                 HttpResponseMessage resp = http.Send(req);
-                byte[] data = new byte[(int)resp.Content.Headers.ContentLength];
+                long? len = resp.Content.Headers.ContentLength;
+                if (len == null) {
+                    throw new IOException("missing content-length");
+                }
+
+                byte[] data = new byte[len.Value];
                 resp.Content.ReadAsStream().ReadExactly(data);
 
                 File.WriteAllBytes(targetPath, data);
@@ -192,7 +212,7 @@ public static class RAOfficialServer {
         Log.RCheevos.LogDebug("HTTP " + req.Method + " request to {u}", req.RequestUri);
 
         if (request != null) {
-            req.Content = new StringContent(request.ToString());
+            req.Content = new StringContent(request.ToString()!);
             Log.RCheevos.LogTrace("Content: {d}", request);
         }
 
@@ -219,7 +239,7 @@ public static class RAOfficialServer {
         }
     }
 
-    public static void FetchComments(int gameId, int achievementId) {
+    public static void FetchComments(uint gameId, int achievementId) {
         GameData game = StaticDataManager.FindGameDataById(gameId);
         if (game == null) {
             throw new ProtocolException("Unknown game id: " + gameId);

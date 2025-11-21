@@ -8,6 +8,19 @@
 
 namespace LAHEE.Data;
 
+public enum AchievementType {
+    missable,
+    progression,
+    win_condition
+}
+
+[Flags]
+public enum AchievementFlags {
+    Always = 1,
+    Official = 2,
+    Unofficial = 4
+}
+
 public class AchievementData {
     public int ID;
     public String MemAddr;
@@ -18,19 +31,19 @@ public class AchievementData {
     public long Modified;
     public long Created;
     public String BadgeName;
-    public int Flags;
-    public String Type;
+    public AchievementFlags Flags;
+    public AchievementType? Type;
     public float Rarity;
     public float RarityHardcore;
     public String BadgeURL;
     public String BadgeLockedURL;
 
-    internal static string ConvertType(string type) {
+    internal static AchievementType? ConvertType(string type) {
         switch (type) {
-            case "1": return "missable";
-            case "2": return "progression";
-            case "3": return "win_condition";
-            case "": return "";
+            case "1": return AchievementType.missable;
+            case "2": return AchievementType.progression;
+            case "3": return AchievementType.win_condition;
+            case "": return null;
             default: throw new ArgumentException("unknown achievement type: " + type);
         }
     }

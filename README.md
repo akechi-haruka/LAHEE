@@ -89,9 +89,9 @@ Achievement definitions must be placed in `<root>\<Data>\<gameid>-<optional_labe
   (ex. `3885-FFCCSubsetRareItems.json`)
 - For core sets, simply copy the `####.json` file from `RAIntegration\Data`.
 - For user sets, simply copy the `####-User.txt` file from `RAIntegration\Data`.
-  - Latest supported RAIntegration version: 1.3.1.
+    - Latest supported RAIntegration version: 1.4.0.
 - Achievement images must be placed in `<root>\lahee\Badge\<badgeid>.png`
-- Game hash defitions must be placed in `<root>\<Data>\<gameid>-<optional_label>.zhash`
+- Game hash defitions must be placed in `<root>\<Data>\<gameid>-<optional_label>.hash.txt`
 - Every line should depict one valid hash for this game+achievement set combo
 - All `.zhash` files of the same ID are merged.
 
@@ -126,6 +126,23 @@ Take a screenshot from either the entire desktop or the currently active Window.
 Parameters: The messageType to be sent to obs-websocket. See OBS' websocket's documentation for more information.
 
 Sends a message to OBS, mostly used with parameter "SaveReplayBuffer".
+
+## Config
+
+To not have your changes overwritten on updates, you can create a copy of `appsettings.json` named
+`appsetings.local.json` and make your changes there.
+
+### LAHEE
+
+* WebPort: the TCP port LAHEE runs under. If changed, emulator config or hexedits need to be adjusted.
+* AutoSessionOnSingleUser: if only one user exists, LAHEE completely ignores authentication, and always logs the only
+  existing user in, regardless of session tokens.
+* LoadAsSingleSet: when true, all achievement sets will be merged to a single set.
+* BadgeDirectory/DataDirectory/UserDirectory: Paths to folders LAHEE stores various files.
+* PresenceHistoryLimit: The maximum number of presence (gameplay status) entries LAHEE should save. -1 for no limit.
+  Might be cool to look back on the past, but set to a low number if you don't care or your save data becomes too big.
+* RAFetch: Settings for downloading/fetching data from the official site, see "Adding achievements (from real site)"
+* OBSWebsocketUrl: URL to your OBS instance for sending commands. Must not use authentication.
 
 ## Attribution
 

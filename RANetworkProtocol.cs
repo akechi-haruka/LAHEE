@@ -1,4 +1,5 @@
 ﻿using LAHEE.Data;
+using LAHEE.Data.File;
 
 // these are defined by RA, therefore disable checks
 
@@ -32,7 +33,7 @@ class RALoginResponse : RAAnyResponse {
 }
 
 class RAGameIDResponse : RAAnyResponse {
-    public int GameID;
+    public uint GameID;
 }
 
 class RAPatchResponse : RAAnyResponse {
@@ -40,23 +41,13 @@ class RAPatchResponse : RAAnyResponse {
 }
 
 class RAPatchResponseV2 : RAAnyResponse {
-    public int GameId;
+    public uint GameId;
     public String Title;
     public String ImageIconUrl;
-    public int RichPresenceGameId;
+    public uint RichPresenceGameId;
     public String RichPresencePatch;
     public int ConsoleId;
-    public SetData[] Sets;
-
-    public class SetData {
-        public String Title;
-        public String Type;
-        public int AchievementSetId;
-        public int GameId;
-        public String ImageIconUrl;
-        public List<AchievementData> Achievements;
-        public LeaderboardData[] Leaderboards;
-    }
+    public List<SetData> Sets;
 }
 
 class RAStartSessionResponse : RAAnyResponse {
@@ -112,12 +103,12 @@ class RALeaderboardResponse : RAAnyResponse {
 class LaheeResponse {
     public String version;
     public UserData[] users;
-    public GameData[] games;
+    public GameDataJsonV1[] games;
     public UserComment[] comments;
 }
 
 class LaheeUserResponse {
-    public int currentgameid;
+    public uint currentgameid;
     public DateTime? lastping;
     public TimeSpan? playtime;
     public String gamestatus;
@@ -179,4 +170,8 @@ class RAUploadFileResponse : RAAnyResponse {
     public class ResponseClass {
         public String BadgeIter;
     }
+}
+
+class RARichPresencePatchResponse : RAAnyResponse {
+    public String RichPresencePatch;
 }

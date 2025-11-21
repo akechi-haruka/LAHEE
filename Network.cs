@@ -28,6 +28,11 @@ static class Network {
 
         server = new WebserverLite(new WebserverSettings("0.0.0.0", localPort), Routes.DefaultNotFoundRoute);
 
+        server.Events.Logger += WatsonLogger;
+        server.Settings.Debug.Responses = Configuration.GetBool("Watson", "DebugResponses");
+        server.Settings.Debug.Requests = Configuration.GetBool("Watson", "DebugRequests");
+        server.Settings.Debug.Routing = Configuration.GetBool("Watson", "DebugRouting");
+
         server.Routes.PreAuthentication.Static.Add(HttpMethod.GET, BASE_DIR, Routes.RedirectWeb, Routes.DefaultErrorRoute);
         server.Routes.PreAuthentication.Static.Add(HttpMethod.POST, BASE_DIR + "dorequest.php", Routes.RARequestRoute, Routes.DefaultErrorRoute);
         server.Routes.PreAuthentication.Static.Add(HttpMethod.POST, BASE_DIR + "doupload.php", Routes.RAUploadRoute, Routes.DefaultErrorRoute);
@@ -59,10 +64,15 @@ static class Network {
         AddRARoute("codenotes2", Routes.RACodeNotes2);
         AddRARoute("badgeiter", Routes.RABadgeIter);
         AddRARoute("uploadachievement", Routes.RAUploadAchievement);
+        AddRARoute("richpresencepatch", Routes.RARichPresencePatch);
 
         Log.Network.LogInformation("Starting webserver on {H}:{P}", server.Settings.Hostname, server.Settings.Port);
         server.Start();
         Log.Network.LogDebug("Started.");
+    }
+
+    private static void WatsonLogger(string obj) {
+        Log.Network.LogDebug(obj);
     }
 
     private static void AddRARoute(string key, Func<HttpContextBase, Task> route) {
@@ -208,13 +218,11 @@ static class Routes {
         GameData game = StaticDataManager.FindGameDataByHash(hash);
         if (game == null) {
             Log.User.LogWarning("ROM Hash {hash} not registered!", hash);
-            await ctx.Response.SendJson(new RAErrorResponse("ROM hash is not registered!"));
-            return;
         }
 
         RAGameIDResponse response = new RAGameIDResponse() {
             Success = true,
-            GameID = game.ID
+            GameID = game?.ID ?? 0
         };
 
         await ctx.Response.SendJson(response);
@@ -223,11 +231,11 @@ static class Routes {
     internal static async Task RAPatch(HttpContextBase ctx) {
         //String username = ctx.Request.GetParameter("u");
         //String token = ctx.Request.GetParameter("t");
-        int gameid = Int32.Parse(ctx.Request.GetParameter("g"));
+        uint gameId = UInt32.Parse(ctx.Request.GetParameter("g"));
 
-        GameData game = StaticDataManager.FindGameDataById(gameid);
+        GameData game = StaticDataManager.FindGameDataById(gameId);
         if (game == null) {
-            Log.User.LogWarning("Game ID {id} not registered!", gameid);
+            Log.User.LogWarning("Game ID {id} not registered!", gameId);
             await ctx.Response.SendJson(new RAErrorResponse("Game ID is not registered!"));
             return;
         }
@@ -243,14 +251,14 @@ static class Routes {
     internal static async Task RAStartSession(HttpContextBase ctx) {
         //String username = ctx.Request.GetParameter("u");
         String token = ctx.Request.GetParameter("t");
-        int gameid = Int32.Parse(ctx.Request.GetParameter("g"));
+        uint gameId = UInt32.Parse(ctx.Request.GetParameter("g"));
         int hardcoreFlag = Int32.Parse(ctx.Request.GetParameter("h")); // 1/0
         //String gamehash = ctx.Request.GetParameter("m");
         //String libraryVersion = ctx.Request.GetParameter("l"); // 11.4
 
-        GameData game = StaticDataManager.FindGameDataById(gameid);
+        GameData game = StaticDataManager.FindGameDataById(gameId);
         if (game == null) {
-            Log.User.LogWarning("Game ID {id} not registered!", gameid);
+            Log.User.LogWarning("Game ID {id} not registered!", gameId);
             await ctx.Response.SendJson(new RAErrorResponse("Game ID is not registered!"));
             return;
         }
@@ -262,7 +270,7 @@ static class Routes {
             return;
         }
 
-        if (!user.GameData.TryGetValue(gameid, out UserGameData userGameData)) {
+        if (!user.GameData.TryGetValue(gameId, out UserGameData userGameData)) {
             Log.User.LogInformation("Creating new progression for {user} in {game}", user, game);
             userGameData = user.RegisterGame(game);
             UserManager.Save();
@@ -346,7 +354,7 @@ static class Routes {
         LiveTicker.BroadcastPing(LiveTicker.LiveTickerEventPing.PingType.AchievementUnlock);
         CaptureManager.StartCapture(game, user, ach);
 
-        int totalAchievementCount = game.Achievements.Count;
+        int totalAchievementCount = game.GetAchievementCount();
         int userAchieved = userGameData.Achievements.Count(a => a.Value.Status == (hardcoreFlag == 1 ? UserAchievementData.StatusFlag.HardcoreUnlock : UserAchievementData.StatusFlag.SoftcoreUnlock));
 
         RAUnlockResponse response = new RAUnlockResponse() {
@@ -363,15 +371,15 @@ static class Routes {
     internal static async Task RAPing(HttpContextBase ctx) {
         //String username = ctx.Request.GetParameter("u");
         String token = ctx.Request.GetParameter("t");
-        //int gameid = Int32.Parse(ctx.Request.GetParameter("g"));
-        String gamehash = ctx.Request.GetParameter("x");
+        //uint gameId = UInt32.Parse(ctx.Request.GetParameter("g"));
+        String gameHash = ctx.Request.GetParameter("x");
         String statusMessage = ctx.Request.GetParameter("m");
         //int hardcoreFlag = Int32.Parse(ctx.Request.GetParameter("h")); // 1/0
         // int secondsSinceUnlock = ctx.Request.GetParameter("o");
 
-        GameData game = StaticDataManager.FindGameDataByHash(gamehash);
+        GameData game = StaticDataManager.FindGameDataByHash(gameHash);
         if (game == null) {
-            Log.User.LogWarning("ROM Hash {hash} not registered!", gamehash);
+            Log.User.LogWarning("ROM Hash {hash} not registered!", gameHash);
             await ctx.Response.SendJson(new RAErrorResponse("ROM hash is not registered!"));
             return;
         }
@@ -419,7 +427,7 @@ static class Routes {
         int score = Int32.Parse(ctx.Request.GetParameter("s"));
         String gamehash = ctx.Request.GetParameter("m");
         // int secondsSinceUnlock = ctx.Request.GetParameter("o");
-        // int gameid = Int32.Parse(ctx.Request.GetParameter("g"));
+        // uint gameId = UInt32.Parse(ctx.Request.GetParameter("g"));
         //String verification = ctx.Request.GetParameter("v");
 
         GameData game = StaticDataManager.FindGameDataByHash(gamehash);
@@ -482,7 +490,7 @@ static class Routes {
     internal static async Task LaheeInfo(HttpContextBase ctx) {
         LaheeResponse response = new LaheeResponse() {
             version = Program.NAME,
-            games = StaticDataManager.GetAllGameData(),
+            games = StaticDataManager.GetAllGameDataAsV1().ToArray(), // TODO: this should be changed to v2 at some point
             users = UserManager.GetAllUserData(),
             comments = StaticDataManager.GetAllUserComments()
         };
@@ -492,7 +500,7 @@ static class Routes {
 
     internal static async Task LaheeUserInfo(HttpContextBase ctx) {
         String user = ctx.Request.GetParameter("user");
-        int gameid = Int32.Parse(ctx.Request.GetParameter("gameid"));
+        uint gameId = UInt32.Parse(ctx.Request.GetParameter("gameid"));
 
         UserData userData = UserManager.GetUserData(user);
         if (userData == null) {
@@ -500,13 +508,13 @@ static class Routes {
             return;
         }
 
-        GameData game = StaticDataManager.FindGameDataById(gameid);
+        GameData game = StaticDataManager.FindGameDataById(gameId);
         if (game == null) {
             await ctx.Response.SendJson(new RAErrorResponse("Game ID is not registered!"));
             return;
         }
 
-        userData.GameData.TryGetValue(gameid, out UserGameData userGameData);
+        userData.GameData.TryGetValue(gameId, out UserGameData userGameData);
 
         LaheeUserResponse response = new LaheeUserResponse() {
             currentgameid = userData.CurrentGameId,
@@ -521,7 +529,7 @@ static class Routes {
 
     internal static async Task LaheeFetchComments(HttpContextBase ctx) {
         String user = ctx.Request.GetParameter("user");
-        int gameid = Int32.Parse(ctx.Request.GetParameter("gameid"));
+        uint gameId = UInt32.Parse(ctx.Request.GetParameter("gameid"));
         int achievementId = Int32.Parse(ctx.Request.GetParameter("aid"));
 
         UserData userData = UserManager.GetUserData(user);
@@ -530,7 +538,7 @@ static class Routes {
             return;
         }
 
-        GameData game = StaticDataManager.FindGameDataById(gameid);
+        GameData game = StaticDataManager.FindGameDataById(gameId);
         if (game == null) {
             await ctx.Response.SendJson(new RAErrorResponse("Game ID is not registered!"));
             return;
@@ -543,7 +551,7 @@ static class Routes {
         }
 
         try {
-            RAOfficialServer.FetchComments(gameid, ach.ID);
+            RAOfficialServer.FetchComments(gameId, ach.ID);
         } catch (ProtocolException e) {
             Log.RCheevos.LogError(e.Message);
             await ctx.Response.SendJson(new RAErrorResponse(e.Message));
@@ -562,7 +570,7 @@ static class Routes {
 
     internal static async Task LaheeWriteComment(HttpContextBase ctx) {
         String user = ctx.Request.GetParameter("user");
-        int gameid = Int32.Parse(ctx.Request.GetParameter("gameid"));
+        uint gameId = UInt32.Parse(ctx.Request.GetParameter("gameid"));
         int achievementId = Int32.Parse(ctx.Request.GetParameter("aid"));
         String comment = ctx.Request.GetParameter("comment");
 
@@ -572,7 +580,7 @@ static class Routes {
             return;
         }
 
-        GameData game = StaticDataManager.FindGameDataById(gameid);
+        GameData game = StaticDataManager.FindGameDataById(gameId);
         if (game == null) {
             await ctx.Response.SendJson(new RAErrorResponse("Game ID is not registered!"));
             return;
@@ -595,9 +603,9 @@ static class Routes {
 
     internal static async Task LaheeDeleteComment(HttpContextBase ctx) {
         String uuid = ctx.Request.GetParameter("uuid");
-        int gameid = Int32.Parse(ctx.Request.GetParameter("gameid"));
+        uint gameId = UInt32.Parse(ctx.Request.GetParameter("gameid"));
 
-        GameData game = StaticDataManager.FindGameDataById(gameid);
+        GameData game = StaticDataManager.FindGameDataById(gameId);
         if (game == null) {
             await ctx.Response.SendJson(new RAErrorResponse("Game ID is not registered!"));
             return;
@@ -617,7 +625,7 @@ static class Routes {
 
     internal static async Task LaheeFlagImportant(HttpContextBase ctx) {
         String user = ctx.Request.GetParameter("user");
-        int gameid = Int32.Parse(ctx.Request.GetParameter("gameid"));
+        uint gameId = UInt32.Parse(ctx.Request.GetParameter("gameid"));
         int achievementId = Int32.Parse(ctx.Request.GetParameter("aid"));
 
         UserData userData = UserManager.GetUserData(user);
@@ -626,7 +634,7 @@ static class Routes {
             return;
         }
 
-        GameData game = StaticDataManager.FindGameDataById(gameid);
+        GameData game = StaticDataManager.FindGameDataById(gameId);
         if (game == null) {
             await ctx.Response.SendJson(new RAErrorResponse("Game ID is not registered!"));
             return;
@@ -675,15 +683,15 @@ static class Routes {
     internal static async Task RAAchievementSets(HttpContextBase ctx) {
         //String username = ctx.Request.GetParameter("u");
         String token = ctx.Request.GetParameter("t");
-        String gamehash = ctx.Request.GetParameter("m");
-        int gameid = -1;
+        String gameHash = ctx.Request.GetParameter("m");
+        uint gameId = 0;
         if (ctx.Request.GetParameter("g") != null) {
-            gameid = Int32.Parse(ctx.Request.GetParameter("g"));
+            gameId = UInt32.Parse(ctx.Request.GetParameter("g"));
         }
 
-        GameData game = gameid > -1 ? StaticDataManager.FindGameDataById(gameid) : StaticDataManager.FindGameDataByHash(gamehash);
+        GameData game = gameId > 0 ? StaticDataManager.FindGameDataById(gameId) : StaticDataManager.FindGameDataByHash(gameHash);
         if (game == null) {
-            Log.User.LogWarning("Game {hash} not registered!", gameid > -1 ? gameid : gamehash);
+            Log.User.LogWarning("Game {hash} not registered!", gameId > 0 ? gameId : gameHash);
             await ctx.Response.SendJson(new RAErrorResponse("ROM hash is not registered!"));
             return;
         }
@@ -695,6 +703,23 @@ static class Routes {
             return;
         }
 
+        List<SetData> sets;
+        if (Configuration.GetBool("LAHEE", "LoadAsSingleSet")) {
+            sets = new List<SetData>() {
+                new SetData() {
+                    Achievements = game.GetAllAchievements().ToList(),
+                    Leaderboards = game.GetAllLeaderboards().ToList(),
+                    AchievementSetId = 1,
+                    GameId = StaticDataManager.RAIntegrationAssertionWorkaround(game.ID),
+                    Title = game.Title,
+                    ImageIconUrl = game.ImageIconURL,
+                    Type = SetType.core
+                }
+            };
+        } else {
+            sets = game.AchievementSets;
+        }
+
         RAPatchResponseV2 response = new RAPatchResponseV2() {
             Success = true,
             GameId = game.ID,
@@ -703,16 +728,7 @@ static class Routes {
             RichPresenceGameId = game.ID,
             RichPresencePatch = game.RichPresencePatch,
             ConsoleId = game.ConsoleID,
-            Sets = new RAPatchResponseV2.SetData[] {
-                new RAPatchResponseV2.SetData() {
-                    Title = game.Title,
-                    Type = "core",
-                    AchievementSetId = game.ID,
-                    ImageIconUrl = game.ImageIconURL,
-                    Achievements = game.Achievements,
-                    Leaderboards = game.Leaderboards
-                }
-            }
+            Sets = sets
         };
 
         await ctx.Response.SendJson(response);
@@ -730,7 +746,7 @@ static class Routes {
     }
 
     internal static async Task RACodeNotes2(HttpContextBase ctx) {
-        int gameId = Int32.Parse(ctx.Request.GetParameter("g"));
+        uint gameId = UInt32.Parse(ctx.Request.GetParameter("g"));
 
         GameData game = StaticDataManager.FindGameDataById(gameId);
         if (game == null) {
@@ -746,6 +762,23 @@ static class Routes {
         await ctx.Response.SendJson(response);
     }
 
+    internal static async Task RARichPresencePatch(HttpContextBase ctx) {
+        uint gameId = UInt32.Parse(ctx.Request.GetParameter("g"));
+
+        GameData game = StaticDataManager.FindGameDataById(gameId);
+        if (game == null) {
+            Log.User.LogWarning("Game ID {id} not registered!", gameId);
+            await ctx.Response.SendJson(new RAErrorResponse("Game ID is not registered!"));
+            return;
+        }
+
+        RARichPresencePatchResponse response = new RARichPresencePatchResponse() {
+            Success = true,
+            RichPresencePatch = game.RichPresencePatch
+        };
+        await ctx.Response.SendJson(response);
+    }
+
     internal static async Task RABadgeIter(HttpContextBase ctx) {
         RABadgeIterResponse response = new RABadgeIterResponse() {
             Success = true,
@@ -757,7 +790,7 @@ static class Routes {
 
     internal static async Task RAUploadAchievement(HttpContextBase ctx) {
         String token = ctx.Request.GetParameter("t");
-        int gameId = Int32.Parse(ctx.Request.GetParameter("g"));
+        uint gameId = UInt32.Parse(ctx.Request.GetParameter("g"));
 
         GameData game = StaticDataManager.FindGameDataById(gameId);
         if (game == null) {
@@ -802,16 +835,17 @@ static class Routes {
             Modified = Utils.CurrentUnixSeconds,
             Created = existing?.Created ?? Utils.CurrentUnixSeconds,
             BadgeName = icon,
-            Flags = flag,
-            Type = type,
+            Flags = (AchievementFlags)flag,
             Rarity = existing?.Rarity ?? 0,
             RarityHardcore = existing?.RarityHardcore ?? 0,
             BadgeURL = "/" + badgeDirectory + "/" + icon + ".png",
             BadgeLockedURL = "/" + badgeDirectory + "/" + icon + "_lock.png"
         };
 
-        game.Achievements.RemoveAll(a => a.ID == achievementId);
-        game.Achievements.Add(ach);
+        ach.Type = Enum.TryParse(type, out AchievementType t) ? t : null;
+
+        game.DeleteAchievementById(achievementId);
+        game.GetCoreAchievementSet()?.Achievements?.Add(ach);
         StaticDataManager.SaveSingleAchievement(game, ach);
 
         Log.Network.LogTrace("Response id: {id}", achievementId);

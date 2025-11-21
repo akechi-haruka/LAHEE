@@ -10,7 +10,7 @@
 namespace LAHEE.Data;
 
 public class UserGameData {
-    public int GameID;
+    public uint GameID;
     public String LastPresence;
     public Dictionary<int, UserAchievementData> Achievements;
     public Dictionary<int, List<UserLeaderboardData>> LeaderboardEntries;

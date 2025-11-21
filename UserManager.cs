@@ -76,7 +76,7 @@ class UserManager {
             AllowUse = true,
             UserName = username,
             ID = new Random().Next(),
-            GameData = new Dictionary<int, UserGameData>()
+            GameData = new Dictionary<uint, UserGameData>()
         };
         userData.Add(username, user);
         Log.User.LogInformation("Registered new user: {User}", user);
@@ -123,6 +123,12 @@ class UserManager {
     }
 
     public static UserData GetUserDataFromToken(string str) {
+        if (Configuration.GetBool("LAHEE", "AutoSessionOnSingleUser") && userData.Count == 1) {
+            UserData u = userData.Values.First();
+            Log.User.LogDebug("AutoSession enabled, user is {u}", u);
+            return u;
+        }
+
         return activeTokens.GetValueOrDefault(str, null);
     }
 
