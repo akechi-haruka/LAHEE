@@ -30,6 +30,7 @@ This allows local/offline/modded progression of RetroAchievements.
 * Playtime tracking (approximate) and stats.
 * Switch between multiple accounts and/or multiple progressions in the same game.
 * Freely share your modified achievement data .json files to anyone.
+* Track progression for unofficial and local achievements.
 
 ### What LAHEE doesn't do
 
