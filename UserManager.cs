@@ -10,6 +10,7 @@ class UserManager {
 
     private static Dictionary<string, UserData> userData;
     private static Dictionary<string, UserData> activeTokens;
+    private static readonly object SAVE_LOCK = new object();
 
     internal static void Initialize() {
         UserDataDirectory = Configuration.Get("LAHEE", "UserDirectory");
@@ -88,27 +89,29 @@ class UserManager {
     }
 
     public static void Save(string dir) {
-        foreach (UserData data in userData.Values) {
-            if (data.AllowUse) {
-                string outputFile = Path.Combine(dir, data.UserName + ".json");
-                string backupFile = Path.Combine(dir, data.UserName + ".bak");
-                if (File.Exists(outputFile)) {
-                    File.Copy(outputFile, backupFile, true);
-                }
+        lock (SAVE_LOCK) {
+            foreach (UserData data in userData.Values) {
+                if (data.AllowUse) {
+                    string outputFile = Path.Combine(dir, data.UserName + ".json");
+                    string backupFile = Path.Combine(dir, data.UserName + ".bak");
+                    if (File.Exists(outputFile)) {
+                        File.Copy(outputFile, backupFile, true);
+                    }
 
-                string output = JsonConvert.SerializeObject(data);
-                if (String.IsNullOrWhiteSpace(output)) {
-                    throw new IOException("Attempted to write empty/null user save data for " + data);
-                }
+                    string output = JsonConvert.SerializeObject(data);
+                    if (String.IsNullOrWhiteSpace(output)) {
+                        throw new IOException("Attempted to write empty/null user save data for " + data);
+                    }
 
-                File.WriteAllText(outputFile, output);
-                Log.User.LogDebug("Saved user data for {user}", data.UserName);
-            } else {
-                Log.User.LogWarning("Not saving {User}, because data loading has failed!", data);
+                    File.WriteAllText(outputFile, output);
+                    Log.User.LogDebug("Saved user data for {user}", data.UserName);
+                } else {
+                    Log.User.LogWarning("Not saving {User}, because data loading has failed!", data);
+                }
             }
-        }
 
-        Log.User.LogInformation("User data was saved");
+            Log.User.LogInformation("User data was saved");
+        }
     }
 
     public static string RegisterSessionToken(UserData user) {
