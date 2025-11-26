@@ -281,7 +281,7 @@ function lahee_build_achievements(user, game) {
         }
         maxpt += a.Points;
 
-        content += `<img src="${status != 0 ? a.BadgeURL : a.BadgeLockedURL}" class="ach_type_${a.Type} ach_status_${status} ${ug.FlaggedAchievements?.includes(a.ID) ? "ach_flag_important" : ""}" onclick="lahee_select_ach(${game.ID}, ${a.ID});" loading="lazy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-title="<b>${a.Title.replaceAll("\"", "&quot;")}</b> (${a.Points})<hr />${a.Description.replaceAll("\"", "&quot;")}" />`;
+        content += `<img src="${status != 0 ? a.BadgeURL : a.BadgeLockedURL}" class="ach_type_${a.Type} ach_status_${status} ach_flags_${a.Flags} ${ug.FlaggedAchievements?.includes(a.ID) ? "ach_flag_important" : ""}" onclick="lahee_select_ach(${game.ID}, ${a.ID});" loading="lazy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-title="<b>${a.Title.replaceAll("\"", "&quot;")}</b> (${a.Points})<hr />${a.Description.replaceAll("\"", "&quot;")}" />`;
     }
     
     if (tooltipList){
@@ -350,7 +350,11 @@ function lahee_select_ach(gid, aid) {
 
     document.getElementById("adetail_title").innerText = a.Title;
     document.getElementById("adetail_desc").innerText = a.Description;
-    document.getElementById("adetail_type").innerText = a.Type;
+    var type = a.Type ?? "";
+    if ((a.Flags & 4) != 0) {
+        type += " (Unofficial)";
+    }
+    document.getElementById("adetail_type").innerText = type;
     document.getElementById("adetail_score").innerText = a.Points;
 
     var status = "Locked";

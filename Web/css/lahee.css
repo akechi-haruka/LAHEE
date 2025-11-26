@@ -91,10 +91,17 @@ table {
     --bs-bg-opacity: 1;
     background-color: gold !important;
 }
+
 .bg-softcore {
     --bs-bg-opacity: 1;
     background-color: silver !important;
 }
+
 .stats_small_text {
     font-size: 12px;
+}
+
+.ach_flags_4, .ach_flags_5 {
+    filter: sepia(100%);
+    border-color: brown !important;
 }
