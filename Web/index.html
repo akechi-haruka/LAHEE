@@ -124,7 +124,7 @@
             <div class="row">
                 <div class="col-9" id="achievementgrid"></div>
                 <div class="col" id="achievementdetails">
-                    <p><img id="adetail_img" /></p>
+                    <p id="adetail_img"></p>
                     <h3 id="adetail_title" class="text-center">Please select...</h3>
                     <p id="adetail_desc"></p>
                     <div id="adetail_info" style="display:none;">
@@ -212,7 +212,9 @@
                 <p>Stats are not yet available for this user. Play at least one game and obtain at least one achievement.</p>
             </div>
             <div id="stats_available">
+
                 <div class="row mb-5">
+
                     <div class="col-12 col-sm-3 text-center stats_details">
                         <h1>Most Played</h1>
                         <p><img id="game_img_l" class="game_img" /></p>
@@ -225,6 +227,7 @@
                         <p id="game_title_s">NAME</p>
                         <h4 id="game_time_s">0.00:00:00</h4>
                     </div>
+
                     <div class="col-12 col-sm-6 text-center">
                         <h1>Totals</h1>
                         <table class="table">
@@ -251,8 +254,11 @@
                             </tr>
                         </table>
                     </div>
+
                 </div>
+
                 <div class="row mb-5">
+
                     <div class="col-12 col-sm-3 text-center">
                         <h1>Fastest 100%</h1>
                         <p><img id="game_img_f1" class="game_img" /></p>
@@ -277,36 +283,28 @@
                         <p id="game_title_sb">NAME</p>
                         <h4 id="game_time_sb">0.00:00:00</h4>
                     </div>
+
                 </div>
+
+                <h3>Meta-Achievements</h3>
                 <div class="row mb-5">
-                    <div class="col-12 col-sm-4 text-center">
-                        <h1>The First</h1>
-                        <p><img id="ach_img_tf" class="ach_img" /></p>
-                        <p><span id="ach_title_tf">NAME</span><br><i id="ach_game_tf">GAMENAME</i></p>
-                        <p id="ach_description_tf">TEXT TEXT TEXT</p>
-                        <h4 id="ach_time_tf">0.00:00:00</h4>
-                        <h4 id="ach_dtime_tf">0.00:00:00</h4>
-                        <small>First achievement obtained.</small>
-                    </div>
-                    <div class="col-12 col-sm-4 text-center">
-                        <h1>The Nut</h1>
-                        <p><img id="ach_img_tn" class="ach_img" /></p>
-                        <p><span id="ach_title_tn">NAME</span><br><i id="ach_game_tn">GAMENAME</i></p>
-                        <p id="ach_description_tn">TEXT TEXT TEXT</p>
-                        <h4 id="ach_time_tn">0.00:00:00</h4>
-                        <h4 id="ach_dtime_tn">0.00:00:00</h4>
-                        <small>Achievement with the longest time in-between the achievement before it.</small>
-                    </div>
-                    <div class="col-12 col-sm-4 text-center">
-                        <h1>The Grind</h1>
-                        <p><img id="ach_img_tg" class="ach_img" /></p>
-                        <p><span id="ach_title_tg">NAME</span><br><i id="ach_game_tg">GAMENAME</i></p>
-                        <p id="ach_description_tg">TEXT TEXT TEXT</p>
-                        <h4 id="ach_time_tg">0.00:00:00</h4>
-                        <h4 id="ach_dtime_tg">0.00:00:00</h4>
-                        <small>Highest value achievement obtained after longest amount of playtime.</small>
-                    </div>
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Condition</th>
+                            <th colspan="3">Achievement</th>
+                            <th>Related</th>
+                            <th>Achieved</th>
+                            <th>Playtime</th>
+                        </tr>
+                        </thead>
+                        <tbody id="meta_table">
+
+                        </tbody>
+                    </table>
                 </div>
+
+                <h3>Game Summary</h3>
                 <div class="row mb-5">
                     <table class="table">
                         <thead>
@@ -321,10 +319,30 @@
                             </tr>
                         </thead>
                         <tbody id="stats_table">
-                            
+
                         </tbody>
                     </table>
                 </div>
+
+                <h3>Milestones</h3>
+                <div class="row mb-5">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th><!-- Game Image --></th>
+                            <th><!-- Achievement Image --></th>
+                            <th>Achievement</th>
+                            <th>Achieved</th>
+                            <th>Playtime</th>
+                            <th>#</th>
+                        </tr>
+                        </thead>
+                        <tbody id="milestones_table">
+
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
         </div>
     </main>

@@ -1,4 +1,5 @@
 ﻿using LAHEE.Util;
+using Newtonsoft.Json;
 
 // ReSharper disable InconsistentNaming
 // ReSharper disable UnassignedField.Global
@@ -18,7 +19,7 @@ public class UserGameData {
     public List<int> FlaggedAchievements;
     public DateTime FirstPlay;
     public DateTime LastPlay;
-    public DateTime PlayTimeLastPing;
+    [JsonIgnore] public DateTime? PlayTimeLastPing;
     public TimeSpan PlayTimeApprox;
 
     public UserAchievementData UnlockAchievement(int achievementId, bool isHardcore, long achieveDate = 0) {
@@ -41,7 +42,7 @@ public class UserGameData {
             }
 
             if (userAchievementData.AchievePlaytime == TimeSpan.Zero) {
-                userAchievementData.AchievePlaytime = PlayTimeApprox + (DateTime.Now - PlayTimeLastPing);
+                userAchievementData.AchievePlaytime = PlayTimeApprox + (DateTime.Now - PlayTimeLastPing.GetValueOrDefault(DateTime.Now));
             }
         } else if (userAchievementData.Status == UserAchievementData.StatusFlag.Locked) {
             userAchievementData.Status = UserAchievementData.StatusFlag.SoftcoreUnlock;
@@ -51,7 +52,7 @@ public class UserGameData {
             }
 
             if (userAchievementData.AchievePlaytimeSoftcore == TimeSpan.Zero) {
-                userAchievementData.AchievePlaytimeSoftcore = PlayTimeApprox + (DateTime.Now - PlayTimeLastPing);
+                userAchievementData.AchievePlaytimeSoftcore = PlayTimeApprox + (DateTime.Now - PlayTimeLastPing.GetValueOrDefault(DateTime.Now));
             }
         }
 

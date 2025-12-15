@@ -89,7 +89,7 @@ listach <gamename>                                                    Lists all 
 unlock <username> <gamename> <achievementname> <hardcore 1/0>         Grant an achievement
 lock <username> <gamename> <achievementname> <hardcore 1/0>           Remove an achievement
 lockall <username> <gamename>                                         Remove ALL achievements
-fetch <gameid> [override_gameid/0] [unofficial 1/0] [copy_unlocks_to]   Copies game and achievement data from official server
+fetch <gameid> [override_gameid/0] [unofficial 1/0] [copy_unlocks_to] Copies game and achievement data from official server
 delete <gamename>                                                     Deletes game and achievement data (not user data!)
 addhash <gamename> <hash>                                             Adds a ROM hash to a game
 reload                                                                Reloads achievement data

@@ -395,7 +395,7 @@ static class Routes {
 
         UserGameData userGameData = user.GameData[game.ID];
 
-        userGameData.PlayTimeApprox += (DateTime.Now - userGameData.PlayTimeLastPing);
+        userGameData.PlayTimeApprox += DateTime.Now - userGameData.PlayTimeLastPing.GetValueOrDefault(DateTime.Now);
         userGameData.PlayTimeLastPing = DateTime.Now;
         userGameData.LastPresence = statusMessage;
         if (userGameData.PresenceHistory == null) { // 1.0 backcompat
@@ -465,7 +465,7 @@ static class Routes {
             LeaderboardID = leaderboardId,
             Score = score,
             RecordDate = Utils.CurrentUnixSeconds,
-            PlayTime = userGameData.PlayTimeApprox + (DateTime.Now - userGameData.PlayTimeLastPing)
+            PlayTime = userGameData.PlayTimeApprox + (DateTime.Now - userGameData.PlayTimeLastPing.GetValueOrDefault(DateTime.Now))
         });
 
         Log.User.LogInformation("{user} recorded a score of {score} on the leaderboard \"{lb}\" in \"{game}\"", user, score, leaderboardData, game);
@@ -481,7 +481,20 @@ static class Routes {
                 NumEntries = 1, // out of scope
                 Rank = 1
             },
-            TopEntries = new RALeaderboardResponse.TopObject[0] // out of scope
+            TopEntries = new RALeaderboardResponse.TopObject[0], // out of scope
+            Response = new RALeaderboardResponseV2() {
+                Success = true,
+                LBData = leaderboardData,
+                Score = score,
+                ScoreFormatted = score.ToString(), // TODO?
+                BestScore = userGameData.LeaderboardEntries[leaderboardId].Select(r => r.Score).Max(),
+                RankInfo = new RALeaderboardResponse.RankObject() {
+                    NumEntries = 1, // out of scope
+                    Rank = 1
+                },
+                TopEntries = new RALeaderboardResponse.TopObject[0], // out of scope
+                TopEntriesFriends = new RALeaderboardResponse.TopObject[0], // out of scope
+            }
         };
 
         await ctx.Response.SendJson(response);

@@ -1,4 +1,4 @@
-// noinspection EqualityComparisonWithCoercionJS,JSUnresolvedReference
+// noinspection EqualityComparisonWithCoercionJS,JSUnresolvedReference,HtmlRequiredAltAttribute,ExceptionCaughtLocallyJS,JSDuplicatedDeclaration
 
 var LAHEE_URL;
 var lahee_data;
@@ -153,20 +153,8 @@ function lahee_change_game() {
     var ru = document.getElementById("user_select").value;
     var rg = document.getElementById("game_select").value;
 
-    var user = null;
-    for (var u of lahee_data.users) {
-        if (u.ID == ru) {
-            user = u;
-            break;
-        }
-    }
-    var game = null;
-    for (var g of lahee_data.games) {
-        if (g.ID == rg) {
-            game = g;
-            break;
-        }
-    }
+    var user = (lahee_data.users.filter(u => u.ID == ru) ?? [])[0];
+    var game = (lahee_data.games.filter(g => g.ID == rg) ?? [])[0];
 
     if (!user || !game) {
         console.error("Can't switch to undefined user/game: " + user?.ID + "," + game?.ID);
@@ -178,6 +166,8 @@ function lahee_change_game() {
         return;
     }
 
+    var prev_user_id = lahee_user?.ID;
+
     lahee_user = user;
     lahee_game = game;
 
@@ -188,7 +178,10 @@ function lahee_change_game() {
     lahee_build_leaderboards(user, game);
     lahee_change_lb();
     lahee_update_game_status();
-    lahee_create_stats(user);
+    if (prev_user_id != user.ID) {
+        console.log("User changed (or first load), updating stats");
+        lahee_create_stats(user);
+    }
 }
 
 function lahee_autoselect_based_on_most_recent_achievement() {
@@ -281,11 +274,11 @@ function lahee_build_achievements(user, game) {
         }
         maxpt += a.Points;
 
-        content += `<img src="${status != 0 ? a.BadgeURL : a.BadgeLockedURL}" class="ach_type_${a.Type} ach_status_${status} ach_flags_${a.Flags} ${ug.FlaggedAchievements?.includes(a.ID) ? "ach_flag_important" : ""}" onclick="lahee_select_ach(${game.ID}, ${a.ID});" loading="lazy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-title="<b>${a.Title.replaceAll("\"", "&quot;")}</b> (${a.Points})<hr />${a.Description.replaceAll("\"", "&quot;")}" />`;
+        content += lahee_render_achievement(game, ug, a, ua);
     }
-    
-    if (tooltipList){
-        for (var t of tooltipList){
+
+    if (tooltipList) {
+        for (var t of tooltipList) {
             t.dispose();
         }
     }
@@ -316,46 +309,29 @@ function lahee_build_achievements(user, game) {
 }
 
 function lahee_select_ach(gid, aid) {
-    var ach;
-    for (var a of lahee_game.Achievements) {
-        if (a.ID == aid) {
-            ach = a;
-            break;
-        }
-    }
+    var ach = ((lahee_data.games.filter(g => g.ID == gid) ?? [])[0]?.Achievements.filter(a => a.ID == aid) ?? [])[0];
+
     if (!ach) {
         console.error("AID not found: " + aid);
         return;
     }
+
+    var game = lahee_get_game_by_achievement(ach.ID);
 
     lahee_achievement = aid;
 
     var ugd = lahee_user.GameData[gid];
     var ua = lahee_user.GameData[gid]?.Achievements[aid] ?? {};
 
-    var img = document.getElementById("adetail_img");
-    img.src = ua.Status ? a.BadgeURL : a.BadgeLockedURL;
-    img.classList.remove("ach_type_missable");
-    img.classList.remove("ach_type_progression");
-    img.classList.remove("ach_type_win_condition");
-    img.classList.remove("ach_flag_important");
-    for (var i = 0; i < 4; i++) {
-        img.classList.remove("ach_status_" + i);
-    }
-    img.classList.add("ach_type_" + a.Type);
-    img.classList.add("ach_status_" + ua.Status);
-    if (ugd && ugd.FlaggedAchievements?.includes(aid)) {
-        img.classList.add("ach_flag_important");
-    }
-
-    document.getElementById("adetail_title").innerText = a.Title;
-    document.getElementById("adetail_desc").innerText = a.Description;
-    var type = a.Type ?? "";
-    if ((a.Flags & 4) != 0) {
+    document.getElementById("adetail_img").innerHTML = lahee_render_achievement(game, ugd, ach, ua);
+    document.getElementById("adetail_title").innerText = ach.Title;
+    document.getElementById("adetail_desc").innerText = ach.Description;
+    var type = ach.Type ?? "";
+    if ((ach.Flags & 4) != 0) {
         type += " (Unofficial)";
     }
     document.getElementById("adetail_type").innerText = type;
-    document.getElementById("adetail_score").innerText = a.Points;
+    document.getElementById("adetail_score").innerText = ach.Points;
 
     var status = "Locked";
     var unlockDate = "Locked";
@@ -379,37 +355,41 @@ function lahee_select_ach(gid, aid) {
     document.getElementById("adetail_status").innerText = status;
     document.getElementById("adetail_unlock").innerText = unlockDate;
     document.getElementById("adetail_unlock_pt").innerText = unlockTime;
-
     document.getElementById("comment_controls").style.display = "block";
 
+    if (gid != lahee_game.ID) {
+        document.getElementById("game_select").value = gid;
+        lahee_change_game();
+    }
+    lahee_set_page('page_achievements');
     lahee_load_comments(aid);
 }
 
 function lahee_connect_liveticker() {
     var socket = new WebSocket("ws://" + (window.location.hostname != "" ? window.location.hostname : "localhost") + ":8001");
 
-    socket.onopen = function (e) {
-        console.log("[open] Connection established");
+    socket.onopen = function () {
+        console.log("[LiveTicker] Connection established");
         document.getElementById("ingame").innerText = "LiveTicker: Connected. Waiting for game start.";
     };
 
     socket.onmessage = function (event) {
-        console.log(`[message] Data received from server: ${event.data}`);
+        console.log("[LiveTicker] Data received from server: " + event.data);
         lahee_liveticker_update(JSON.parse(event.data));
     };
 
     socket.onclose = function (event) {
         if (event.wasClean) {
-            console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+            console.log("[LiveTicker] Connection closed cleanly, code=" + event.code + " reason=" + event.reason);
         } else {
-            console.log('[close] Connection died');
+            console.log("[LiveTicker] Connection died");
         }
         document.getElementById("ingame").innerText = "LiveTicker: Reconnecting...";
         setTimeout(lahee_connect_liveticker, 5000);
     };
 
     socket.onerror = function (error) {
-        console.log(`[error] ${error}`);
+        console.log("[LiveTicker] " + error);
     };
 }
 
@@ -449,20 +429,12 @@ function lahee_change_lb() {
     var lb_id = document.getElementById("lb_id").value;
 
     var ul = (lahee_user?.GameData[lahee_game.ID]?.LeaderboardEntries ?? [])[lb_id] ?? [];
-    var gl = null;
-
-    if (lahee_game?.Leaderboards) {
-        for (var glb of lahee_game.Leaderboards) {
-            if (glb.ID == lb_id) {
-                gl = glb;
-                break;
-            }
-        }
-    }
+    var gl = (lahee_game?.Leaderboards?.filter(glb => glb.ID == lb_id) ?? [])[0];
     if (!gl) {
         console.error("leaderboard id not found: " + lb_id);
         return;
     }
+
     var sort = document.getElementById("lbsort_select").value;
     var arr = ul.slice();
     for (var i = 0; i < arr.length; i++) {
@@ -499,13 +471,7 @@ function lahee_change_lb() {
 }
 
 function lahee_play_unlock_sound(gid, uad) {
-    var ach = null;
-    for (var a of lahee_game.Achievements) {
-        if (a.ID == uad.AchievementID) {
-            ach = a;
-            break;
-        }
-    }
+    var ach = (lahee_game.Achievements.filter(a => a.ID == uad.AchievementID) ?? [])[0];
 
     if (ach) {
         lahee_select_ach(gid, ach.ID);
@@ -595,6 +561,7 @@ function lahee_download_comments() {
     });
 }
 
+// noinspection JSUnusedGlobalSymbols
 function lahee_delete_comment(id) {
     if (confirm("Are you sure that you want to delete a comment?")) {
         lahee_request("r=laheedeletecomment&uuid=" + id + "&gameid=" + lahee_game.ID, function (ret) {
@@ -651,32 +618,23 @@ function lahee_create_stats(user) {
     var table_str = "";
 
     var longest_pt = {id: 0, v: 0};
-    var shortest_pf = {id: 0, v: 9999999999999};
+    var shortest_pt = {id: 0, v: 9999999999999};
     var fastest_100 = {id: 0, v: 9999999999999};
     var slowest_100 = {id: 0, v: 0};
     var fastest_beat = {id: 0, v: 9999999999999};
     var slowest_beat = {id: 0, v: 0};
-    var first_achievement = {id: 0, gid: 0, v: 9999999999999};
-    var nut_achievement = {id: 0, gid: 0, v: 0, g: "No Data"};
-    var grind_achievement = {id: 0, gid: 0, p: 0, v: 0};
     var first_play = new Date();
 
     game_counts[0] = lahee_data.games.length;
 
     for (var ug of Object.values(user.GameData)) {
-        var game = null;
-        for (var g of lahee_data.games) {
-            if (g.ID == ug.GameID) {
-                game = g;
-                break;
-            }
-        }
-        console.log("Checking: " + game?.Title + "(" + game?.ID + ")");
-        var uat = Object.values(ug.Achievements);
+        var game = (lahee_data.games.filter(g => g.ID == ug.GameID) ?? [])[0];
+        console.log("Checking: " + game?.Title + "(" + ug.GameID + ")");
+        var user_achievement_arr = Object.values(ug.Achievements);
 
         var total_achievements = game?.Achievements.length ?? -1;
-        var hardcore_achievements = uat.filter(a => a.Status == 2).length;
-        var softcore_achievements = uat.filter(a => a.Status == 1).length;
+        var hardcore_achievements = user_achievement_arr.filter(a => a.Status == 2).length;
+        var softcore_achievements = user_achievement_arr.filter(a => a.Status == 1).length;
         var completion_ids = game?.Achievements.filter(a => a.Type == "win_condition").map(a => a.ID) ?? [];
 
         var playtime_ms = 0;
@@ -688,9 +646,9 @@ function lahee_create_stats(user) {
             longest_pt.id = ug.GameID;
             longest_pt.v = playtime_ms;
         }
-        if (playtime_ms < shortest_pf.v && playtime_ms > 0) {
-            shortest_pf.id = ug.GameID;
-            shortest_pf.v = playtime_ms;
+        if (playtime_ms < shortest_pt.v && playtime_ms > 0) {
+            shortest_pt.id = ug.GameID;
+            shortest_pt.v = playtime_ms;
         }
         if ((hardcore_achievements + softcore_achievements) >= total_achievements && playtime_ms < fastest_100.v && playtime_ms > 0) {
             fastest_100.id = ug.GameID;
@@ -734,7 +692,7 @@ function lahee_create_stats(user) {
 
         var status = "";
         game_counts[1]++;
-        if (uat.filter(a => completion_ids.includes(a.AchievementID) && a.Status > 0).length > 0) {
+        if (user_achievement_arr.filter(a => completion_ids.includes(a.AchievementID) && a.Status > 0).length > 0) {
             status = "Beaten";
             game_counts[2]++;
         }
@@ -751,31 +709,10 @@ function lahee_create_stats(user) {
         ach_counts[1] += softcore_achievements + hardcore_achievements;
         ach_counts[2] += hardcore_achievements;
 
-        var arr = Object.values(ug.Achievements).sort(function (a, b) {
-            return Math.max(a.AchieveDate, a.AchieveDateSoftcore) - Math.max(b.AchieveDate, b.AchieveDateSoftcore);
-        });
-        var last_ach_pt = 0;
-        var last_ach_name = "No Data";
-        for (var ua of arr) {
-            var higherPlaytime = TimeSpan.parse(ua.AchieveDate > ua.AchieveDateSoftcore ? ua.AchievePlaytime : ua.AchievePlaytimeSoftcore);
-            if (higherPlaytime.valueOf() <= 0){
-                continue;
-            }
-            var diff = Math.abs(higherPlaytime.valueOf() - last_ach_pt);
-            if (diff > nut_achievement.v) {
-                nut_achievement.id = ua.AchievementID;
-                nut_achievement.gid = ug.GameID;
-                nut_achievement.v = diff;
-                nut_achievement.g = last_ach_name;
-                last_ach_name = game?.Achievements.filter(a => a.ID == ua.AchievementID)[0]?.Title ?? "Unknown Achievement: " + ua.AchievementID;
-            }
-            last_ach_pt = higherPlaytime.valueOf();
-        }
-
         if (game) {
-            game_pt_total = 0;
-            game_pt_hardcore = 0;
-            game_pt_softcore = 0;
+            var game_pt_total = 0;
+            var game_pt_hardcore = 0;
+            var game_pt_softcore = 0;
             for (var a of game.Achievements) {
                 game_pt_total += a.Points;
                 var ua = ug.Achievements[a.ID];
@@ -786,22 +723,8 @@ function lahee_create_stats(user) {
                     } else if (ua.Status == 1) {
                         game_pt_softcore += a.Points;
                     }
+
                     score_counts[ua.Status] += a.Points;
-
-                    var earlierAchieveDate = ua.AchieveDate == 0 || ua.AchieveDateSoftcore < ua.AchieveDate ? ua.AchieveDateSoftcore : ua.AchieveDate;
-                    var higherPlaytime = TimeSpan.parse(ua.AchieveDate > ua.AchieveDateSoftcore ? ua.AchievePlaytime : ua.AchievePlaytimeSoftcore);
-
-                    if (earlierAchieveDate < first_achievement.v && earlierAchieveDate > 0) {
-                        first_achievement.id = a.ID;
-                        first_achievement.gid = game.ID;
-                        first_achievement.v = earlierAchieveDate;
-                    }
-                    if (a.Points >= grind_achievement.p && higherPlaytime > grind_achievement.v) {
-                        grind_achievement.id = a.ID;
-                        grind_achievement.gid = game.ID;
-                        grind_achievement.p = a.Points;
-                        grind_achievement.v = higherPlaytime.valueOf();
-                    }
                 }
 
             }
@@ -810,7 +733,7 @@ function lahee_create_stats(user) {
 
             table_str += `
                 <tr>
-                    <td><img src="${game.ImageIconURL}" height="48" /></td>
+                    <td><img src="${game.ImageIconURL}" height="64" /></td>
                     <td>${game.Title}</td>
                     <td class="text-center">
                         ${softcore_achievements + hardcore_achievements} / ${total_achievements}
@@ -835,14 +758,11 @@ function lahee_create_stats(user) {
     }
 
     lahee_stats_render_game("l", user, longest_pt.id);
-    lahee_stats_render_game("s", user, shortest_pf.id);
+    lahee_stats_render_game("s", user, shortest_pt.id);
     lahee_stats_render_game("f1", user, fastest_100.id);
     lahee_stats_render_game("s1", user, slowest_100.id);
     lahee_stats_render_game("fb", user, fastest_beat.id, fastest_beat.v);
     lahee_stats_render_game("sb", user, slowest_beat.id, slowest_beat.v);
-    lahee_stats_render_ach("tf", user, first_achievement.id, first_achievement.gid);
-    lahee_stats_render_ach("tn", user, nut_achievement.id, nut_achievement.gid, TimeSpan.fromMilliseconds(nut_achievement.v).toStringWithoutMs() + "<br><small class='stats_small_text'>since "+nut_achievement.g+"</small>");
-    lahee_stats_render_ach("tg", user, grind_achievement.id, grind_achievement.gid);
 
     var tt = TimeSpan.fromMilliseconds(total_time);
     document.getElementById("total_time").innerText = tt.toStringWithoutMs() + " (" + Math.floor(tt.totalHours) + "h.)";
@@ -851,16 +771,13 @@ function lahee_create_stats(user) {
     document.getElementById("total_score").innerText = score_counts.map(n => n.toLocaleString()).join(" / ");
     document.getElementById("total_started").innerText = first_play.toLocaleDateString();
     document.getElementById("stats_table").innerHTML = table_str;
+
+    lahee_stats_render_milestones(user);
+    lahee_stats_render_meta_achievements(user);
 }
 
 function lahee_stats_render_game(suffix, user, gameid, time) {
-    var game = null;
-    for (var g of lahee_data.games) {
-        if (g.ID == gameid) {
-            game = g;
-            break;
-        }
-    }
+    var game = (lahee_data.games.filter(g => g.ID == gameid) ?? [])[0];
     var ug = user?.GameData[gameid];
 
     var total_achievements = game?.Achievements.length ?? -1;
@@ -883,41 +800,286 @@ function lahee_stats_render_game(suffix, user, gameid, time) {
     document.getElementById("game_time_" + suffix).innerText = time ? TimeSpan.fromMilliseconds(time).toStringWithoutMs() : (ug ? TimeSpan.parse(ug.PlayTimeApprox).toStringWithoutMs() : "--:--:--");
 }
 
-
-function lahee_stats_render_ach(suffix, user, aid, gameid, time) {
-    console.log("stats_render_ach: " + user + ", " + aid + ", " + gameid + ", " + time);
-    var game = null;
+function lahee_get_achievement(aid) {
     for (var g of lahee_data.games) {
-        if (g.ID == gameid) {
-            game = g;
-            break;
+        for (var a of g.Achievements) {
+            if (a.ID == aid) {
+                return a;
+            }
+        }
+    }
+    return null;
+}
+
+function lahee_get_game_by_achievement(aid) {
+    for (var g of lahee_data.games) {
+        for (var a of g.Achievements) {
+            if (a.ID == aid) {
+                return g;
+            }
+        }
+    }
+    return null;
+}
+
+function lahee_stats_render_milestones(user) {
+    var all_user_achievements = Object.values(user.GameData).flatMap((ug) => Object.values(ug.Achievements)).filter(a => a.Status != 0).sort(function (a, b) {
+        return Math.max(a.AchieveDate, a.AchieveDateSoftcore) - Math.max(b.AchieveDate, b.AchieveDateSoftcore);
+    });
+    var milestone_html = "";
+
+    var milestones = [1, 2, 5, 10, 15, 20, 25, 50, 100, 123, 150, 200, 250, 300, 350, 400, 450, 500, 600, 666, 700, 777, 800, 900, 1000, 1234, 1337, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 6000, 6666, 7000, 7777, 8000, 9000, 10000];
+    for (var i of milestones) {
+        if (all_user_achievements[i - 1]) {
+            var ua = all_user_achievements[i - 1];
+
+            var game = lahee_get_game_by_achievement(ua.AchievementID);
+            var ach = (game?.Achievements.filter(a => a.ID == ua.AchievementID) ?? [])[0];
+
+            milestone_html += `
+                <tr>
+                    <td><img src="${game?.ImageIconURL}" height="64" /></td>
+                    <td>${lahee_render_achievement(game, ua, ach, ua)}</td>
+                    <td>${ach?.Title ?? ("Unknown Achievement: " + ua.AchievementID)}<br /><small>${game?.Title ?? "Unknown Game"}</small></td>
+                    <td>${new Date(Math.max(ua.AchieveDate, ua.AchieveDateSoftcore) * 1000).toLocaleString()}</td>
+                    <td>${TimeSpan.parse(ua.AchieveDate != 0 ? ua.AchievePlaytime : ua.AchievePlaytimeSoftcore).toStringWithoutMs()}</td>
+                    <td>#${i}</td>
+                </tr>
+            `;
+        }
+    }
+    document.getElementById("milestones_table").innerHTML = milestone_html;
+}
+
+// object returned from any of the lahee_check_meta_* functions
+class LaheeMetaResult {
+    // the achievement that fulfills this meta-achievement
+    user_achievement;
+    // the name of the meta-achievement
+    name;
+    // explanation of the meta-achievement
+    description;
+    // an array of achievements related to fulfilling the condition
+    related_user_achievements;
+
+    constructor(ua, name, description, rel_ua = null) {
+        this.user_achievement = ua;
+        this.name = name;
+        this.description = description;
+        this.related_user_achievements = rel_ua;
+    }
+}
+
+function lahee_stats_render_meta_achievements(user) {
+    // any meta functions must return LaheeMetaResult
+    var meta_conditions = [
+        lahee_check_meta_first,
+        lahee_check_meta_nut,
+        lahee_check_meta_grind,
+        lahee_check_meta_combo
+    ];
+
+    var meta_html = "";
+
+    for (var cond of meta_conditions) {
+        var meta_data = cond(user);
+        if (meta_data) {
+            var ua = meta_data.user_achievement;
+            var game = lahee_get_game_by_achievement(ua.AchievementID);
+            var ug = lahee_user.GameData[game?.ID];
+            var ach = (game?.Achievements.filter(a => a.ID == ua.AchievementID) ?? [])[0];
+
+            var related_html = "";
+            for (var related_ua of meta_data.related_user_achievements ?? []) {
+                var related_ach = (game?.Achievements.filter(a => a.ID == related_ua.AchievementID) ?? [])[0];
+                related_html += lahee_render_achievement(game, ug, related_ach, ua);
+            }
+
+            meta_html += `
+                <tr>
+                    <td>${meta_data.name}<br /><small>${meta_data.description}</small></td>
+                    <td><img src="${game?.ImageIconURL}" height="64" /></td>
+                    <td>${lahee_render_achievement(game, ug, ach, ua)}</td>
+                    <td>${ach?.Title ?? ("Unknown Achievement: " + ua.AchievementID)}<br /><small>${game?.Title ?? "Unknown Game"}</small></td>
+                    <td>${related_html}</td>
+                    <td>${new Date(Math.max(ua.AchieveDate, ua.AchieveDateSoftcore) * 1000).toLocaleString()}</td>
+                    <td>${TimeSpan.parse(ua.AchieveDate != 0 ? ua.AchievePlaytime : ua.AchievePlaytimeSoftcore).toStringWithoutMs()}</td>
+                </tr>
+            `;
         }
     }
 
-    var a = (game?.Achievements.filter(a => a.ID == aid) ?? [])[0];
-    var ua = user?.GameData[gameid]?.Achievements[aid];
+    document.getElementById("meta_table").innerHTML = meta_html;
+}
 
-    var earlydate = null;
-    var earlypt = null;
-    if (ua) {
-        if (ua.AchieveDate != 0 && ua.AchieveDate < ua.AchieveDateSoftcore) {
-            earlydate = ua.AchieveDate;
-            earlypt = ua.AchievePlaytime;
-        } else {
-            earlydate = ua.AchieveDateSoftcore;
-            earlypt = ua.AchievePlaytimeSoftcore;
+function lahee_check_meta_first(user) {
+    var all_user_achievements_sorted = Object.values(user.GameData).flatMap((ug) => Object.values(ug.Achievements)).filter(a => a.Status != 0).sort(function (a, b) {
+        return Math.max(a.AchieveDate, a.AchieveDateSoftcore) - Math.max(b.AchieveDate, b.AchieveDateSoftcore);
+    });
+
+    if (all_user_achievements_sorted[0]) {
+        return new LaheeMetaResult(all_user_achievements_sorted[0], "The First", "The very first achievement you have obtained.");
+    }
+
+    return null;
+}
+
+function lahee_check_meta_nut(user) {
+    var all_user_achievements = Object.values(user.GameData).flatMap((ug) => Object.values(ug.Achievements));
+
+    if (all_user_achievements.length < 2) { // condition can't be met if we have less than 2 achievements
+        return null;
+    }
+
+    var highest_diff = 0; // currently highest time difference between two achievements
+    var highest_diff_previous_ua = null; // achievement before our current top time difference candidate
+    var highest_diff_ua = null; // current highest time difference achievement
+
+    for (const is_hardcore of [false, true]) {
+
+        var previous_ua = null;
+        var all_user_achievements_sorted = all_user_achievements.slice().sort(function (a, b) {
+            return is_hardcore ? a.AchieveDate - b.AchieveDate : a.AchieveDateSoftcore - b.AchieveDateSoftcore;
+        });
+
+        for (var ua of all_user_achievements_sorted) {
+
+            var playtime = TimeSpan.parse(is_hardcore ? ua.AchievePlaytime : ua.AchievePlaytimeSoftcore).valueOf();
+            if (playtime <= 0) {
+                continue;
+            }
+
+            var previous_playtime = previous_ua ? TimeSpan.parse(is_hardcore ? previous_ua.AchievePlaytime : previous_ua.AchievePlaytimeSoftcore).valueOf() : 0;
+
+            var diff = Math.abs(playtime - previous_playtime);
+            if (diff > highest_diff) {
+                var game1 = lahee_get_game_by_achievement(ua.AchievementID);
+                var game2 = lahee_get_game_by_achievement(previous_ua?.AchievementID);
+                if (!game2 || game1.ID == game2.ID) {
+                    console.log("new nut: " + ua.AchievementID + " from " + previous_ua?.AchievementID + ", diff=" + diff);
+                    highest_diff = diff;
+                    highest_diff_previous_ua = previous_ua;
+                    highest_diff_ua = ua;
+                }
+            }
+
+            previous_ua = ua;
         }
     }
 
-    var img = document.getElementById("ach_img_" + suffix);
-    for (var i = 0; i < 4; i++) {
-        img.classList.remove("ach_status_" + i);
+    if (highest_diff_ua) {
+        var ach = lahee_get_achievement(highest_diff_previous_ua.AchievementID);
+        return new LaheeMetaResult(highest_diff_ua, "The Nut", "The achievement with the longest time between the previous achievement and this one.<br>(You: " + TimeSpan.fromMilliseconds(highest_diff).toStringWithoutMs() + " since " + (ach.Title ?? "Unknown Achievement: " + highest_diff_previous_ua.AchievementID) + ")", [highest_diff_previous_ua]);
     }
-    img.classList.add("ach_status_" + ua?.Status);
-    img.src = a ? a.BadgeURL : "";
-    document.getElementById("ach_title_" + suffix).innerText = a ? a.Title + " (" + a.Points + ")" : (aid > 0 ? "Unknown Achievement: " + gameid : "No Data");
-    document.getElementById("ach_description_" + suffix).innerText = a ? a.Description : (aid > 0 ? "Unknown Achievement: " + gameid : "No Data");
-    document.getElementById("ach_game_" + suffix).innerText = game ? game.Title : (gameid > 0 ? "Unknown Game: " + gameid : "No Data");
-    document.getElementById("ach_time_" + suffix).innerHTML = time ? time : (ua ? TimeSpan.parse(earlypt).toStringWithoutMs() : "--:--:--");
-    document.getElementById("ach_dtime_" + suffix).innerText = earlydate ? new Date(earlydate * 1000).toLocaleString() : "--:--:--";
+
+    return null;
+}
+
+function lahee_check_meta_grind(user) {
+    var all_user_achievements_sorted = Object.values(user.GameData).flatMap((ug) => Object.values(ug.Achievements)).sort(function (a, b) {
+        return Math.max(a.AchieveDate, a.AchieveDateSoftcore) - Math.max(b.AchieveDate, b.AchieveDateSoftcore);
+    });
+
+    var current_highest_points = 0;
+    var current_highest_playtime = 0;
+    var current_highest_ua = null;
+
+    for (var ua of all_user_achievements_sorted) {
+        var game = lahee_get_game_by_achievement(ua.AchievementID);
+        var ach = (game?.Achievements.filter(a => a.ID == ua.AchievementID) ?? [])[0];
+
+        var playtime = TimeSpan.parse(ua.AchieveDate != 0 ? ua.AchievePlaytime : ua.AchievePlaytimeSoftcore).valueOf();
+
+        if ((ach && ach.Points >= current_highest_points) && (!current_highest_ua || playtime > current_highest_playtime)) {
+            current_highest_points = ach.Points;
+            current_highest_playtime = playtime;
+            current_highest_ua = ua;
+        }
+    }
+
+    if (current_highest_ua != null) {
+        return new LaheeMetaResult(current_highest_ua, "The Grind", "The achievement with the highest point value obtained after the longest amount of play time.<br>(You: " + current_highest_points + " Points)");
+    }
+
+    return null;
+}
+
+function lahee_check_meta_combo(user) {
+    var all_user_achievements = Object.values(user.GameData).flatMap((ug) => Object.values(ug.Achievements));
+
+    if (all_user_achievements.length < 2) { // condition can't be met if we have less than 2 achievements
+        return null;
+    }
+
+    var highest_combo_count = 1; // combo needs to be longer than 1
+    var highest_combo_ua = []; // achievements of current best combo
+    var highest_combo_time = 0; // time length how long the achievement combo was held
+
+    for (const is_hardcore of [false, true]) {
+
+        var all_user_achievements_sorted = all_user_achievements.sort(function (a, b) {
+            return is_hardcore ? a.AchievePlaytime - b.AchievePlaytime : a.AchievePlaytimeSoftcore - b.AchievePlaytimeSoftcore;
+        });
+
+        var current_combo_count = 0;
+        var current_combo_ua = [];
+        var current_combo_diff_total = 0;
+        var previous_ua = null;
+
+        for (var ua of all_user_achievements_sorted) {
+
+            var playtime = TimeSpan.parse(is_hardcore ? ua.AchievePlaytime : ua.AchievePlaytimeSoftcore).valueOf();
+            if (playtime <= 0) {
+                continue;
+            }
+
+            var previous_playtime = previous_ua ? TimeSpan.parse(is_hardcore ? previous_ua.AchievePlaytime : previous_ua.AchievePlaytimeSoftcore).valueOf() : 0;
+
+            var diff = Math.abs(playtime - previous_playtime);
+            if (diff < 1000 * 60 * 10) { // at most 10 minutes between achievements
+                current_combo_count++;
+                current_combo_diff_total += diff;
+                current_combo_ua.push(ua);
+            } else {
+
+                if (current_combo_count > highest_combo_count) {
+                    highest_combo_count = current_combo_count;
+                    highest_combo_ua = current_combo_ua;
+                    highest_combo_time = current_combo_diff_total;
+                }
+
+                current_combo_count = 1;
+                current_combo_ua = [ua];
+                current_combo_diff_total = 0;
+            }
+
+            previous_ua = ua;
+        }
+    }
+
+    if (highest_combo_count > 1) {
+        return new LaheeMetaResult(highest_combo_ua[0], "The Combo", "The longest combo of achievements within 10 minutes of each other.<br>(You: " + highest_combo_count + " within " + TimeSpan.fromMilliseconds(highest_combo_time).toStringWithoutMs() + ")", highest_combo_ua);
+    }
+
+    return null;
+}
+
+function lahee_render_achievement(game, ug, a, ua) {
+    var status = ua.Status ?? 0;
+    if (!a) {
+        a = {
+            Title: "Unknown Achievement: " + ua.AchievementID,
+            Description: "Unknown Achievement",
+            Flags: 0,
+            Type: "",
+            BadgeURL: "/Badge/00000.png",
+            BadgeLockedURL: "/Badge/00000.png"
+        };
+    }
+    if (!game) {
+        game = {
+            ID: 0
+        };
+    }
+    return `<img src="${status != 0 ? a.BadgeURL : a.BadgeLockedURL}" class="ach ach_type_${a.Type} ach_status_${status} ach_flags_${a.Flags} ${ug?.FlaggedAchievements?.includes(a.ID) ? "ach_flag_important" : ""}" onclick="lahee_select_ach(${game.ID}, ${a.ID});" loading="lazy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-title="<b>${a.Title.replaceAll("\"", "&quot;")}</b> (${a.Points})<hr />${a.Description.replaceAll("\"", "&quot;")}" />`;
 }

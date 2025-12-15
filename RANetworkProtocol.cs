@@ -83,6 +83,7 @@ class RAUnlockResponse : RAAnyResponse {
 }
 
 class RALeaderboardResponse : RAAnyResponse {
+    public RALeaderboardResponseV2 Response;
     public int Score;
     public int BestScore;
     public RankObject RankInfo;
@@ -98,6 +99,16 @@ class RALeaderboardResponse : RAAnyResponse {
         public int Rank;
         public int Score;
     }
+}
+
+class RALeaderboardResponseV2 : RAAnyResponse {
+    public LeaderboardData LBData;
+    public int Score;
+    public String ScoreFormatted;
+    public int BestScore;
+    public RALeaderboardResponse.RankObject RankInfo;
+    public RALeaderboardResponse.TopObject[] TopEntries;
+    public RALeaderboardResponse.TopObject[] TopEntriesFriends;
 }
 
 class LaheeResponse {
