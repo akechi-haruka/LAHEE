@@ -155,15 +155,22 @@
                     <div id="comment_controls" style="display: none;">
                         <div class="row my-2">
                             <div class="col">
-                                <input type="button" class="btn btn-primary w-100" value="Add Notes" onclick="lahee_show_comment_editor();" />
+                                <input type="button" class="btn btn-warning w-100" value="Flag"
+                                       onclick="lahee_flag_important();"/>
+                            </div>
+                            <div class="col">
+                                <input id="download_ach_code_btn" type="button" class="btn btn-secondary w-100"
+                                       value="View Code" onclick="lahee_show_code_popup();"/>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col">
-                                <input type="button" class="btn btn-warning w-100" value="Flag" onclick="lahee_flag_important();" />
+                                <input type="button" class="btn btn-primary w-100" value="Add Notes"
+                                       onclick="lahee_show_comment_editor();"/>
                             </div>
                             <div class="col">
-                                <input id="ra_download_btn" type="button" onclick="lahee_download_comments();" class="btn btn-secondary w-100" value="Copy from RA" />
+                                <input id="ra_download_btn" type="button" onclick="lahee_download_comments();"
+                                       class="btn btn-secondary w-100" value="DL Notes"/>
                             </div>
                         </div>
                         <div id="comment_container">
@@ -366,6 +373,58 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="lahee_popup.hide();">Close (Esc)</button>
                     <button type="button" class="btn btn-primary" onclick="lahee_write_comment();">Add Notes (Ctrl+Enter)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="codeModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="codeModalTitle">Achievement Code</h5>
+                </div>
+                <div class="modal-body">
+                    <p id="ach_code_desc"></p>
+                    <table class="table table-striped">
+                        <thead class="thead-light">
+                        <tr>
+                            <th>Flag</th>
+                            <th>Type</th>
+                            <th>Mem</th>
+                            <th>Cmp</th>
+                            <th>Type</th>
+                            <th>Mem/Val</th>
+                            <th><span class="hoverable_text"
+                                      title="0 means the requirement must be true at the time the achievement triggers.&#013;Any other value indicates the number of frames a requirement must be true before the achievement can trigger.">Hits</span>
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody id="ach_code_table">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="lahee_popup.hide();">
+                        Close (Esc)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="extendedCodeNoteModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="extendedCodeNoteTitle"></h5>
+                </div>
+                <div class="modal-body" id="extendedCodeNoteModalText">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal"
+                            onclick="lahee_popup_2.hide();">Close
+                    </button>
                 </div>
             </div>
         </div>

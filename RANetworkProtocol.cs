@@ -1,5 +1,7 @@
 ﻿using LAHEE.Data;
 using LAHEE.Data.File;
+using RATools.Data;
+using CodeNote = LAHEE.Data.CodeNote;
 
 // these are defined by RA, therefore disable checks
 
@@ -185,4 +187,9 @@ class RAUploadFileResponse : RAAnyResponse {
 
 class RARichPresencePatchResponse : RAAnyResponse {
     public String RichPresencePatch;
+}
+
+class LaheeAchievementCodeResponse : RAAnyResponse {
+    public List<CodeNote> CodeNotes;
+    public RequirementGroup[] TriggerGroups;
 }

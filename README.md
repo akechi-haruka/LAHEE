@@ -82,7 +82,8 @@ Data is saved in `<lahee root>\User\<username>.json`, if you want to back up you
 2. Set "WebApiKey" to the Web API Key found on https://retroachievements.org/settings, aswell as "Username" and "Password" to your real RetroAchievements account.
 3. After starting LAHEE, type in `fetch XXXX` where XXXX is the game ID you want to get achievements for. This ID can be found in the URL of the achievements page (ex. for FFCC: https://retroachievements.org/game/3885, this would be 3885).
 
-Additionally, you can also install http://localhost:8000/lahee.user.js, if you are running a userscript manager to add a button to the real RetroAchievements website to import sets directly to LAHEE.
+Alternatively, you can also install http://localhost:8000/lahee.user.js, if you are running a userscript manager to add
+a button to the real RetroAchievements website to import sets directly to LAHEE.
 
 ## Adding achievements (via RAIntegration)
 

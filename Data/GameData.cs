@@ -58,6 +58,10 @@ public class GameData {
         return GetAllAchievements().Where(a => a.ID == achievementId).FirstOrDefault((AchievementData)null);
     }
 
+    public AchievementData GetAchievementById(uint achievementId) {
+        return GetAllAchievements().Where(a => a.ID == achievementId).FirstOrDefault((AchievementData)null);
+    }
+
     public LeaderboardData GetLeaderboardById(int leaderboardId) {
         return GetAllLeaderboards().Where(l => l.ID == leaderboardId).FirstOrDefault((LeaderboardData)null);
     }

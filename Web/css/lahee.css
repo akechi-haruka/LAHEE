@@ -54,10 +54,12 @@ main.container {
 
 .ach_status_1 {
     border-color: transparent !important; /* override missable type */
+    filter: none !important; /* override unofficial */
 }
 
 .ach_status_2 {
     border-color: gold !important;
+    filter: none !important; /* override unofficial */
 }
 
 table {
@@ -107,5 +109,27 @@ table {
 
 .ach_flags_4, .ach_flags_5 {
     filter: sepia(100%);
-    border-color: brown !important;
+    border-color: brown;
+}
+
+.hoverable_text {
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    cursor: pointer;
+}
+
+.modal:nth-of-type(odd) {
+    z-index: 1049 !important;
+}
+
+.modal-backdrop.show:nth-of-type(odd) {
+    z-index: 1048 !important;
+}
+
+.modal:nth-of-type(even) {
+    z-index: 1052 !important;
+}
+
+.modal-backdrop.show:nth-of-type(even) {
+    z-index: 1051 !important;
 }

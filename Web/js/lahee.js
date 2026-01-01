@@ -6,6 +6,7 @@ var lahee_user;
 var lahee_game;
 var lahee_last_audio = 0;
 var lahee_popup;
+var lahee_popup_2;
 var lahee_achievement;
 
 var tooltipList;
@@ -1064,7 +1065,7 @@ function lahee_check_meta_combo(user) {
     return null;
 }
 
-function lahee_render_achievement(game, ug, a, ua) {
+function lahee_render_achievement(game, ug, a, ua, size) {
     var status = ua.Status ?? 0;
     if (!a) {
         a = {
@@ -1081,5 +1082,414 @@ function lahee_render_achievement(game, ug, a, ua) {
             ID: 0
         };
     }
-    return `<img src="${status != 0 ? a.BadgeURL : a.BadgeLockedURL}" class="ach ach_type_${a.Type} ach_status_${status} ach_flags_${a.Flags} ${ug?.FlaggedAchievements?.includes(a.ID) ? "ach_flag_important" : ""}" onclick="lahee_select_ach(${game.ID}, ${a.ID});" loading="lazy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-title="<b>${a.Title.replaceAll("\"", "&quot;")}</b> (${a.Points})<hr />${a.Description.replaceAll("\"", "&quot;")}" />`;
+    return `<img src="${status != 0 ? a.BadgeURL : a.BadgeLockedURL}" class="ach ach_type_${a.Type} ach_status_${status} ach_flags_${a.Flags} ${ug?.FlaggedAchievements?.includes(a.ID) ? "ach_flag_important" : ""}" onclick="lahee_select_ach(${game.ID}, ${a.ID});" loading="lazy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-title="<b>${a.Title.replaceAll("\"", "&quot;")}</b> (${a.Points})<hr />${a.Description.replaceAll("\"", "&quot;")}" ${size ? "width='" + size + "'" : ""} />`;
+}
+
+function lahee_show_code_popup() {
+    var ach = lahee_get_achievement(lahee_achievement);
+    var game = lahee_get_game_by_achievement(lahee_achievement);
+    if (!ach || !game) {
+        return;
+    }
+
+    var ug = lahee_user.GameData[game.ID] ?? {};
+    var ua = (ug?.Achievements ?? [])[ach.ID] ?? {};
+
+    if (!ach.MemAddr) {
+        alert("This achievement has no code.");
+        return;
+    }
+
+    document.getElementById("download_ach_code_btn").disabled = true;
+    lahee_request("r=laheeachievementcode&gameid=" + game.ID + "&aid=" + lahee_achievement, function (ret) {
+        if (ret.Success) {
+            lahee_update_code_popup(game, ug, ach, ua, ret.CodeNotes, ret.TriggerGroups);
+            lahee_popup = new bootstrap.Modal(document.getElementById('codeModal'), {});
+            lahee_popup.show();
+            document.getElementById("download_ach_code_btn").disabled = false;
+        } else {
+            throw new Error(ret.Error);
+        }
+    }, function (e) {
+        document.getElementById("download_ach_code_btn").disabled = false;
+        alert("Error occurred while loading data: " + e);
+    });
+}
+
+function lahee_update_code_popup(game, ug, a, ua, codenotes, groups) {
+    var html = "";
+
+    for (var i = 0; i < groups.length; i++) {
+        var group = groups[i];
+        var ht = i == 0 ? "All the conditions in the core group must be true" : "When using Alt groups, for the achievement to trigger, all the conditions in the Core group MUST be true.&#013;And then all the conditions of ANY Alt group must be true.&#013;In other words, each Alt group uses OR logic.";
+        html += "<tr><td colspan='7' class='text-center fw-bold'><span class='hoverable_text' title='" + ht + "'>Group " + (i + 1) + " (" + (i == 0 ? "Core" : "Alt " + i) + ")</span></td></tr>";
+
+        for (var req of group.Requirements) {
+
+            html += `<tr>
+                <td><span class="hoverable_text" title="${lahee_trigger_parse_type_desc(req.Type)}">${lahee_trigger_parse_type(req.Type)}</span></td>
+                <td>
+                    <span class="hoverable_text" title="${lahee_trigger_field_parse_type_desc(req.Left.Type)}">${lahee_trigger_field_parse_type(req.Left.Type)}</span>
+                    <span class="hoverable_text" title="${lahee_trigger_field_parse_size_desc(req.Left.Size)}">${lahee_trigger_field_parse_size(req.Left.Size)}</span>
+                </td>
+                <td>${lahee_trigger_render_value(codenotes, req.Left)}</td>
+                <td>${lahee_trigger_get_operator(req.Operator)}</td>
+                <td>
+                    <span class="hoverable_text" title="${lahee_trigger_field_parse_type_desc(req.Right.Type)}">${lahee_trigger_field_parse_type(req.Right.Type)}</span>
+                    <span class="hoverable_text" title="${lahee_trigger_field_parse_size_desc(req.Right.Size)}">${lahee_trigger_field_parse_size(req.Right.Size)}</span>
+                </td>
+                <td>${lahee_trigger_render_value(codenotes, req.Right)}</td>
+                <td>${req.HitCount}</td>
+            </tr>`;
+        }
+
+    }
+
+    document.getElementById("codeModalTitle").innerHTML = lahee_render_achievement(game, ug, a, ua, 32) + " " + a.Title + ": Achievement Code";
+    document.getElementById("ach_code_desc").innerHTML = a.Description;
+    document.getElementById("ach_code_table").innerHTML = html;
+}
+
+function lahee_trigger_parse_type(t) {
+    switch (t) {
+        case 0:
+            return "";
+        case 1:
+            return "ResetIf";
+        case 2:
+            return "PauseIf";
+        case 3:
+            return "AddSource";
+        case 4:
+            return "SubSource";
+        case 5:
+            return "AddHits";
+        case 6:
+            return "SubHits";
+        case 7:
+            return "AndNext";
+        case 8:
+            return "OrNext";
+        case 9:
+            return "Measured";
+        case 10:
+            return "MeasuredIf";
+        case 11:
+            return "AddAddress";
+        case 12:
+            return "ResetNextIf";
+        case 13:
+            return "Trigger";
+        case 14:
+            return "MeasuredPercent";
+        case 15:
+            return "Remember";
+        default:
+            return "Unknown: " + t;
+    }
+}
+
+function lahee_trigger_parse_type_desc(t) {
+    switch (t) {
+        case 0:
+            return "";
+        case 1:
+            return "Resets any HitCounts in the current requirement group if true.";
+        case 2:
+            return "Pauses processing of the achievement if true.";
+        case 3:
+            return "Adds the Left part of the requirement to the Left part of the next requirement.";
+        case 4:
+            return "Subtracts the Left part of the next requirement from the Left part of the requirement.";
+        case 5:
+            return "Adds the HitsCounts from this requirement to the next requirement.";
+        case 6:
+            return "Subtracts the HitsCounts from this requirement from the next requirement.";
+        case 7:
+            return "This requirement must also be true for the next requirement to be true.";
+        case 8:
+            return "This requirement or the following requirement must be true for the next requirement to be true.";
+        case 9:
+            return "Meta-flag indicating that this condition tracks progress as a raw value.";
+        case 10:
+            return "Meta-flag indicating that this condition must be true to track progress.";
+        case 11:
+            return "Adds the Left part of the requirement to the addresses in the next requirement.";
+        case 12:
+            return "Resets any HitCounts on the next requirement group if true.";
+        case 13:
+            return "While all non-Trigger conditions are true, a challenge indicator will be displayed.";
+        case 14:
+            return "Meta-flag indicating that this condition tracks progress as a percentage.";
+        case 15:
+            return "Meta-flag to capture the accumulator for further modification.";
+        default:
+            return "Unknown: " + t;
+    }
+}
+
+function lahee_trigger_get_operator(o) {
+    switch (o) {
+        case 0:
+            return "";
+        case 1:
+            return "==";
+        case 2:
+            return "!=";
+        case 3:
+            return "<";
+        case 4:
+            return "<=";
+        case 5:
+            return ">";
+        case 6:
+            return ">=";
+        case 7:
+            return "+";
+        case 8:
+            return "-";
+        case 9:
+            return "*";
+        case 10:
+            return "/";
+        case 11:
+            return "&";
+        case 12:
+            return "^";
+        case 13:
+            return "%";
+        default:
+            return "Unknown: " + t;
+    }
+}
+
+function lahee_trigger_field_parse_type(o) {
+    switch (o) {
+        case 0:
+            return "";
+        case 1:
+            return "Memory";
+        case 2:
+            return "Constant";
+        case 3:
+            return "Delta";
+        case 4:
+            return "Prior";
+        case 5:
+            return "Memory (BCD)";
+        case 6:
+            return "Float";
+        case 7:
+            return "Memory (Inverse)";
+        case 8:
+            return "Recall";
+        default:
+            return "Unknown: " + o;
+    }
+}
+
+function lahee_trigger_field_parse_type_desc(o) {
+    switch (o) {
+        case 0:
+            return "";
+        case 1:
+            return "The value at a memory address.";
+        case 2:
+            return "An unsigned integer constant.";
+        case 3:
+            return "The previous value at a memory address.";
+        case 4:
+            return "The last differing value at a memory address.";
+        case 5:
+            return "The current value at a memory address decoded from BCD.";
+        case 6:
+            return "A floating point constant.";
+        case 7:
+            return "The bitwise inversion of the value at a memory address.";
+        case 8:
+            return "The accumulator captured by a Remember condition.";
+        default:
+            return "Unknown: " + o;
+    }
+}
+
+function lahee_trigger_field_parse_size(s) {
+    switch (s) {
+        case 0:
+            return "";
+        case 1:
+            return "Bit 0";
+        case 2:
+            return "Bit 1";
+        case 3:
+            return "Bit 2";
+        case 4:
+            return "Bit 3";
+        case 5:
+            return "Bit 4";
+        case 6:
+            return "Bit 5";
+        case 7:
+            return "Bit 6";
+        case 8:
+            return "Bit 7";
+        case 9:
+            return "Low Nibble";
+        case 10:
+            return "High Nibble";
+        case 11:
+            return "8-bit";
+        case 12:
+            return "16-bit LE";
+        case 13:
+            return "24-bit LE";
+        case 14:
+            return "32-bit LE";
+        case 15:
+            return "BitCount";
+        case 16:
+            return "16-bit BE";
+        case 17:
+            return "24-bit BE";
+        case 18:
+            return "32-bit BE";
+        case 19:
+            return "Float";
+        case 20:
+            return "MBF32";
+        case 21:
+            return "MBF32 LE";
+        case 22:
+            return "Float BE";
+        case 23:
+            return "Double";
+        case 24:
+            return "Double BE";
+        case 25:
+            return "Array";
+        default:
+            return "Unknown: " + s;
+    }
+}
+
+function lahee_trigger_field_parse_size_desc(s) {
+    switch (s) {
+        case 0:
+            return "";
+        case 1:
+            return "Bit 0 of a byte.";
+        case 2:
+            return "Bit 1 of a byte.";
+        case 3:
+            return "Bit 2 of a byte.";
+        case 4:
+            return "Bit 3 of a byte.";
+        case 5:
+            return "Bit 4 of a byte.";
+        case 6:
+            return "Bit 5 of a byte.";
+        case 7:
+            return "Bit 6 of a byte.";
+        case 8:
+            return "Bit 7 of a byte.";
+        case 9:
+            return "Bits 0-3 of a byte.";
+        case 10:
+            return "Bits 4-7 of a byte.";
+        case 11:
+            return "A byte (8-bits).";
+        case 12:
+            return "Two bytes (16-bit). Read from memory in little-endian mode.";
+        case 13:
+            return "Three bytes (24-bit). Read from memory in little-endian mode.";
+        case 14:
+            return "Four bytes (32-bit). Read from memory in little-endian mode.";
+        case 15:
+            return "The number of bits set in a byte.";
+        case 16:
+            return "Two bytes (16-bit). Read from memory in big-endian mode.";
+        case 17:
+            return "Three bytes (24-bit). Read from memory in big-endian mode.";
+        case 18:
+            return "Four bytes (32-bit). Read from memory in big-endian mode.";
+        case 19:
+            return "32-bit IEE-754 floating point number.";
+        case 20:
+            return "32-bit Microsoft Binary Format floating point number.";
+        case 21:
+            return "32-bit Microsoft Binary Format floating point number in little-endian mode.";
+        case 22:
+            return "32-bit IEE-754 floating point number in big-endian mode";
+        case 23:
+            return "Most significant 32-bits of an IEE-754 double number (64-bit float).";
+        case 24:
+            return "Most significant 32-bits of an IEE-754 double number (64-bit float) in big endian mode.";
+        case 25:
+            return "Virtual size indicating a value takes an arbitrary number of bytes";
+        default:
+            return "Unknown: " + s;
+    }
+}
+
+function lahee_find_code_note_text(codenotes, addr) {
+    if (!codenotes) {
+        return null;
+    }
+    for (var cn of codenotes) {
+        if (Number(cn.Address) == addr) {
+            return cn.Note;
+        }
+    }
+    return null;
+}
+
+function lahee_trigger_render_value(codenotes, field) {
+    var cn = null;
+    if (field.IsMemoryReference) {
+        cn = lahee_find_code_note_text(codenotes, field.Value);
+    }
+
+    var val;
+    var addr;
+    if (field.IsMemoryReference) {
+        addr = "0x" + field.Value.toString(16);
+        val = "<i>" + addr + "</i>";
+    } else {
+        val = field.Float != 0 ? field.Float : field.Value;
+        addr = field.Float == 0 ? "0x" + val.toString(16) : null;
+    }
+
+    if (cn) { // If we have code notes, cut down the text a bit for inline display
+        var was_cut = false;
+        var string_cutoff = cn.indexOf("\n"); // only show first line if multiline
+        if (string_cutoff > 0) {
+            val = cn.substring(0, string_cutoff);
+            was_cut = true;
+        } else {
+            val = cn;
+        }
+        string_cutoff = val.indexOf(". "); // only show first sentence if they are not seperated by newlines
+        if (string_cutoff > 0) {
+            val = val.substring(0, string_cutoff);
+            was_cut = true;
+        }
+        var tcn = addr + ": " + cn.replaceAll("\'", "&#39;").replaceAll("\n", "&#013;");
+        var ecn = cn.replaceAll("\'", "&#39;").replaceAll("\n", "<br />");
+        if (was_cut) {
+            return "<a class='hoverable_text' title='" + tcn + "' onclick='lahee_show_extended_cn(`" + addr + "`, `" + ecn + "`)'>" + val + "</a>";
+        } else {
+            return "<span class='hoverable_text' title='" + tcn + "'>" + val + "</span>";
+        }
+    } else if (addr && !field.IsMemoryReference) {
+        return "<span class='hoverable_text' title='" + addr + "'>" + val + "</span>";
+    } else {
+        return val;
+    }
+}
+
+function lahee_show_extended_cn(addr, text) {
+    document.getElementById("extendedCodeNoteTitle").innerHTML = addr;
+    document.getElementById("extendedCodeNoteModalText").innerHTML = text;
+    lahee_popup_2 = new bootstrap.Modal(document.getElementById('extendedCodeNoteModal'), {});
+    lahee_popup_2.show();
 }

@@ -15,10 +15,10 @@
 		<Description>RetroAchievements API Emulator</Description>
 		<Copyright>2024-2025 Akechi Haruka</Copyright>
 		<IncludeSourceRevisionInInformationalVersion>true</IncludeSourceRevisionInInformationalVersion>
-        <AssemblyVersion>1.13</AssemblyVersion>
-        <FileVersion>1.13</FileVersion>
+        <AssemblyVersion>1.14</AssemblyVersion>
+        <FileVersion>1.14</FileVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <Version>1.13</Version>
+        <Version>1.14</Version>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -82,7 +82,11 @@
 		</None>
 	</ItemGroup>
 
-	<Target Name="SetHash" AfterTargets="InitializeSourceControlInformation">
+    <ItemGroup>
+        <ProjectReference Include="..\RATools\Source\Data\RATools.Data.csproj"/>
+    </ItemGroup>
+
+    <Target Name="SetHash" AfterTargets="InitializeSourceControlInformation">
 
 		<Exec Command="git.exe describe --always --dirty --exclude='*' --abbrev=8" ConsoleToMSBuild="True" IgnoreExitCode="False">
 			<Output PropertyName="Revision" TaskParameter="ConsoleOutput" />

@@ -28,4 +28,8 @@ class Configuration {
     public static bool GetBool(string section, string value) {
         return (Current.GetSection(section)?.GetValue<bool>(value)).Value;
     }
+
+    public static bool GetBool(string section, string subsection, string value) {
+        return (Current.GetSection(section)?.GetSection(subsection)?.GetValue<bool>(value)).Value;
+    }
 }

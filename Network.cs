@@ -4,8 +4,11 @@ using HttpMultipartParser;
 using LAHEE.Data;
 using LAHEE.Util;
 using Microsoft.Extensions.Logging;
+using RATools.Data;
 using WatsonWebserver.Core;
 using WatsonWebserver.Lite;
+using AchievementType = LAHEE.Data.AchievementType;
+using CodeNote = LAHEE.Data.CodeNote;
 using HttpMethod = WatsonWebserver.Core.HttpMethod;
 
 namespace LAHEE;
@@ -51,6 +54,7 @@ static class Network {
         AddRARoute("laheedeletecomment", Routes.LaheeDeleteComment);
         AddRARoute("laheeflagimportant", Routes.LaheeFlagImportant);
         AddRARoute("laheetriggerfetch", Routes.LaheeTriggerFetch);
+        AddRARoute("laheeachievementcode", Routes.LaheeGetAchievementCode);
         AddRARoute("login", Routes.RALogin);
         AddRARoute("login2", Routes.RALogin);
         AddRARoute("gameid", Routes.RAGameId);
@@ -866,6 +870,67 @@ static class Routes {
             Success = true,
             AchievementID = achievementId,
             Error = ""
+        };
+        await ctx.Response.SendJson(response);
+    }
+
+    internal static async Task LaheeGetAchievementCode(HttpContextBase ctx) {
+        uint gameId = UInt32.Parse(ctx.Request.GetParameter("gameid"));
+        uint achievementId = UInt32.Parse(ctx.Request.GetParameter("aid"));
+
+        GameData game = StaticDataManager.FindGameDataById(gameId);
+        if (game == null) {
+            await ctx.Response.SendJson(new RAErrorResponse("Game ID is not registered!"));
+            return;
+        }
+
+        AchievementData ach = game.GetAchievementById(achievementId);
+        if (ach == null) {
+            Log.User.LogWarning("Achievement with ID {id} not found in game \"{game}\"!", achievementId, game);
+            await ctx.Response.SendJson(new RAErrorResponse("Achievement ID not found!"));
+            return;
+        }
+
+        if (Configuration.GetBool("LAHEE", "RAFetch", "AutoUpdateCodeNotes")) {
+            try {
+                if (game.CodeNotes == null || game.CodeNotes.Count == 0) {
+                    if (RAOfficialServer.CanFetch) {
+                        List<CodeNote> codeNotes = RAOfficialServer.FetchCodeNotes(game);
+                        if (codeNotes == null) {
+                            throw new ProtocolException("Internal error while downloading code notes");
+                        }
+                    } else {
+                        Log.RCheevos.LogWarning("Not downloading code notes, RAFetch is not configured correctly");
+                    }
+                }
+            } catch (ProtocolException e) {
+                Log.RCheevos.LogError(e.Message);
+                await ctx.Response.SendJson(new RAErrorResponse(e.Message));
+            } catch (Exception e) {
+                Log.RCheevos.LogError(e, "Exception while downloading code notes for {g}", game);
+                await ctx.Response.SendJson(new RAErrorResponse("Downloading code notes from official RA server failed"));
+                return;
+            }
+        } else {
+            Log.RCheevos.LogInformation("Auto-updating code notes is disabled");
+        }
+
+        Trigger trigger;
+        try {
+            trigger = Trigger.Deserialize(ach.MemAddr);
+            if (trigger == null) {
+                throw new NullReferenceException("Trigger deserialization failed");
+            }
+        } catch (Exception e) {
+            Log.RCheevos.LogError(e.Message);
+            await ctx.Response.SendJson(new RAErrorResponse(e.Message));
+            return;
+        }
+
+        LaheeAchievementCodeResponse response = new LaheeAchievementCodeResponse() {
+            Success = true,
+            CodeNotes = game.CodeNotes,
+            TriggerGroups = trigger.Groups.ToArray()
         };
         await ctx.Response.SendJson(response);
     }

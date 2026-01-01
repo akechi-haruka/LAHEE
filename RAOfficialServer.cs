@@ -8,31 +8,49 @@ namespace LAHEE;
 public static class RAOfficialServer {
     private const string SERVER_ACCOUNT_USER_ID = "019Z8BMP7E37YNRVDSP8SV266G";
 
+    public static string Url {
+        get { return Configuration.Get("LAHEE", "RAFetch", "Url"); }
+    }
+
+    public static string SessionToken { get; private set; }
+
+    public static bool CanFetch {
+        get {
+            string apiWeb = Configuration.Get("LAHEE", "RAFetch", "WebApiKey");
+            string username = Configuration.Get("LAHEE", "RAFetch", "Username");
+            string password = Configuration.Get("LAHEE", "RAFetch", "Password");
+
+            if (String.IsNullOrWhiteSpace(Url)) {
+                Log.Main.LogError("Invalid RAFetch Url in configuration.");
+                return false;
+            }
+
+            if (String.IsNullOrWhiteSpace(apiWeb)) {
+                Log.Main.LogError("Invalid RAFetch WebApiKey in configuration. Get it from here: {u}", Url + "/settings");
+                return false;
+            }
+
+            if (String.IsNullOrWhiteSpace(username)) {
+                Log.Main.LogError("Invalid RAFetch username in configuration.");
+                return false;
+            }
+
+            if (String.IsNullOrWhiteSpace(password)) {
+                Log.Main.LogError("Invalid RAFetch password in configuration.");
+                return false;
+            }
+
+            return true;
+        }
+    }
+
     public static void FetchData(string gameIdStr, string overrideIdStr, bool includeUnofficial, String copyToUsername = null) {
-        string url = Configuration.Get("LAHEE", "RAFetch", "Url");
+        if (!CanFetch) {
+            return;
+        }
+
         string apiWeb = Configuration.Get("LAHEE", "RAFetch", "WebApiKey");
         string username = Configuration.Get("LAHEE", "RAFetch", "Username");
-        string password = Configuration.Get("LAHEE", "RAFetch", "Password");
-
-        if (String.IsNullOrWhiteSpace(url)) {
-            Log.Main.LogError("Invalid RAFetch Url in configuration.");
-            return;
-        }
-
-        if (String.IsNullOrWhiteSpace(apiWeb)) {
-            Log.Main.LogError("Invalid RAFetch WebApiKey in configuration. Get it from here: {u}", url + "/settings");
-            return;
-        }
-
-        if (String.IsNullOrWhiteSpace(username)) {
-            Log.Main.LogError("Invalid RAFetch username in configuration.");
-            return;
-        }
-
-        if (String.IsNullOrWhiteSpace(password)) {
-            Log.Main.LogError("Invalid RAFetch password in configuration.");
-            return;
-        }
 
         if (!UInt32.TryParse(gameIdStr, out uint fetchId)) {
             Log.Main.LogError("Not a valid game ID: {i}", gameIdStr);
@@ -47,15 +65,13 @@ public static class RAOfficialServer {
             }
         }
 
-        RALoginResponse login = Query<RALoginResponse>(HttpMethod.Get, url, "dorequest.php?r=login2&u=" + username + "&p=" + password, null);
-        if (login == null) {
+        string sessionToken = LogInToRealServer();
+        if (sessionToken == null) {
             return;
         }
 
-        Log.RCheevos.LogInformation("Logged into RA server at {u} as {n}", url, login.DisplayName);
-
         int f = includeUnofficial ? 7 : 3;
-        RAPatchResponseV2 patch = Query<RAPatchResponseV2>(HttpMethod.Get, url, "dorequest.php?r=achievementsets&u=" + username + "&t=" + login.Token + "&f=" + f + "&m=&g=" + fetchId, null);
+        RAPatchResponseV2 patch = Query<RAPatchResponseV2>(HttpMethod.Get, Url, "dorequest.php?r=achievementsets&u=" + username + "&t=" + sessionToken + "&f=" + f + "&m=&g=" + fetchId, null);
         if (patch == null) {
             return;
         }
@@ -75,7 +91,7 @@ public static class RAOfficialServer {
 
         List<string> hashes = new List<string>();
 
-        RAApiHashesResponse hashResponse = Query<RAApiHashesResponse>(HttpMethod.Get, url, "API/API_GetGameHashes.php?y=" + apiWeb + "&i=" + fetchId, null);
+        RAApiHashesResponse hashResponse = Query<RAApiHashesResponse>(HttpMethod.Get, Url, "API/API_GetGameHashes.php?y=" + apiWeb + "&i=" + fetchId, null);
         if (hashResponse == null) {
             return;
         }
@@ -93,12 +109,7 @@ public static class RAOfficialServer {
             imageDownloads[Path.GetFileNameWithoutExtension(ad.BadgeName) + "_lock.png"] = ad.BadgeLockedURL;
         }
 
-        RACodeNotesResponse notes = Query<RACodeNotesResponse>(HttpMethod.Get, url, "dorequest.php?r=codenotes2&u=" + username + "&t=" + login.Token + "&g=" + fetchId, null);
-        if (notes == null) {
-            return;
-        }
-
-        gameData.CodeNotes = notes.CodeNotes;
+        FetchCodeNotes(gameData);
 
         // Achievement data modifications:
 
@@ -119,9 +130,9 @@ public static class RAOfficialServer {
         // remove "unsupported emulator"
         gameData.DeleteAchievementById(StaticDataManager.UNSUPPORTED_EMULATOR_ACHIEVEMENT_ID);
 
-        Log.RCheevos.LogInformation("Finished getting data from \"{u}\"", url);
+        Log.RCheevos.LogInformation("Finished getting data from \"{u}\"", Url);
 
-        String fileBase = Configuration.Get("LAHEE", "DataDirectory") + "\\" + overrideId + "-" + (fetchId != overrideId ? "zz-" : "") + new string(gameData.Title.Where(ch => !Program.INVALID_FILE_NAME_CHARS.Contains(ch)).ToArray());
+        String fileBase = Configuration.Get("LAHEE", "DataDirectory") + "\\" + overrideId + "-" + new string(gameData.Title.Where(ch => !Program.INVALID_FILE_NAME_CHARS.Contains(ch)).ToArray());
         String fileData = fileBase + ".set.json";
         String fileHash = fileBase + ".hash.txt";
         if (!File.Exists(fileData)) {
@@ -157,7 +168,7 @@ public static class RAOfficialServer {
                 userGameData = user.RegisterGame(game);
             }
 
-            RAStartSessionResponse al = Query<RAStartSessionResponse>(HttpMethod.Get, url, "dorequest.php?r=startsession&u=" + username + "&t=" + login.Token + "&h=0&l=11.4&g=" + fetchId + "&m=", null);
+            RAStartSessionResponse al = Query<RAStartSessionResponse>(HttpMethod.Get, Url, "dorequest.php?r=startsession&u=" + username + "&t=" + sessionToken + "&h=0&l=11.4&g=" + fetchId + "&m=", null);
             if (al != null) {
                 foreach (RAStartSessionResponse.RAStartSessionAchievementData ad in al.Unlocks) {
                     userGameData.UnlockAchievement(ad.ID, false, ad.When);
@@ -181,26 +192,28 @@ public static class RAOfficialServer {
         String basename = Path.GetFileNameWithoutExtension(filename) + ".png";
         String targetPath = path + "\\" + basename;
         Log.RCheevos.LogTrace("Checking image file: {f} at {f2}", basename, targetPath);
-        if (!File.Exists(targetPath)) {
-            Log.RCheevos.LogDebug("Downloading image file: " + url);
-            try {
-                HttpClient http = new HttpClient();
-                HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Get, url);
-                req.Headers.Add("User-Agent", Program.NAME);
+        if (File.Exists(targetPath)) {
+            return;
+        }
 
-                HttpResponseMessage resp = http.Send(req);
-                long? len = resp.Content.Headers.ContentLength;
-                if (len == null) {
-                    throw new IOException("missing content-length");
-                }
+        Log.RCheevos.LogDebug("Downloading image file: {u}", url);
+        try {
+            HttpClient http = new HttpClient();
+            HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Get, url);
+            req.Headers.Add("User-Agent", Program.NAME);
 
-                byte[] data = new byte[len.Value];
-                resp.Content.ReadAsStream().ReadExactly(data);
-
-                File.WriteAllBytes(targetPath, data);
-            } catch (Exception ex) {
-                Log.RCheevos.LogWarning(ex, "Failed to download image: {i}", url);
+            HttpResponseMessage resp = http.Send(req);
+            long? len = resp.Content.Headers.ContentLength;
+            if (len == null) {
+                throw new IOException("missing content-length");
             }
+
+            byte[] data = new byte[len.Value];
+            resp.Content.ReadAsStream().ReadExactly(data);
+
+            File.WriteAllBytes(targetPath, data);
+        } catch (Exception ex) {
+            Log.RCheevos.LogWarning(ex, "Failed to download image: {i}", url);
         }
     }
 
@@ -245,22 +258,21 @@ public static class RAOfficialServer {
             throw new ProtocolException("Unknown game id: " + gameId);
         }
 
-        string url = Configuration.Get("LAHEE", "RAFetch", "Url");
         string apiWeb = Configuration.Get("LAHEE", "RAFetch", "WebApiKey");
 
-        if (String.IsNullOrWhiteSpace(url)) {
+        if (String.IsNullOrWhiteSpace(Url)) {
             throw new ProtocolException("Invalid RAFetch Url in configuration.");
         }
 
         if (String.IsNullOrWhiteSpace(apiWeb)) {
-            throw new ProtocolException("Invalid RAFetch WebApiKey in configuration. Get it from here: " + url + "/settings");
+            throw new ProtocolException("Invalid RAFetch WebApiKey in configuration. Get it from here: " + Url + "/settings");
         }
 
-        RAApiCommentsResponse resp = Query<RAApiCommentsResponse>(HttpMethod.Get, url, "API/API_GetComments.php?y=" + apiWeb + "&t=2&i=" + achievementId + "&sort=-submitted", null);
+        RAApiCommentsResponse resp = Query<RAApiCommentsResponse>(HttpMethod.Get, Url, "API/API_GetComments.php?y=" + apiWeb + "&t=2&i=" + achievementId + "&sort=-submitted", null);
         if (resp != null) {
             bool addedComments = false;
             foreach (UserComment uc in resp.Results) {
-                if (uc.ULID.Equals(SERVER_ACCOUNT_USER_ID)) {
+                if (uc.ULID.Equals(SERVER_ACCOUNT_USER_ID)) { // skip all "comments" that depict status changes (score changed, icon changed, ...)
                     continue;
                 }
 
@@ -278,5 +290,45 @@ public static class RAOfficialServer {
         } else {
             throw new ProtocolException("Failed to fetch comments for " + achievementId);
         }
+    }
+
+    private static string LogInToRealServer() {
+        if (SessionToken != null) {
+            return SessionToken;
+        }
+
+        string username = Configuration.Get("LAHEE", "RAFetch", "Username");
+        string password = Configuration.Get("LAHEE", "RAFetch", "Password");
+
+        RALoginResponse login = Query<RALoginResponse>(HttpMethod.Get, Url, "dorequest.php?r=login2&u=" + username + "&p=" + password, null);
+        if (login == null) {
+            return null;
+        }
+
+        Log.RCheevos.LogInformation("Logged into RA server at {u} as {n}", Url, login.DisplayName);
+
+        SessionToken = login.Token;
+
+        return login.Token;
+    }
+
+    public static List<CodeNote> FetchCodeNotes(GameData game) {
+        ArgumentNullException.ThrowIfNull(game);
+
+        string sessionToken = LogInToRealServer();
+        if (sessionToken == null) {
+            return null;
+        }
+
+        string username = Configuration.Get("LAHEE", "RAFetch", "Username");
+
+        RACodeNotesResponse notes = Query<RACodeNotesResponse>(HttpMethod.Get, Url, "dorequest.php?r=codenotes2&u=" + username + "&t=" + sessionToken + "&g=" + game.ID, null);
+        if (notes == null) {
+            return null;
+        }
+
+        game.CodeNotes = notes.CodeNotes;
+
+        return notes.CodeNotes;
     }
 }
