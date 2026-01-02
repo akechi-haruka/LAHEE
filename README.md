@@ -1,8 +1,8 @@
 # L.A.H.E.E. - Local Achievements Home Edition Enhanced
 
-RetroAchievements API Emulator
+RetroAchievements Service Emulator
 
-2024-2025 Haruka
+2024-2026 Haruka
 
 Licensed under the SSPL.
 
@@ -16,9 +16,10 @@ This allows local/offline/modded progression of RetroAchievements.
 
 ### Screenshots
 
-![https://github.com/akechi-haruka/LAHEE/blob/master/screenshot.jpg](https://github.com/akechi-haruka/LAHEE/blob/master/screenshot.jpg)
-![https://github.com/akechi-haruka/LAHEE/blob/master/screenshot2.png](https://github.com/akechi-haruka/LAHEE/blob/master/screenshot2.png)
-![https://github.com/akechi-haruka/LAHEE/blob/master/screenshot3.png](https://github.com/akechi-haruka/LAHEE/blob/master/screenshot3.png)
+![https://github.com/akechi-haruka/LAHEE/blob/master/Readme/screenshot.jpg](https://github.com/akechi-haruka/LAHEE/blob/master/Readme/screenshot.jpg)
+![https://github.com/akechi-haruka/LAHEE/blob/master/Readme/screenshot2.png](https://github.com/akechi-haruka/LAHEE/blob/master/Readme/screenshot2.png)
+![https://github.com/akechi-haruka/LAHEE/blob/master/Readme/screenshot3.png](https://github.com/akechi-haruka/LAHEE/blob/master/Readme/screenshot3.png)
+![https://github.com/akechi-haruka/LAHEE/blob/master/Readme/screenshot4.png](https://github.com/akechi-haruka/LAHEE/blob/master/Readme/screenshot4.png)
 
 ### Features
 
@@ -29,8 +30,10 @@ This allows local/offline/modded progression of RetroAchievements.
 * Fetch achievement data and previous online progression from your real RetroAchievements account.
 * Playtime tracking (approximate) and stats.
 * Switch between multiple accounts and/or multiple progressions in the same game.
-* Freely share your modified achievement data .json files to anyone.
 * Track progression for unofficial and local achievements.
+* Automatic replays (requires OBS) or screenshots when achievements are obtained.
+* View achievement code with explanations and code notes.
+* Freely share your modified achievement data .json files to anyone.
 
 ### What LAHEE doesn't do
 
@@ -51,14 +54,8 @@ Latest unstable development build: https://nightly.link/akechi-haruka/LAHEE/work
 and append a new entry named
 `HostUrl = http://localhost:8000/`
 2. Go to the directory where `Dolphin.exe` is located. If there are any `RA_Integration` files:
-   1. Download https://github.com/akechi-haruka/hexedit2 and place the .exe next to `Dolphin.exe`.
-   2. Run following:
-   ```
-   hexedit2 multi -t StringASCII RA_Integration.dll RA_Integration.dll https://retroachievements.org/dorequest.php http://localhost:8000/dorequest.php
-   hexedit2 multi -t StringASCII RA_Integration.dll RA_Integration.dll https://retroachievements.org http://localhost:8000
-   hexedit2 multi -t StringASCII RA_Integration-x64.dll RA_Integration-x64.dll https://retroachievements.org/dorequest.php http://localhost:8000/dorequest.php
-   hexedit2 multi -t StringASCII RA_Integration-x64.dll RA_Integration-x64.dll https://retroachievements.org http://localhost:8000
-   ```
+    1. If you want to be able to edit achievements, see "Patching RAIntegration".
+    2. Otherwise delete those files.
 3. Launch Dolphin, navigate to Tools > Achievements, and type in any desired username and any password.
 
 ### RetroArch
@@ -70,11 +67,15 @@ RetroArch has no ability to change the RA server name, so we need to patch that 
 3. Open a command prompt in the folder where RetroArch is located and execute `hexedit2 multi -t StringASCII retroarch.exe retroarch.exe https://retroachievements.org http://localhost:8000`
 4. Launch RetroArch, navigate to the achievements menu, and type in any desired username and any password.
 
+## Web Viewer
+
+Open http://localhost:8000/Web/ in your browser to see locked/unlocked achievements, records, status message and score.
+
+To enable notifications and sound effects, allow them in your browser.
+
 ### Misc. features
 
 If desired, an avatar can be placed in `<lahee root>\UserPic\<username>.png`.
-
-Data is saved in `<lahee root>\User\<username>.json`, if you want to back up your progression data.
 
 ## Adding achievements (from real site)
 
@@ -89,6 +90,20 @@ a button to the real RetroAchievements website to import sets directly to LAHEE.
 
 From LAHEE 1.11 and above, you can use RAIntegration / "RetroAchievements Development" to add and modify achievements
 directly in LAHEE via the Upload/Promote/Demote buttons.
+
+### Patching RAIntegration
+
+These steps are only required if your emulator loads RAIntegration from `RA_Integration[-x64].dll` or if you want to use
+RAIntegration to edit achievements on LAHEE.
+
+1. Download https://github.com/akechi-haruka/hexedit2 and place the .exe next to `Dolphin.exe`.
+2. Run following:
+   ```
+   hexedit2 multi -t StringASCII RA_Integration.dll RA_Integration.dll https://retroachievements.org/dorequest.php http://localhost:8000/dorequest.php
+   hexedit2 multi -t StringASCII RA_Integration.dll RA_Integration.dll https://retroachievements.org http://localhost:8000
+   hexedit2 multi -t StringASCII RA_Integration-x64.dll RA_Integration-x64.dll https://retroachievements.org/dorequest.php http://localhost:8000/dorequest.php
+   hexedit2 multi -t StringASCII RA_Integration-x64.dll RA_Integration-x64.dll https://retroachievements.org http://localhost:8000
+   ```
 
 ## Adding achievements (manually / custom)
 
@@ -107,12 +122,6 @@ Achievement definitions must be placed in `<root>\<Data>\<gameid>-<optional_labe
 Note that the Game ID from the file name itself will override the Game ID that is stored inside the .json itself. This allows you to easily merge sets.
 
 For example, to merge the core FFCC set (ID 3885) and the "Rare Drops" subset (ID 28855), name both files simply a variation of `3885-FFCC Core.json` and `3885-FFCC Rare Drops.json`, and both will be combined into one set and no longer requires patching your game hash.
-
-## Web Viewer
-
-Open http://localhost:8000/Web/ in your browser to see locked/unlocked achievements, records, presence and score.
-
-To enable notifications and sound effects, allow them in your browser.
 
 ## Capture Triggers
 

@@ -1,8 +1,5 @@
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Net.WebSockets;
-using System.Text;
-using JetBrains.Annotations;
 using LAHEE.Data;
 using LAHEE.Util;
 using Microsoft.Extensions.Configuration;
@@ -11,11 +8,12 @@ using Microsoft.Extensions.Logging;
 namespace LAHEE;
 
 public static class CaptureManager {
-
     public enum CaptureTrigger {
-        Invalid, Screenshot, OBSWebsocket
+        Invalid,
+        Screenshot,
+        OBSWebsocket
     }
-    
+
     public class CaptureAction {
         public CaptureTrigger Trigger;
         public int Delay;
@@ -25,7 +23,7 @@ public static class CaptureManager {
     public const String DIRECTORY = "Capture";
 
     private static List<CaptureAction> actions;
-    
+
     public static void Initialize() {
         if (!Directory.Exists(DIRECTORY)) {
             Directory.CreateDirectory(DIRECTORY);
@@ -51,14 +49,15 @@ public static class CaptureManager {
                 actions.RemoveAll(a => a.Trigger == CaptureTrigger.OBSWebsocket);
             }
         }
-        
+
         Log.Main.LogInformation("{n} capture actions configured.", actions.Count);
     }
 
     private static String SanitizePath(string path) {
-        foreach (char c in Path.GetInvalidFileNameChars()) { 
-            path = path.Replace(c, '-'); 
+        foreach (char c in Path.GetInvalidFileNameChars()) {
+            path = path.Replace(c, '-');
         }
+
         return path;
     }
 
@@ -66,6 +65,7 @@ public static class CaptureManager {
         if (actions.Count == 0) {
             return;
         }
+
         Log.Main.LogDebug("Starting Capture thread for " + user + " / " + game + " / " + ach);
         new Thread(() => StartCaptureT(game, user, ach)) {
             Name = "Capture Thread: " + user + " / " + game + " / " + ach
@@ -80,6 +80,7 @@ public static class CaptureManager {
             time += a.Delay;
             DoCaptureAction(a.Trigger, a.Parameter, game, user, ach);
         }
+
         Log.Main.LogDebug("Capture thread finished for " + user + " / " + game + " / " + ach);
     }
 
@@ -95,7 +96,7 @@ public static class CaptureManager {
 
     private static async Task<bool> DoWebsocketAsync(string parameter) {
         Log.Main.LogDebug("Connecting to OBS websocket...");
-        
+
         Uri uri = new Uri(Configuration.Get("LAHEE", "OBSWebsocketUrl"));
         return await new OBSWebsocket(uri).ConnectAndSendAsync(parameter);
     }
@@ -113,10 +114,11 @@ public static class CaptureManager {
             if (parent == null) {
                 throw new ArgumentException("Invalid path: " + path);
             }
+
             if (!Directory.Exists(parent)) {
                 Directory.CreateDirectory(parent);
             }
-            
+
             Bitmap image;
             switch (parameter) {
                 case "Desktop":
@@ -137,5 +139,4 @@ public static class CaptureManager {
             Log.Main.LogCritical(ex, "Failed creating screenshot to {p}", path);
         }
     }
-
 }

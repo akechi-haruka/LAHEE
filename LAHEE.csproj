@@ -6,14 +6,14 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>disable</Nullable>
 		<StartupObject>LAHEE.Program</StartupObject>
-		<ApplicationIcon>icon.ico</ApplicationIcon>
-		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<ApplicationIcon>Src\icon.ico</ApplicationIcon>
+		<ApplicationManifest>Src\app.manifest</ApplicationManifest>
 		<ErrorReport>none</ErrorReport>
 		<Title>Local Achievements Home Edition Enhanced</Title>
 		<Authors>Akechi Haruka</Authors>
 		<Company />
 		<Description>RetroAchievements API Emulator</Description>
-		<Copyright>2024-2025 Akechi Haruka</Copyright>
+		<Copyright>2024-2026 Akechi Haruka</Copyright>
 		<IncludeSourceRevisionInInformationalVersion>true</IncludeSourceRevisionInInformationalVersion>
         <AssemblyVersion>1.14</AssemblyVersion>
         <FileVersion>1.14</FileVersion>
@@ -36,6 +36,16 @@
 		<None Remove="screenshot.jpg" />
         <None Update="appsettings.local.json">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Remove="RATools\**"/>
+		<None Remove="screenshot3.png"/>
+		<None Remove="screenshot2.png"/>
+		<None Remove="Readme\**"/>
+		<None Update="appsettings.debug.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="appsettings.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
 	</ItemGroup>
 
@@ -83,7 +93,22 @@
 	</ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\RATools\Source\Data\RATools.Data.csproj"/>
+		<Compile Remove="RATools\**"/>
+		<Compile Remove="Readme\**"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Remove="RATools\**"/>
+		<EmbeddedResource Remove="Readme\**"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="RATools\Core\Core\Source\Jamiras.Core.csproj"/>
+		<ProjectReference Include="RATools\Source\Data\RATools.Data.csproj"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="Src\"/>
     </ItemGroup>
 
     <Target Name="SetHash" AfterTargets="InitializeSourceControlInformation">
