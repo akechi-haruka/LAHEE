@@ -79,12 +79,22 @@ If desired, an avatar can be placed in `<lahee root>\UserPic\<username>.png`.
 
 ## Adding achievements (from real site)
 
+### via Browser
+
+This requires a userscript manager addon such as Greasemonkey.
+
+Install this userscript: https://raw.githubusercontent.com/akechi-haruka/LAHEE/refs/heads/master/Web/lahee.user.js
+
+Afterwards, you will have a button on the game specific page to copy the set to LAHEE.
+![https://github.com/akechi-haruka/LAHEE/blob/master/Readme/screenshot_userscript.png](https://github.com/akechi-haruka/LAHEE/blob/master/Readme/screenshot_userscript.png)
+
+### via LAHEE console
+
 1. Open "appsettings.json".
 2. Set "WebApiKey" to the Web API Key found on https://retroachievements.org/settings, aswell as "Username" and "Password" to your real RetroAchievements account.
 3. After starting LAHEE, type in `fetch XXXX` where XXXX is the game ID you want to get achievements for. This ID can be found in the URL of the achievements page (ex. for FFCC: https://retroachievements.org/game/3885, this would be 3885).
 
-Alternatively, you can also install this userscript from (https://raw.githubusercontent.com/akechi-haruka/LAHEE/refs/heads/master/Web/lahee.user.js), if you are running a userscript manager in your browser to add
-a button on the real RetroAchievements website to import sets directly to LAHEE.
+Alternatively, 
 
 ## Adding achievements (via RAIntegration)
 
