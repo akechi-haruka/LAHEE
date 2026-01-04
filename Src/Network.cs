@@ -537,6 +537,7 @@ static class Routes {
             currentgameid = userData.CurrentGameId,
             gamestatus = userGameData?.LastPresence,
             lastping = userGameData?.PlayTimeLastPing,
+            lastplay = userGameData?.LastPlay,
             playtime = userGameData?.PlayTimeApprox,
             achievements = userGameData?.Achievements ?? []
         };

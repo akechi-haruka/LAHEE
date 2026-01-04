@@ -123,6 +123,7 @@ class LaheeResponse {
 class LaheeUserResponse {
     public uint currentgameid;
     public DateTime? lastping;
+    public DateTime? lastplay;
     public TimeSpan? playtime;
     public String gamestatus;
     public Dictionary<int, UserAchievementData> achievements;
