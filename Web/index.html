@@ -85,7 +85,7 @@
                 </ul>
                 <form id="main_data_selector" style="visibility: hidden;" class="d-flex" onsubmit="lahee_change_game(); return false;">
                     <img id="useravatar" src="" height="48" />
-                    <select id="user_select" class="form-select me-2">
+                    <select id="user_select" class="form-select me-2" onchange="lahee_build_game_selector();">
                         <option>Loading...</option>
                     </select>
                     <img id="gameavatar" src="" height="48" class="page_achievements_controls page_leaderboards_controls page-controls" />

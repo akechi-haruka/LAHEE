@@ -175,6 +175,7 @@ function lahee_change_game() {
     document.getElementById("useravatar").src = "../UserPic/" + user.UserName + ".png";
     document.getElementById("gameavatar").src = game.ImageIconURL;
 
+    lahee_build_game_selector(user);
     lahee_build_achievements(user, game);
     lahee_build_leaderboards(user, game);
     lahee_change_lb();
@@ -1492,4 +1493,70 @@ function lahee_show_extended_cn(addr, text) {
     document.getElementById("extendedCodeNoteModalText").innerHTML = text;
     lahee_popup_2 = new bootstrap.Modal(document.getElementById('extendedCodeNoteModal'), {});
     lahee_popup_2.show();
+}
+
+function lahee_build_game_selector(user) {
+    if (!user) {
+        var ru = document.getElementById("user_select").value;
+        user = (lahee_data.users.filter(u => u.ID == ru) ?? [])[0];
+    }
+    var now = new Date();
+    var gamelist = lahee_data.games.slice();
+
+    var games = "<optgroup label='Recently Played'>";
+    for (var game of gamelist) {
+        var ug = user.GameData[game.ID] ?? {};
+        if (now - new Date(ug.LastPlay) < 30 * 24 * 60 * 60 * 1000) {
+            games += "<option value='" + game.ID + "' " + (lahee_game.ID == game.ID ? "selected" : "") + ">" + game.Title + "</option>";
+            gamelist = gamelist.filter(g => g.ID != game.ID);
+        }
+    }
+    games += "</optgroup>";
+
+    games += "<optgroup label='Unplayed'>";
+    for (var game of gamelist) {
+        var ug = user.GameData[game.ID] ?? {};
+        if (!ug.Achievements || Object.keys(ug.Achievements).length == 0) {
+            games += "<option value='" + game.ID + "' " + (lahee_game.ID == game.ID ? "selected" : "") + ">" + game.Title + "</option>";
+            gamelist = gamelist.filter(g => g.ID != game.ID);
+        }
+    }
+    games += "</optgroup>";
+
+    // calculate beaten/completed games first, so unfinished doesn't take priority
+    var games_completed = "<optgroup label='Completed'>";
+    for (var game of gamelist) {
+        var ug = user.GameData[game.ID] ?? {};
+        if (ug.Achievements && Object.keys(ug.Achievements).length >= game.Achievements.length) {
+            games_completed += "<option value='" + game.ID + "' " + (lahee_game.ID == game.ID ? "selected" : "") + ">" + game.Title + "</option>";
+            gamelist = gamelist.filter(g => g.ID != game.ID);
+        }
+    }
+    games_completed += "</optgroup>";
+
+    var games_beaten = "<optgroup label='Beaten'>";
+    for (var game of gamelist) {
+        var completion_ids = game?.Achievements.filter(a => a.Type == "win_condition").map(a => a.ID) ?? [];
+        var ug = user.GameData[game.ID] ?? {};
+        if (Object.values(ug.Achievements).filter(a => completion_ids.includes(a.AchievementID) && a.Status > 0).length > 0) {
+            games_beaten += "<option value='" + game.ID + "' " + (lahee_game.ID == game.ID ? "selected" : "") + ">" + game.Title + "</option>";
+            gamelist = gamelist.filter(g => g.ID != game.ID);
+        }
+    }
+    games_beaten += "</optgroup>";
+
+    games += "<optgroup label='Unfinished'>";
+    for (var game of gamelist) {
+        var ug = user.GameData[game.ID] ?? {};
+        if (!ug.Achievements || Object.keys(ug.Achievements).length < game.Achievements.length) {
+            games += "<option value='" + game.ID + "' " + (lahee_game.ID == game.ID ? "selected" : "") + ">" + game.Title + "</option>";
+            gamelist = gamelist.filter(g => g.ID != game.ID);
+        }
+    }
+    games += "</optgroup>";
+
+    games += games_beaten;
+    games += games_completed;
+
+    document.getElementById("game_select").innerHTML = games;
 }
