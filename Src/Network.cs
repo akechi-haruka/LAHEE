@@ -772,6 +772,30 @@ static class Routes {
             return;
         }
 
+        if (Configuration.GetBool("LAHEE", "RAFetch", "AutoUpdateCodeNotes")) {
+            try {
+                if (game.CodeNotes == null || game.CodeNotes.Count == 0) {
+                    if (RAOfficialServer.CanFetch) {
+                        List<CodeNote> codeNotes = RAOfficialServer.FetchCodeNotes(game);
+                        if (codeNotes == null) {
+                            throw new ProtocolException("Internal error while downloading code notes");
+                        }
+                    } else {
+                        Log.RCheevos.LogWarning("Not downloading code notes, RAFetch is not configured correctly");
+                    }
+                }
+            } catch (ProtocolException e) {
+                Log.RCheevos.LogError(e.Message);
+                await ctx.Response.SendJson(new RAErrorResponse(e.Message));
+            } catch (Exception e) {
+                Log.RCheevos.LogError(e, "Exception while downloading code notes for {g}", game);
+                await ctx.Response.SendJson(new RAErrorResponse("Downloading code notes from official RA server failed"));
+                return;
+            }
+        } else {
+            Log.RCheevos.LogInformation("Auto-updating code notes is disabled");
+        }
+
         RACodeNotesResponse response = new RACodeNotesResponse() {
             Success = true,
             CodeNotes = game.CodeNotes

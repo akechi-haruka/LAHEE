@@ -50,7 +50,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Content Include="icon.ico" />
 		<Content Include="Web\css\bootstrap.css" />
 		<Content Include="Web\css\bootstrap.css.map" />
 		<Content Include="Web\css\bootstrap.min.css" />
