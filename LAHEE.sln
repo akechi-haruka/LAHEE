@@ -25,6 +25,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Readme", "Readme", "{EA6DB4
 		Readme\screenshot3.png = Readme\screenshot3.png
 		Readme\lahee.png = Readme\lahee.png
 		Readme\screenshot4.png = Readme\screenshot4.png
+		Readme\screenshot_userscript.png = Readme\screenshot_userscript.png
 	EndProjectSection
 EndProject
 Global
