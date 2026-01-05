@@ -40,6 +40,7 @@ static class Network {
         server.Routes.PreAuthentication.Static.Add(HttpMethod.POST, BASE_DIR + "dorequest.php", Routes.RARequestRoute, Routes.DefaultErrorRoute);
         server.Routes.PreAuthentication.Static.Add(HttpMethod.POST, BASE_DIR + "doupload.php", Routes.RAUploadRoute, Routes.DefaultErrorRoute);
 
+        server.Routes.PreAuthentication.Content = new CacheableContentRouteManager(Configuration.GetInt("Watson", "ResourceCacheSeconds"));
         server.Routes.PreAuthentication.Content.Add(BASE_DIR + "Badge/", true);
         server.Routes.PreAuthentication.Content.Add(BASE_DIR + "UserPic/", true);
         server.Routes.PreAuthentication.Content.Add(BASE_DIR + "Web/", true);
