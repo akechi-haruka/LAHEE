@@ -128,7 +128,7 @@ function lahee_update_game_status(ping_type) {
     lahee_request("r=laheeuserinfo&user=" + lahee_user.UserName + "&gameid=" + lahee_game.ID, function (res) {
         var msg;
         if (res.currentgameid == lahee_game.ID) {
-            var lastplay = new Date() - new Date(res.lastplay);
+            var lastplay = new Date() - new Date(res.lastping ?? res.lastplay);
             if (lastplay < 600_000) {
                 msg = res.gamestatus + "\nPlaytime: " + TimeSpan.parse(res.playtime).toStringWithoutMs();
             } else {
