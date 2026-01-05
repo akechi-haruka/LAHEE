@@ -508,7 +508,7 @@ static class Routes {
     internal static async Task LaheeInfo(HttpContextBase ctx) {
         LaheeResponse response = new LaheeResponse() {
             version = Program.NAME,
-            games = StaticDataManager.GetAllGameDataAsV1().ToArray(), // TODO: this should be changed to v2 at some point
+            games = StaticDataManager.GetAllGameData().ToArray(),
             users = UserManager.GetAllUserData(),
             comments = StaticDataManager.GetAllUserComments()
         };
@@ -535,11 +535,11 @@ static class Routes {
         userData.GameData.TryGetValue(gameId, out UserGameData userGameData);
 
         LaheeUserResponse response = new LaheeUserResponse() {
-            currentgameid = userData.CurrentGameId,
-            gamestatus = userGameData?.LastPresence,
-            lastping = userGameData?.PlayTimeLastPing,
-            lastplay = userGameData?.LastPlay,
-            playtime = userGameData?.PlayTimeApprox,
+            current_game_id = userData.CurrentGameId,
+            game_status = userGameData?.LastPresence,
+            last_ping = userGameData?.PlayTimeLastPing,
+            last_play = userGameData?.LastPlay,
+            play_time = userGameData?.PlayTimeApprox,
             achievements = userGameData?.Achievements ?? []
         };
 

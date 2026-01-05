@@ -1,4 +1,5 @@
 <!doctype html>
+<!--suppress HtmlFormInputWithoutLabel, HtmlRequiredAltAttribute, HtmlDeprecatedAttribute, JSDeprecatedSymbols -->
 <html lang="en" data-bs-theme="auto">
 <head>
 
@@ -11,6 +12,7 @@
 
     <script src="js/color-modes.js"></script>
     <script src="js/TimeSpan.js"></script>
+    <script src="js/lahee_dto.js"></script>
 </head>
 <body class="d-flex flex-column h-100" onload="lahee_init();">
 
@@ -84,11 +86,12 @@
                     </li>
                 </ul>
                 <form id="main_data_selector" style="visibility: hidden;" class="d-flex" onsubmit="lahee_change_game(); return false;">
-                    <img id="useravatar" src="" height="48" />
+                    <img id="user_avatar" src="" height="48"/>
                     <select id="user_select" class="form-select me-2" onchange="lahee_build_game_selector();">
                         <option>Loading...</option>
                     </select>
-                    <img id="gameavatar" src="" height="48" class="page_achievements_controls page_leaderboards_controls page-controls" />
+                    <img id="game_avatar" src="" height="48"
+                         class="page_achievements_controls page_leaderboards_controls page-controls"/>
                     <select id="game_select" class="form-select me-2 page_achievements_controls page_leaderboards_controls page-controls">
                         <option>Loading...</option>
                     </select>
@@ -101,7 +104,8 @@
                         <option value="5">Sort: Points</option>
                     </select>
                     <input class="form-control me-2 page_achievements_controls page-controls" type="text" id="filter" placeholder="Filter by name/desc." />
-                    <select id="lbsort_select" class="form-select me-2 page-controls page_leaderboards_controls">
+                    <select id="leaderboard_sort_select"
+                            class="form-select me-2 page-controls page_leaderboards_controls">
                         <option value="0">Sort: Best</option>
                         <option value="1">Sort: Recent</option>
                     </select>
@@ -122,8 +126,8 @@
         </div>
         <div id="page_achievements" class="lahee-page">
             <div class="row">
-                <div class="col-9" id="achievementgrid"></div>
-                <div class="col" id="achievementdetails">
+                <div class="col-9" id="achievement_grid"></div>
+                <div class="col" id="achievement_details">
                     <p id="adetail_img"></p>
                     <h3 id="adetail_title" class="text-center">Please select...</h3>
                     <p id="adetail_desc"></p>
@@ -180,22 +184,23 @@
                     </div>
                     <div class="row">
                         <div class="col">
-                            <h2 id="gamept">0/0</h2>
+                            <h2 id="game_pt">0/0</h2>
                             <p>Game Points</p>
                         </div>
                         <div class="col">
-                            <h2 id="totalpt">0</h2>
+                            <h2 id="total_pt">0</h2>
                             <p>Total Points</p>
                         </div>
                     </div>
                     <div class="progress" role="progressbar">
-                        <div id="gameptprogress" class="progress-bar bg-success" style="width: 0%">Now Loading...</div>
+                        <div id="game_point_progress" class="progress-bar bg-success" style="width: 0">Now Loading...
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         <div id="page_leaderboards" class="lahee-page">
-            <select class="form-select" id="lb_id" onchange="lahee_change_lb();">
+            <select class="form-select" id="lb_id" onchange="lahee_records_change_selected();">
                 <option>Loading...</option>
             </select>
             <hr />
@@ -224,13 +229,13 @@
 
                     <div class="col-12 col-sm-3 text-center stats_details">
                         <h1>Most Played</h1>
-                        <p><img id="game_img_l" class="game_img" /></p>
+                        <p><img id="game_img_l" class="game_img" src=""/></p>
                         <p id="game_title_l">NAME</p>
                         <h4 id="game_time_l">0 days 00:00:00</h4>
                     </div>
                     <div class="col-12 col-sm-3 text-center">
                         <h1>Least Played</h1>
-                        <p><img id="game_img_s" class="game_img" /></p>
+                        <p><img id="game_img_s" class="game_img" src=""/></p>
                         <p id="game_title_s">NAME</p>
                         <h4 id="game_time_s">0.00:00:00</h4>
                     </div>
@@ -268,25 +273,25 @@
 
                     <div class="col-12 col-sm-3 text-center">
                         <h1>Fastest 100%</h1>
-                        <p><img id="game_img_f1" class="game_img" /></p>
+                        <p><img id="game_img_f1" class="game_img" src=""/></p>
                         <p id="game_title_f1">NAME</p>
                         <h4 id="game_time_f1">0.00:00:00</h4>
                     </div>
                     <div class="col-12 col-sm-3 text-center">
                         <h1>Slowest 100%</h1>
-                        <p><img id="game_img_s1" class="game_img" /></p>
+                        <p><img id="game_img_s1" class="game_img" src=""/></p>
                         <p id="game_title_s1">NAME</p>
                         <h4 id="game_time_s1">0.00:00:00</h4>
                     </div>
                     <div class="col-12 col-sm-3 text-center">
                         <h1>Fastest Beat</h1>
-                        <p><img id="game_img_fb" class="game_img" /></p>
+                        <p><img id="game_img_fb" class="game_img" src=""/></p>
                         <p id="game_title_fb">NAME</p>
                         <h4 id="game_time_fb">0.00:00:00</h4>
                     </div>
                     <div class="col-12 col-sm-3 text-center">
                         <h1>Slowest Beat</h1>
-                        <p><img id="game_img_sb" class="game_img" /></p>
+                        <p><img id="game_img_sb" class="game_img" src=""/></p>
                         <p id="game_title_sb">NAME</p>
                         <h4 id="game_time_sb">0.00:00:00</h4>
                     </div>
@@ -356,7 +361,7 @@
 
     <footer class="footer mt-auto py-3 bg-body-tertiary">
         <div class="container">
-            <span class="text-body-secondary" id="ingame"></span>
+            <span class="text-body-secondary" id="status_text"></span>
             <span class="text-body-secondary float-end" id="lahee_version">LAHEE</span>
         </div>
     </footer>

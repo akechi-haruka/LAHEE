@@ -312,6 +312,7 @@ static class StaticDataManager {
         return gameData.Values.ToList();
     }
 
+    [Obsolete]
     internal static List<GameDataJsonV1> GetAllGameDataAsV1() {
         return gameData.Values.Select(data => new GameDataJsonV1(data)).ToList();
     }

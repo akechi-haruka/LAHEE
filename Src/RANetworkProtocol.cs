@@ -1,5 +1,4 @@
 ﻿using LAHEE.Data;
-using LAHEE.Data.File;
 using RATools.Data;
 using CodeNote = LAHEE.Data.CodeNote;
 
@@ -116,16 +115,16 @@ class RALeaderboardResponseV2 : RAAnyResponse {
 class LaheeResponse {
     public String version;
     public UserData[] users;
-    public GameDataJsonV1[] games;
+    public GameData[] games;
     public UserComment[] comments;
 }
 
 class LaheeUserResponse {
-    public uint currentgameid;
-    public DateTime? lastping;
-    public DateTime? lastplay;
-    public TimeSpan? playtime;
-    public String gamestatus;
+    public uint current_game_id;
+    public DateTime? last_ping;
+    public DateTime? last_play;
+    public TimeSpan? play_time;
+    public String game_status;
     public Dictionary<int, UserAchievementData> achievements;
 }
 
