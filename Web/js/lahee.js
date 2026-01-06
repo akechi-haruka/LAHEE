@@ -18,13 +18,40 @@ var lahee_popup_2;
 var tooltipList;
 
 function lahee_init() {
+    lahee_settings_load();
+    lahee_settings_apply();
+
     if (Notification.permission == "default") {
         Notification.requestPermission().then(p => console.log("Notification permission: " + p));
     }
     lahee_audio_play("540121__jj_om__blank-sound.ogg");
 
+    lahee_split_init_library();
+
     LAHEE_URL = "http://" + window.location.host + "/dorequest.php";
     lahee_request("r=laheeinfo").then(lahee_init_done).catch(lahee_init_error);
+}
+
+function lahee_split_init_library() {
+    try {
+        var saved_sizes = localStorage.getItem("lahee_setting_split_sizes");
+        if (saved_sizes) {
+            saved_sizes = JSON.parse(saved_sizes);
+        } else {
+            saved_sizes = [75, 25];
+        }
+        // noinspection JSUnresolvedReference
+        Split(["#achievement_grid", "#achievement_details"], {
+            sizes: saved_sizes,
+            onDragEnd: function (sizes) {
+                var s = JSON.stringify(sizes);
+                localStorage.setItem("lahee_setting_split_sizes", s);
+                document.getElementById("lahee_setting_split_sizes").value = s;
+            }
+        });
+    } catch (e) {
+        console.error("Error with split.js library", e);
+    }
 }
 
 /**
@@ -224,8 +251,6 @@ function lahee_build_achievements(user, game) {
 
     var ug = user.getUserGameData(game);
 
-    var content = "<div class='ach_grid'>";
-
     var sort = document.getElementById("sort_select").value;
     var filter = document.getElementById("filter").value;
     var arr = game.getAllAchievements();
@@ -237,7 +262,6 @@ function lahee_build_achievements(user, game) {
                 a.Description.toLowerCase().includes(filter);
         });
     }
-
     arr.sort(function (a, b) {
         var ua = ug.getAchievementData(a.ID);
         if (sort == 1) { // locked
@@ -271,9 +295,43 @@ function lahee_build_achievements(user, game) {
         }
     });
 
+    var content = "";
+    if (localStorage.getItem("lahee_setting_ach_grouping") === "true" && game.AchievementSets.length > 1) {
+        var rendered_achievement_sets = {};
+        for (var set of game.AchievementSets) {
+            rendered_achievement_sets[set.Title] = "";
+        }
+        for (var a of arr) {
+            var ua = ug.getAchievementData(a);
+
+            rendered_achievement_sets[a.Set.Title] += lahee_render_achievement(game, ug, a, ua);
+        }
+
+        for (var title of Object.keys(rendered_achievement_sets)) {
+            content += `
+                <p class="ach_set_header">${title}</p>
+                <div class='ach_grid'>
+                    ${rendered_achievement_sets[title]}
+                </div>
+            `;
+        }
+    } else {
+        content += "<div class='ach_grid'>";
+
+        for (var a of arr) {
+            var ua = ug.getAchievementData(a);
+
+            content += lahee_render_achievement(game, ug, a, ua);
+        }
+
+        content += "</div>";
+    }
+
+
+    document.getElementById("achievement_grid").innerHTML = content;
+
     var pt = 0;
     var max_pt = 0;
-
     for (var a of arr) {
         var ua = ug.getAchievementData(a);
 
@@ -281,12 +339,7 @@ function lahee_build_achievements(user, game) {
             pt += a.Points;
         }
         max_pt += a.Points;
-
-        content += lahee_render_achievement(game, ug, a, ua);
     }
-
-    document.getElementById("achievement_grid").innerHTML = content + "</div>";
-
     var game_point_el = document.getElementById("game_point_progress");
     game_point_el.style.width = (pt / max_pt * 100) + "%";
     game_point_el.innerText = Math.floor(pt / max_pt * 100) + "%";
@@ -1124,7 +1177,7 @@ function lahee_check_meta_combo(user) {
     if (highest_combo_count > 1) {
 
         console.log("combo timestamps: ", highest_combo_ua.map(ua => ua.getAchieveDate()));
-        
+
         return new LaheeMetaResult(highest_combo_ua[0], "The Combo", "The longest combo of achievements within 10 minutes of each other.<br>(You: " + highest_combo_count + " within " + TimeSpan.fromMilliseconds(highest_combo_time).toStringWithoutMs() + ")", highest_combo_ua);
     }
 
@@ -1293,7 +1346,7 @@ function lahee_build_game_selector() {
     var game_list = lahee_data.games.slice();
 
     var select_html = "";
-    
+
     if (user) {
 
         select_html += "<optgroup label='Recently Played'>";
@@ -1365,4 +1418,38 @@ function lahee_build_game_selector() {
     }
 
     document.getElementById("game_select").innerHTML = select_html;
+}
+
+function lahee_settings_load() {
+    document.getElementById("lahee_setting_ach_grouping").checked = localStorage.getItem("lahee_setting_ach_grouping") === "true";
+    document.getElementById("lahee_setting_ach_no_margin").checked = localStorage.getItem("lahee_setting_ach_no_margin") === "true";
+    document.getElementById("lahee_setting_split_sizes").value = localStorage.getItem("lahee_setting_split_sizes");
+}
+
+function lahee_settings_save() {
+    localStorage.setItem("lahee_setting_ach_grouping", document.getElementById("lahee_setting_ach_grouping").checked);
+    localStorage.setItem("lahee_setting_ach_no_margin", document.getElementById("lahee_setting_ach_no_margin").checked);
+
+    bootstrap.Toast.getOrCreateInstance(document.getElementById("toast_saved")).show();
+}
+
+function lahee_settings_reset() {
+    localStorage.clear();
+    window.location.reload();
+}
+
+function lahee_settings_apply() {
+    var no_margin_enabled = localStorage.getItem("lahee_setting_ach_no_margin");
+    var grid = document.getElementById("achievement_grid");
+    if (no_margin_enabled === "true") {
+        grid.style.margin = "0";
+        grid.style.padding = "0";
+    } else {
+        grid.style.removeProperty("margin");
+        grid.style.removeProperty("padding");
+    }
+
+    if (lahee_data) {
+        lahee_change_game();
+    }
 }

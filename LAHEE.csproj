@@ -57,11 +57,7 @@
 		<Content Include="Web\css\lahee.css" />
 		<Content Include="Web\favicon.ico" />
 		<Content Include="Web\index.html" />
-		<Content Include="Web\js\bootstrap.bundle.min.js" />
-		<Content Include="Web\js\bootstrap.bundle.min.js.map" />
-		<Content Include="Web\js\color-modes.js" />
 		<Content Include="Web\js\lahee.js" />
-		<Content Include="Web\js\TimeSpan.js" />
 		<Content Include="Web\lahee.png" />
 		<Content Include="Web\sounds\162482__kastenfrosch__achievement.mp3" />
 		<Content Include="Web\sounds\540121__jj_om__blank-sound.ogg" />

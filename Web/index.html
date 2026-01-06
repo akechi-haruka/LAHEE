@@ -7,11 +7,13 @@
     <title>LAHEE</title>
 
     <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/split.css" rel="stylesheet">
     <link href="css/lahee.css" rel="stylesheet">
     <link rel="icon" href="favicon.ico">
 
-    <script src="js/color-modes.js"></script>
-    <script src="js/TimeSpan.js"></script>
+    <script src="js/3rdparty/color-modes.js"></script>
+    <script src="js/3rdparty/TimeSpan.js"></script>
+    <script src="js/3rdparty/split.min.js"></script>
     <script src="js/lahee_dto.js"></script>
 </head>
 <body class="d-flex flex-column h-100" onload="lahee_init();">
@@ -84,6 +86,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="javascript:lahee_set_page('page_stats')">Stats</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="javascript:lahee_set_page('page_settings')">Settings</a>
+                    </li>
                 </ul>
                 <form id="main_data_selector" style="visibility: hidden;" class="d-flex" onsubmit="lahee_change_game(); return false;">
                     <img id="user_avatar" src="" height="48"/>
@@ -125,7 +130,7 @@
             <p>Depending on the number of games or achievements, this may take a moment.</p>
         </div>
         <div id="page_achievements" class="lahee-page">
-            <div class="row">
+            <div class="row split">
                 <div class="col-9" id="achievement_grid"></div>
                 <div class="col" id="achievement_details">
                     <p id="adetail_img"></p>
@@ -167,7 +172,7 @@
                                        value="View Code" onclick="lahee_show_code_popup();"/>
                             </div>
                         </div>
-                        <div class="row">
+                        <div class="row mb-2">
                             <div class="col">
                                 <input type="button" class="btn btn-primary w-100" value="Add Notes"
                                        onclick="lahee_show_comment_editor();"/>
@@ -357,6 +362,39 @@
 
             </div>
         </div>
+        <div id="page_settings" class="lahee-page">
+            <div class="alert alert-info" role="alert">Settings are stored locally in the browser and apply to all users
+                you view on LAHEE.
+            </div>
+            <h1>Achievement List Settings</h1>
+
+            <div class="mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="lahee_setting_ach_grouping">
+                    <label class="form-check-label" for="lahee_setting_ach_grouping">
+                        Group achievement grid by (sub-)sets if more than 1 set is present
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="lahee_setting_ach_no_margin">
+                    <label class="form-check-label" for="lahee_setting_ach_no_margin">
+                        Make achievement icon grid span the full width (disable margins)
+                    </label>
+                </div>
+            </div>
+
+            <label for="lahee_setting_split_sizes" class="form-label">Column Layout</label>
+            <input type="text" id="lahee_setting_split_sizes" class="form-control" disabled>
+            <div class="form-text">The sizes of the achievement display columns in %. Resize them by dragging them via
+                &#x28FF;
+            </div>
+
+            <hr/>
+            <button type="button" class="btn btn-primary"
+                    onclick="lahee_settings_save(); lahee_settings_apply(); lahee_set_page('page_achievements');">Save
+            </button>
+            <button type="button" class="btn btn-warning" onclick="lahee_settings_reset();">Reset to defaults</button>
+        </div>
     </main>
 
     <footer class="footer mt-auto py-3 bg-body-tertiary">
@@ -418,7 +456,7 @@
         </div>
     </div>
 
-    <div class="modal fade" id="extendedCodeNoteModal" tabindex="-1" role="dialog">
+    <div class="modal fade bg-dark bg-opacity-50" id="extendedCodeNoteModal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -435,7 +473,19 @@
         </div>
     </div>
 
-    <script src="js/bootstrap.bundle.min.js"></script>
+    <div class="toast-container position-fixed bottom-0 start-50 translate-middle-x p-3">
+        <div id="toast_saved" class="toast" role="alert">
+            <div class="toast-header">
+                <strong class="me-auto">Settings</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                Settings have been saved.
+            </div>
+        </div>
+    </div>
+
+    <script src="js/3rdparty/bootstrap.bundle.min.js"></script>
     <script src="js/lahee.js"></script>
 
 </body>

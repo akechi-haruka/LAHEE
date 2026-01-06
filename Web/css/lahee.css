@@ -118,18 +118,14 @@ table {
     cursor: pointer;
 }
 
-.modal:nth-of-type(odd) {
-    z-index: 1049 !important;
+.ach_set_header {
+    text-align: center;
+    width: 100%;
+    font-weight: bold;
+    clear: both;
+    padding-top: 1rem;
 }
 
-.modal-backdrop.show:nth-of-type(odd) {
-    z-index: 1048 !important;
-}
-
-.modal:nth-of-type(even) {
-    z-index: 1052 !important;
-}
-
-.modal-backdrop.show:nth-of-type(even) {
-    z-index: 1051 !important;
+.ach_set_header:nth-of-type(1) {
+    padding-top: 0;
 }
