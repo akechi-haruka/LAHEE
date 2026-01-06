@@ -394,7 +394,12 @@ class LaheeUserData {
      * @param leaderboard_id {number}
      */
     getLeaderboardScoresFor(leaderboard_id) {
-        return this.getAllGameData().flatMap(ug => Object.values(ug.LeaderboardEntries))[leaderboard_id] ?? [];
+        for (var ug of this.getAllGameData()) {
+            if (ug.LeaderboardEntries[leaderboard_id]) {
+                return ug.LeaderboardEntries[leaderboard_id];
+            }
+        }
+        return [];
     }
 }
 
@@ -430,7 +435,7 @@ class LaheeUserGameData {
                 Object.values(data.Achievements).forEach(ua => this.Achievements[ua.AchievementID] = new LaheeUserAchievementData(this, ua));
             }
             if (data.LeaderboardEntries) {
-                Object.values(data.LeaderboardEntries).forEach(ul => this.LeaderboardEntries[ul.ID] = ul.map(ule => new LaheeUserLeaderboardData(this, ule)));
+                Object.keys(data.LeaderboardEntries).forEach(lid => this.LeaderboardEntries[lid] = data.LeaderboardEntries[lid].map(ule => new LaheeUserLeaderboardData(this, ule)));
             }
             this.FirstPlay = new Date(data.FirstPlay);
             this.LastPlay = new Date(data.LastPlay);
@@ -478,7 +483,7 @@ class LaheeUserLeaderboardData {
     constructor(user_game_data, data) {
         Object.assign(this, data);
         this.UserGameData = user_game_data;
-        this.RecordDate = new Date(data.RecordDate);
+        this.RecordDate = new Date(data.RecordDate * 1000);
         this.PlayTime = TimeSpan.parse(data.PlayTime);
     }
 }
