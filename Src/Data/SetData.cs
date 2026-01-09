@@ -19,15 +19,15 @@ public enum SetType {
 }
 
 public class SetData {
-    public String Title;
+    public string Title;
 
     [JsonConverter(typeof(StringEnumConverter))]
     public SetType Type;
 
     public int AchievementSetId;
     public uint GameId;
-    public String ImageIconUrl;
+    public string ImageIconUrl;
     public List<AchievementData> Achievements;
     public List<LeaderboardData> Leaderboards;
-    [JsonIgnore] public String FileSource;
+    [JsonIgnore] public string FileSource;
 }

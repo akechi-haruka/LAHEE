@@ -9,16 +9,16 @@ public static class RAOfficialServer {
     private const string SERVER_ACCOUNT_USER_ID = "019Z8BMP7E37YNRVDSP8SV266G";
 
     public static string Url {
-        get { return Configuration.Get("LAHEE", "RAFetch", "Url"); }
+        get { return Program.Config.Get("LAHEE", "RAFetch", "Url"); }
     }
 
     public static string SessionToken { get; private set; }
 
     public static bool CanFetch {
         get {
-            string apiWeb = Configuration.Get("LAHEE", "RAFetch", "WebApiKey");
-            string username = Configuration.Get("LAHEE", "RAFetch", "Username");
-            string password = Configuration.Get("LAHEE", "RAFetch", "Password");
+            string apiWeb = Program.Config.Get("LAHEE", "RAFetch", "WebApiKey");
+            string username = Program.Config.Get("LAHEE", "RAFetch", "Username");
+            string password = Program.Config.Get("LAHEE", "RAFetch", "Password");
 
             if (String.IsNullOrWhiteSpace(Url)) {
                 Log.Main.LogError("Invalid RAFetch Url in configuration.");
@@ -44,13 +44,13 @@ public static class RAOfficialServer {
         }
     }
 
-    public static void FetchData(string gameIdStr, string overrideIdStr, bool includeUnofficial, String copyToUsername = null) {
+    public static void FetchData(string gameIdStr, string overrideIdStr, bool includeUnofficial, string copyToUsername = null) {
         if (!CanFetch) {
             return;
         }
 
-        string apiWeb = Configuration.Get("LAHEE", "RAFetch", "WebApiKey");
-        string username = Configuration.Get("LAHEE", "RAFetch", "Username");
+        string apiWeb = Program.Config.Get("LAHEE", "RAFetch", "WebApiKey");
+        string username = Program.Config.Get("LAHEE", "RAFetch", "Username");
 
         if (!UInt32.TryParse(gameIdStr, out uint fetchId)) {
             Log.Main.LogError("Not a valid game ID: {i}", gameIdStr);
@@ -102,7 +102,7 @@ public static class RAOfficialServer {
             }
         }
 
-        Dictionary<String, String> imageDownloads = new Dictionary<string, string>();
+        Dictionary<string, string> imageDownloads = new Dictionary<string, string>();
         imageDownloads.Add(gameData.ImageIcon, gameData.ImageIconURL);
         foreach (AchievementData ad in gameData.GetAllAchievements()) {
             imageDownloads[ad.BadgeName] = ad.BadgeURL;
@@ -132,9 +132,9 @@ public static class RAOfficialServer {
 
         Log.RCheevos.LogInformation("Finished getting data from \"{u}\"", Url);
 
-        String fileBase = Configuration.Get("LAHEE", "DataDirectory") + "\\" + overrideId + "-" + new string(gameData.Title.Where(ch => !Program.INVALID_FILE_NAME_CHARS.Contains(ch)).ToArray());
-        String fileData = fileBase + ".set.json";
-        String fileHash = fileBase + ".hash.txt";
+        string fileBase = Program.Config.Get("LAHEE", "DataDirectory") + "\\" + overrideId + "-" + new string(gameData.Title.Where(ch => !Program.INVALID_FILE_NAME_CHARS.Contains(ch)).ToArray());
+        string fileData = fileBase + ".set.json";
+        string fileHash = fileBase + ".hash.txt";
         if (!File.Exists(fileData)) {
             Log.RCheevos.LogInformation("Creating file {f}", fileData);
             File.WriteAllText(fileData, JsonConvert.SerializeObject(gameData));
@@ -187,10 +187,10 @@ public static class RAOfficialServer {
         Log.Main.LogInformation("Operation completed.");
     }
 
-    private static void CheckAndQueryImage(String filename, String url) {
-        string path = Configuration.Get("LAHEE", "BadgeDirectory");
-        String basename = Path.GetFileNameWithoutExtension(filename) + ".png";
-        String targetPath = path + "\\" + basename;
+    private static void CheckAndQueryImage(string filename, string url) {
+        string path = Program.Config.Get("LAHEE", "BadgeDirectory");
+        string basename = Path.GetFileNameWithoutExtension(filename) + ".png";
+        string targetPath = path + "\\" + basename;
         Log.RCheevos.LogTrace("Checking image file: {f} at {f2}", basename, targetPath);
         if (File.Exists(targetPath)) {
             return;
@@ -217,7 +217,7 @@ public static class RAOfficialServer {
         }
     }
 
-    private static TResponse Query<TResponse>(HttpMethod method, String host, String path, object request) where TResponse : class {
+    private static TResponse Query<TResponse>(HttpMethod method, string host, string path, object request) where TResponse : class {
         HttpClient http = new HttpClient();
         HttpRequestMessage req = new HttpRequestMessage(method, host + "/" + path);
         req.Headers.Add("User-Agent", Program.NAME);
@@ -232,7 +232,7 @@ public static class RAOfficialServer {
         try {
             HttpResponseMessage resp = http.Send(req);
             Log.RCheevos.LogDebug("Server returned HTTP {h}", resp.StatusCode);
-            String content = new StreamReader(resp.Content.ReadAsStream()).ReadToEnd();
+            string content = new StreamReader(resp.Content.ReadAsStream()).ReadToEnd();
             Log.RCheevos.LogTrace("Content: {d}", content);
 
             if (resp.StatusCode != HttpStatusCode.OK) {
@@ -258,7 +258,7 @@ public static class RAOfficialServer {
             throw new ProtocolException("Unknown game id: " + gameId);
         }
 
-        string apiWeb = Configuration.Get("LAHEE", "RAFetch", "WebApiKey");
+        string apiWeb = Program.Config.Get("LAHEE", "RAFetch", "WebApiKey");
 
         if (String.IsNullOrWhiteSpace(Url)) {
             throw new ProtocolException("Invalid RAFetch Url in configuration.");
@@ -297,8 +297,8 @@ public static class RAOfficialServer {
             return SessionToken;
         }
 
-        string username = Configuration.Get("LAHEE", "RAFetch", "Username");
-        string password = Configuration.Get("LAHEE", "RAFetch", "Password");
+        string username = Program.Config.Get("LAHEE", "RAFetch", "Username");
+        string password = Program.Config.Get("LAHEE", "RAFetch", "Password");
 
         RALoginResponse login = Query<RALoginResponse>(HttpMethod.Get, Url, "dorequest.php?r=login2&u=" + username + "&p=" + password, null);
         if (login == null) {
@@ -320,7 +320,7 @@ public static class RAOfficialServer {
             return null;
         }
 
-        string username = Configuration.Get("LAHEE", "RAFetch", "Username");
+        string username = Program.Config.Get("LAHEE", "RAFetch", "Username");
 
         RACodeNotesResponse notes = Query<RACodeNotesResponse>(HttpMethod.Get, Url, "dorequest.php?r=codenotes2&u=" + username + "&t=" + sessionToken + "&g=" + game.ID, null);
         if (notes == null) {

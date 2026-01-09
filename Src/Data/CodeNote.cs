@@ -9,7 +9,7 @@
 namespace LAHEE.Data;
 
 public class CodeNote {
-    public String User;
-    public String Address;
-    public String Note;
+    public string User;
+    public string Address;
+    public string Note;
 }

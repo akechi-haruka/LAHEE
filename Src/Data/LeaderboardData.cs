@@ -10,11 +10,11 @@ namespace LAHEE.Data;
 
 public class LeaderboardData {
     public int ID;
-    public String Mem;
-    public String Format;
+    public string Mem;
+    public string Format;
     public int LowerIsBetter;
-    public String Title;
-    public String Description;
+    public string Title;
+    public string Description;
     public bool Hidden;
 
     public override string ToString() {

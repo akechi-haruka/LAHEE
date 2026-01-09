@@ -1,16 +1,4 @@
 ﻿{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information"
-    },
-    "File": {
-      "Path": "Log/app.log",
-      "Append": true,
-      "MinLevel": "Debug",
-      "FileSizeLimitBytes": 0,
-      "MaxRollingFiles": 0
-    }
-  },
   "LAHEE": {
     "WebPort": 8000,
     "AutoSessionOnSingleUser": true,
@@ -44,5 +32,10 @@
         "Delay": 15000
       }
     ]
+  },
+  "Watson": {
+    "DebugResponses": false,
+    "DebugRequests": false,
+    "DebugRouting": false
   }
 }

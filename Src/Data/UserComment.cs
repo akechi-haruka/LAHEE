@@ -10,10 +10,10 @@ namespace LAHEE.Data;
 
 public class UserComment {
     public int AchievementID;
-    public String ULID;
-    public String User;
+    public string ULID;
+    public string User;
     public DateTime Submitted;
-    public String CommentText;
+    public string CommentText;
     public bool IsLocal;
     public Guid LaheeUUID;
 }

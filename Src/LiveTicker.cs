@@ -75,7 +75,7 @@ class LiveTicker {
     }
 
     public abstract class LiveTickerEvent {
-        public String type;
+        public string type;
 
         protected LiveTickerEvent(string type) {
             this.type = type;

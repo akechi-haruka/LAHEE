@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Text;
+using Haruka.Common.Configuration;
 using LAHEE.Data;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic.FileIO;
@@ -9,7 +10,9 @@ namespace LAHEE;
 class Program {
     internal static readonly char[] INVALID_FILE_NAME_CHARS = Path.GetInvalidFileNameChars();
 
-    public static readonly String NAME;
+    public static readonly string NAME;
+
+    public static AppConfig Config;
 
     static Program() {
         string gitHash = Assembly.Load(typeof(Program).Assembly.FullName!)
@@ -23,13 +26,14 @@ class Program {
     private static void Main() {
         Console.Title = NAME;
 
-        String path = Environment.ProcessPath;
+        string path = Environment.ProcessPath;
         if (path != null) {
             Environment.CurrentDirectory = Path.GetDirectoryName(path)!;
         }
 
         try {
-            Configuration.Initialize();
+            AppConfig.Initialize();
+            Config = new AppConfig("LAHEE");
         } catch (Exception ex) {
             Console.WriteLine("An error ocurred during loading the configuration:\n" + ex.Message);
 #if DEBUG
@@ -39,7 +43,7 @@ class Program {
             return;
         }
 
-        string badgeDirectory = Configuration.Get("LAHEE", "BadgeDirectory") ?? "Badge";
+        string badgeDirectory = Config.Get("LAHEE", "BadgeDirectory") ?? "Badge";
         if (!File.Exists(badgeDirectory)) {
             Directory.CreateDirectory(badgeDirectory);
         }
@@ -233,8 +237,8 @@ reloaduser                                                            Reloads us
 
         int count = 0;
         Log.Data.LogInformation("Deleting all files belonging to: {g}", game);
-        string dir = Configuration.Get("LAHEE", "DataDirectory");
-        foreach (String file in Directory.EnumerateFiles(dir)) {
+        string dir = Config.Get("LAHEE", "DataDirectory");
+        foreach (string file in Directory.EnumerateFiles(dir)) {
             if (StaticDataManager.GetGameIdFromFilePath(file) == game.ID) {
                 Log.Data.LogInformation("Deleting: {f}", file);
                 File.Delete(file);
@@ -254,8 +258,8 @@ reloaduser                                                            Reloads us
             return;
         }
 
-        string dir = Configuration.Get("LAHEE", "DataDirectory");
-        String fn = Path.Combine(dir, game.ID + "-CustomHashes.hash.txt");
+        string dir = Config.Get("LAHEE", "DataDirectory");
+        string fn = Path.Combine(dir, game.ID + "-CustomHashes.hash.txt");
         string content = "";
 
         if (File.Exists(fn)) {

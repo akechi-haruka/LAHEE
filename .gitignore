@@ -363,4 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # RetroAchievements specific
-appsettings.local.json
+*.local.json

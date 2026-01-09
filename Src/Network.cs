@@ -14,11 +14,11 @@ using HttpMethod = WatsonWebserver.Core.HttpMethod;
 namespace LAHEE;
 
 static class Network {
-    public const String LOCAL_HOST = "localhost";
-    public const String BASE_DIR = "/";
-    public static String LocalUrl;
+    public const string LOCAL_HOST = "localhost";
+    public const string BASE_DIR = "/";
+    public static string LocalUrl;
 
-    internal const String RA_ROUTE_HEADER = "X-RA-Route";
+    internal const string RA_ROUTE_HEADER = "X-RA-Route";
 
     private static WebserverLite server;
     internal static Dictionary<string, Func<HttpContextBase, Task>> RARoutes;
@@ -26,21 +26,21 @@ static class Network {
     public static void Initialize() {
         Log.Network.LogDebug("Initializing network...");
 
-        int localPort = Configuration.GetInt("LAHEE", "WebPort");
+        int localPort = Program.Config.GetInt("LAHEE", "WebPort");
         LocalUrl = "http://" + LOCAL_HOST + ":" + localPort + BASE_DIR;
 
         server = new WebserverLite(new WebserverSettings("0.0.0.0", localPort), Routes.DefaultNotFoundRoute);
 
         server.Events.Logger += WatsonLogger;
-        server.Settings.Debug.Responses = Configuration.GetBool("Watson", "DebugResponses");
-        server.Settings.Debug.Requests = Configuration.GetBool("Watson", "DebugRequests");
-        server.Settings.Debug.Routing = Configuration.GetBool("Watson", "DebugRouting");
+        server.Settings.Debug.Responses = Program.Config.GetBool("Watson", "DebugResponses");
+        server.Settings.Debug.Requests = Program.Config.GetBool("Watson", "DebugRequests");
+        server.Settings.Debug.Routing = Program.Config.GetBool("Watson", "DebugRouting");
 
         server.Routes.PreAuthentication.Static.Add(HttpMethod.GET, BASE_DIR, Routes.RedirectWeb, Routes.DefaultErrorRoute);
         server.Routes.PreAuthentication.Static.Add(HttpMethod.POST, BASE_DIR + "dorequest.php", Routes.RARequestRoute, Routes.DefaultErrorRoute);
         server.Routes.PreAuthentication.Static.Add(HttpMethod.POST, BASE_DIR + "doupload.php", Routes.RAUploadRoute, Routes.DefaultErrorRoute);
 
-        server.Routes.PreAuthentication.Content = new CacheableContentRouteManager(Configuration.GetInt("Watson", "ResourceCacheSeconds"));
+        server.Routes.PreAuthentication.Content = new CacheableContentRouteManager(Program.Config.GetInt("Watson", "ResourceCacheSeconds"));
         server.Routes.PreAuthentication.Content.Add(BASE_DIR + "Badge/", true);
         server.Routes.PreAuthentication.Content.Add(BASE_DIR + "UserPic/", true);
         server.Routes.PreAuthentication.Content.Add(BASE_DIR + "Web/", true);
@@ -112,7 +112,7 @@ static class Routes {
     }
 
     internal static Task PostRouting(HttpContextBase ctx) {
-        String raRoute = ctx.Response.Headers.Get(Network.RA_ROUTE_HEADER);
+        string raRoute = ctx.Response.Headers.Get(Network.RA_ROUTE_HEADER);
         if (raRoute != null) {
             Log.Network.LogInformation("{Method} {Url} ({RAPath}): {ResponseCode} {ResponseLength} {UserAgent}", ctx.Request.Method, ctx.Request.Url.RawWithQuery, raRoute, ctx.Response.StatusCode, ctx.Response.ContentLength, ctx.Request.Useragent);
         } else {
@@ -135,7 +135,7 @@ static class Routes {
     }
 
     internal static async Task RAUploadRoute(HttpContextBase ctx) {
-        String part = ctx.Request.ContentType.Split('=')[1];
+        string part = ctx.Request.ContentType.Split('=')[1];
         Log.Network.LogDebug("Upload request. form-data part = {f}", part);
         using (MemoryStream ms = new MemoryStream(ctx.Request.DataAsBytes)) {
             MultipartFormDataParser form = await MultipartFormDataParser.ParseAsync(ms);
@@ -149,7 +149,7 @@ static class Routes {
             if (r == "uploadbadgeimage") {
                 if (OperatingSystem.IsWindowsVersionAtLeast(6, 1)) {
                     if (form.Files.Count > 0) {
-                        string badgeDirectory = Configuration.Get("LAHEE", "BadgeDirectory");
+                        string badgeDirectory = Program.Config.Get("LAHEE", "BadgeDirectory");
                         int badgeId = StaticDataManager.AssignNextCustomAchievementId();
 
                         Image img = Image.FromStream(form.Files[0].Data);
@@ -255,7 +255,7 @@ static class Routes {
 
     internal static async Task RAStartSession(HttpContextBase ctx) {
         //String username = ctx.Request.GetParameter("u");
-        String token = ctx.Request.GetParameter("t");
+        string token = ctx.Request.GetParameter("t");
         uint gameId = UInt32.Parse(ctx.Request.GetParameter("g"));
         int hardcoreFlag = Int32.Parse(ctx.Request.GetParameter("h")); // 1/0
         //String gamehash = ctx.Request.GetParameter("m");
@@ -312,10 +312,10 @@ static class Routes {
 
     internal static async Task RAAwardAchievement(HttpContextBase ctx) {
         //String username = ctx.Request.GetParameter("u");
-        String token = ctx.Request.GetParameter("t");
+        string token = ctx.Request.GetParameter("t");
         int achievementid = Int32.Parse(ctx.Request.GetParameter("a"));
         int hardcoreFlag = Int32.Parse(ctx.Request.GetParameter("h")); // 1/0
-        String gamehash = ctx.Request.GetParameter("m");
+        string gamehash = ctx.Request.GetParameter("m");
         // int secondsSinceUnlock = ctx.Request.GetParameter("o");
         //String verification = ctx.Request.GetParameter("v");
 
@@ -375,10 +375,10 @@ static class Routes {
 
     internal static async Task RAPing(HttpContextBase ctx) {
         //String username = ctx.Request.GetParameter("u");
-        String token = ctx.Request.GetParameter("t");
+        string token = ctx.Request.GetParameter("t");
         //uint gameId = UInt32.Parse(ctx.Request.GetParameter("g"));
-        String gameHash = ctx.Request.GetParameter("x");
-        String statusMessage = ctx.Request.GetParameter("m");
+        string gameHash = ctx.Request.GetParameter("x");
+        string statusMessage = ctx.Request.GetParameter("m");
         //int hardcoreFlag = Int32.Parse(ctx.Request.GetParameter("h")); // 1/0
         // int secondsSinceUnlock = ctx.Request.GetParameter("o");
 
@@ -409,7 +409,7 @@ static class Routes {
 
         userGameData.PresenceHistory.Add(new PresenceHistory(DateTime.Now, statusMessage));
 
-        int limit = Configuration.GetInt("LAHEE", "PresenceHistoryLimit");
+        int limit = Program.Config.GetInt("LAHEE", "PresenceHistoryLimit");
         while (limit > -1 && userGameData.PresenceHistory.Count > limit) {
             userGameData.PresenceHistory.RemoveAt(0);
         }
@@ -427,10 +427,10 @@ static class Routes {
 
     internal static async Task RASubmitLeaderboardEntry(HttpContextBase ctx) {
         //String username = ctx.Request.GetParameter("u");
-        String token = ctx.Request.GetParameter("t");
+        string token = ctx.Request.GetParameter("t");
         int leaderboardId = Int32.Parse(ctx.Request.GetParameter("i"));
         int score = Int32.Parse(ctx.Request.GetParameter("s"));
-        String gamehash = ctx.Request.GetParameter("m");
+        string gamehash = ctx.Request.GetParameter("m");
         // int secondsSinceUnlock = ctx.Request.GetParameter("o");
         // uint gameId = UInt32.Parse(ctx.Request.GetParameter("g"));
         //String verification = ctx.Request.GetParameter("v");
@@ -517,7 +517,7 @@ static class Routes {
     }
 
     internal static async Task LaheeUserInfo(HttpContextBase ctx) {
-        String user = ctx.Request.GetParameter("user");
+        string user = ctx.Request.GetParameter("user");
         uint gameId = UInt32.Parse(ctx.Request.GetParameter("gameid"));
 
         UserData userData = UserManager.GetUserData(user);
@@ -547,7 +547,7 @@ static class Routes {
     }
 
     internal static async Task LaheeFetchComments(HttpContextBase ctx) {
-        String user = ctx.Request.GetParameter("user");
+        string user = ctx.Request.GetParameter("user");
         uint gameId = UInt32.Parse(ctx.Request.GetParameter("gameid"));
         int achievementId = Int32.Parse(ctx.Request.GetParameter("aid"));
 
@@ -588,10 +588,10 @@ static class Routes {
     }
 
     internal static async Task LaheeWriteComment(HttpContextBase ctx) {
-        String user = ctx.Request.GetParameter("user");
+        string user = ctx.Request.GetParameter("user");
         uint gameId = UInt32.Parse(ctx.Request.GetParameter("gameid"));
         int achievementId = Int32.Parse(ctx.Request.GetParameter("aid"));
-        String comment = ctx.Request.GetParameter("comment");
+        string comment = ctx.Request.GetParameter("comment");
 
         UserData userData = UserManager.GetUserData(user);
         if (userData == null) {
@@ -621,7 +621,7 @@ static class Routes {
     }
 
     internal static async Task LaheeDeleteComment(HttpContextBase ctx) {
-        String uuid = ctx.Request.GetParameter("uuid");
+        string uuid = ctx.Request.GetParameter("uuid");
         uint gameId = UInt32.Parse(ctx.Request.GetParameter("gameid"));
 
         GameData game = StaticDataManager.FindGameDataById(gameId);
@@ -643,7 +643,7 @@ static class Routes {
     }
 
     internal static async Task LaheeFlagImportant(HttpContextBase ctx) {
-        String user = ctx.Request.GetParameter("user");
+        string user = ctx.Request.GetParameter("user");
         uint gameId = UInt32.Parse(ctx.Request.GetParameter("gameid"));
         int achievementId = Int32.Parse(ctx.Request.GetParameter("aid"));
 
@@ -687,8 +687,8 @@ static class Routes {
     }
 
     internal static async Task LaheeTriggerFetch(HttpContextBase ctx) {
-        String gameid = ctx.Request.GetParameter("gameid");
-        String @override = ctx.Request.GetParameter("override");
+        string gameid = ctx.Request.GetParameter("gameid");
+        string @override = ctx.Request.GetParameter("override");
         bool unofficial = ctx.Request.GetParameter("unofficial") == "true";
 
         RAOfficialServer.FetchData(gameid, @override, unofficial);
@@ -701,8 +701,8 @@ static class Routes {
 
     internal static async Task RAAchievementSets(HttpContextBase ctx) {
         //String username = ctx.Request.GetParameter("u");
-        String token = ctx.Request.GetParameter("t");
-        String gameHash = ctx.Request.GetParameter("m");
+        string token = ctx.Request.GetParameter("t");
+        string gameHash = ctx.Request.GetParameter("m");
         uint gameId = 0;
         if (ctx.Request.GetParameter("g") != null) {
             gameId = UInt32.Parse(ctx.Request.GetParameter("g"));
@@ -723,7 +723,7 @@ static class Routes {
         }
 
         List<SetData> sets;
-        if (Configuration.GetBool("LAHEE", "LoadAsSingleSet")) {
+        if (Program.Config.GetBool("LAHEE", "LoadAsSingleSet")) {
             sets = new List<SetData>() {
                 new SetData() {
                     Achievements = game.GetAllAchievements().ToList(),
@@ -774,7 +774,7 @@ static class Routes {
             return;
         }
 
-        if (Configuration.GetBool("LAHEE", "RAFetch", "AutoUpdateCodeNotes")) {
+        if (Program.Config.GetBool("LAHEE", "RAFetch", "AutoUpdateCodeNotes")) {
             try {
                 if (game.CodeNotes == null || game.CodeNotes.Count == 0) {
                     if (RAOfficialServer.CanFetch) {
@@ -832,7 +832,7 @@ static class Routes {
     }
 
     internal static async Task RAUploadAchievement(HttpContextBase ctx) {
-        String token = ctx.Request.GetParameter("t");
+        string token = ctx.Request.GetParameter("t");
         uint gameId = UInt32.Parse(ctx.Request.GetParameter("g"));
 
         GameData game = StaticDataManager.FindGameDataById(gameId);
@@ -852,19 +852,19 @@ static class Routes {
         Log.Data.LogInformation("Updating achievement: {aid}", ctx.Request.GetParameter("a"));
 
         int achievementId = Int32.Parse(ctx.Request.GetParameter("a") ?? "-1");
-        String title = ctx.Request.GetParameter("n");
-        String text = ctx.Request.GetParameter("d");
+        string title = ctx.Request.GetParameter("n");
+        string text = ctx.Request.GetParameter("d");
         int points = Int32.Parse(ctx.Request.GetParameter("z"));
-        String type = ctx.Request.GetParameter("x");
-        String code = ctx.Request.GetParameter("m");
+        string type = ctx.Request.GetParameter("x");
+        string code = ctx.Request.GetParameter("m");
         int flag = Int32.Parse(ctx.Request.GetParameter("f"));
-        String icon = ctx.Request.GetParameter("b");
+        string icon = ctx.Request.GetParameter("b");
 
         if (achievementId <= 0) {
             achievementId = StaticDataManager.AssignNextCustomAchievementId();
         }
 
-        string badgeDirectory = Configuration.Get("LAHEE", "BadgeDirectory");
+        string badgeDirectory = Program.Config.Get("LAHEE", "BadgeDirectory");
 
         AchievementData existing = game.GetAchievementById(achievementId);
 
@@ -917,7 +917,7 @@ static class Routes {
             return;
         }
 
-        if (Configuration.GetBool("LAHEE", "RAFetch", "AutoUpdateCodeNotes")) {
+        if (Program.Config.GetBool("LAHEE", "RAFetch", "AutoUpdateCodeNotes")) {
             try {
                 if (game.CodeNotes == null || game.CodeNotes.Count == 0) {
                     if (RAOfficialServer.CanFetch) {

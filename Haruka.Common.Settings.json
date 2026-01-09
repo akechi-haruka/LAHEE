@@ -1,0 +1,14 @@
+﻿{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information"
+    },
+    "File": {
+      "Path": "Log/app.log",
+      "Append": true,
+      "MinLevel": "Debug",
+      "FileSizeLimitBytes": 0,
+      "MaxRollingFiles": 0
+    }
+  }
+}

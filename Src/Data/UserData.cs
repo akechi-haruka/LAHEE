@@ -11,7 +11,7 @@ namespace LAHEE.Data;
 public class UserData {
     public int ID;
     public bool AllowUse;
-    public String UserName;
+    public string UserName;
     public Dictionary<uint, UserGameData> GameData;
     public uint CurrentGameId;
 

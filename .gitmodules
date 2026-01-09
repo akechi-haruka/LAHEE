@@ -1,3 +1,6 @@
 [submodule "RATools"]
 	path = RATools
 	url = https://github.com/Jamiras/RATools
+[submodule "Haruka.Common"]
+	path = Haruka.Common
+	url = https://github.com/akechi-haruka/Haruka.Common.git

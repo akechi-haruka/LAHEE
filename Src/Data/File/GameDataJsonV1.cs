@@ -12,15 +12,15 @@ namespace LAHEE.Data.File;
 
 public class GameDataJsonV1 {
     public uint ID;
-    public String Title;
-    public String ImageIcon;
-    public String RichPresencePatch;
+    public string Title;
+    public string ImageIcon;
+    public string RichPresencePatch;
     public int ConsoleID;
-    public String ImageIconURL;
+    public string ImageIconURL;
     public List<AchievementData> Achievements;
     public List<LeaderboardData> Leaderboards;
-    public List<String> ROMHashes = new List<string>();
-    [JsonIgnore] public String SourceFilePath;
+    public List<string> ROMHashes = new List<string>();
+    [JsonIgnore] public string SourceFilePath;
 
     public GameDataJsonV1() {
     }

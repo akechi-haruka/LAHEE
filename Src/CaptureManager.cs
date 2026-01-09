@@ -17,10 +17,10 @@ public static class CaptureManager {
     public class CaptureAction {
         public CaptureTrigger Trigger;
         public int Delay;
-        public String Parameter;
+        public string Parameter;
     }
 
-    public const String DIRECTORY = "Capture";
+    public const string DIRECTORY = "Capture";
 
     private static List<CaptureAction> actions;
 
@@ -30,7 +30,7 @@ public static class CaptureManager {
         }
 
         actions = new List<CaptureAction>();
-        IEnumerable<IConfigurationSection> ca = Configuration.Current.GetSection("LAHEE").GetSection("Capture").GetChildren();
+        IEnumerable<IConfigurationSection> ca = Program.Config.GetSection("LAHEE").GetSection("Capture").GetChildren();
         foreach (IConfigurationSection c in ca) {
             CaptureAction a = new CaptureAction() {
                 Delay = Int32.Parse(c.GetSection("Delay").Value ?? "0"),
@@ -53,7 +53,7 @@ public static class CaptureManager {
         Log.Main.LogInformation("{n} capture actions configured.", actions.Count);
     }
 
-    private static String SanitizePath(string path) {
+    private static string SanitizePath(string path) {
         foreach (char c in Path.GetInvalidFileNameChars()) {
             path = path.Replace(c, '-');
         }
@@ -97,7 +97,7 @@ public static class CaptureManager {
     private static async Task<bool> DoWebsocketAsync(string parameter) {
         Log.Main.LogDebug("Connecting to OBS websocket...");
 
-        Uri uri = new Uri(Configuration.Get("LAHEE", "OBSWebsocketUrl"));
+        Uri uri = new Uri(Program.Config.Get("LAHEE", "OBSWebsocketUrl"));
         return await new OBSWebsocket(uri).ConnectAndSendAsync(parameter);
     }
 
@@ -107,10 +107,10 @@ public static class CaptureManager {
             return;
         }
 
-        String path = Path.Combine(DIRECTORY, SanitizePath(user.UserName), SanitizePath(game.Title), SanitizePath(DateTime.Now + "_" + ach.Title + ".png"));
+        string path = Path.Combine(DIRECTORY, SanitizePath(user.UserName), SanitizePath(game.Title), SanitizePath(DateTime.Now + "_" + ach.Title + ".png"));
 
         try {
-            String parent = Directory.GetParent(path)?.FullName;
+            string parent = Directory.GetParent(path)?.FullName;
             if (parent == null) {
                 throw new ArgumentException("Invalid path: " + path);
             }

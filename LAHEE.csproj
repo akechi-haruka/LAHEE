@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>disable</Nullable>
 		<StartupObject>LAHEE.Program</StartupObject>
@@ -34,17 +34,21 @@
 		<None Remove="README.txt" />
 		<None Remove="README.md" />
 		<None Remove="screenshot.jpg" />
-        <None Update="appsettings.local.json">
+		<None Update="LAHEE.local.json">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 		<None Remove="RATools\**"/>
 		<None Remove="screenshot3.png"/>
 		<None Remove="screenshot2.png"/>
 		<None Remove="Readme\**"/>
-		<None Update="appsettings.debug.json">
+		<None Update="Haruka.Common.Settings.debug.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
-		<None Update="appsettings.json">
+		<None Update="LAHEE.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Remove="Haruka.Common\**"/>
+		<None Update="Haruka.Common.Settings.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
 	</ItemGroup>
@@ -65,17 +69,17 @@
 
 	<ItemGroup>
 		<PackageReference Include="HttpMultipartParser" Version="9.2.0"/>
-		<PackageReference Include="JetBrains.Annotations" Version="2025.2.2" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-		<PackageReference Include="NReco.Logging.File" Version="1.2.1" />
-		<PackageReference Include="System.Drawing.Common" Version="9.0.9" />
-		<PackageReference Include="Watson.Core" Version="6.2.3" />
-		<PackageReference Include="Watson.Lite" Version="6.2.3" />
-		<PackageReference Include="websocketsharp.core" Version="1.0.0" />
+		<PackageReference Include="JetBrains.Annotations" Version="2025.2.4"/>
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.1"/>
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.1"/>
+		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.1"/>
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.1"/>
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4"/>
+		<PackageReference Include="NReco.Logging.File" Version="1.3.1"/>
+		<PackageReference Include="System.Drawing.Common" Version="10.0.1"/>
+		<PackageReference Include="Watson.Core" Version="6.5.1"/>
+		<PackageReference Include="Watson.Lite" Version="6.5.2"/>
+		<PackageReference Include="websocketsharp.core" Version="1.0.1"/>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -90,14 +94,17 @@
     <ItemGroup>
 		<Compile Remove="RATools\**"/>
 		<Compile Remove="Readme\**"/>
+		<Compile Remove="Haruka.Common\**"/>
 	</ItemGroup>
 
 	<ItemGroup>
 		<EmbeddedResource Remove="RATools\**"/>
 		<EmbeddedResource Remove="Readme\**"/>
+		<EmbeddedResource Remove="Haruka.Common\**"/>
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="Haruka.Common\Haruka.Common.csproj"/>
 		<ProjectReference Include="RATools\Core\Core\Source\Jamiras.Core.csproj"/>
 		<ProjectReference Include="RATools\Source\Data\RATools.Data.csproj"/>
 	</ItemGroup>

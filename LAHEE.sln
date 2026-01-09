@@ -28,6 +28,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Readme", "Readme", "{EA6DB4
 		Readme\screenshot_userscript.png = Readme\screenshot_userscript.png
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Haruka.Common", "Haruka.Common\Haruka.Common.csproj", "{E504F874-5BAC-457D-A68F-648D2E5AFC70}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -50,6 +52,10 @@ Global
 		{8FD8E667-A12D-4697-853C-48A61EC2CDAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8FD8E667-A12D-4697-853C-48A61EC2CDAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8FD8E667-A12D-4697-853C-48A61EC2CDAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E504F874-5BAC-457D-A68F-648D2E5AFC70}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E504F874-5BAC-457D-A68F-648D2E5AFC70}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E504F874-5BAC-457D-A68F-648D2E5AFC70}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E504F874-5BAC-457D-A68F-648D2E5AFC70}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -61,5 +67,6 @@ Global
 		{1276C451-3EE6-4720-9198-0AE0DA2B2B4D} = {9C116AEF-3E99-418D-95DC-8B936BC423E7}
 		{8FD8E667-A12D-4697-853C-48A61EC2CDAE} = {9C116AEF-3E99-418D-95DC-8B936BC423E7}
 		{EA6DB437-2032-4A5B-9F91-8F5C5526003E} = {BAC7CA8A-60AE-4383-B499-04628FC1C196}
+		{E504F874-5BAC-457D-A68F-648D2E5AFC70} = {9C116AEF-3E99-418D-95DC-8B936BC423E7}
 	EndGlobalSection
 EndGlobal

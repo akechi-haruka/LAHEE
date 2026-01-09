@@ -26,14 +26,14 @@ public enum AchievementFlags {
 
 public class AchievementData {
     public int ID;
-    public String MemAddr;
-    public String Title;
-    public String Description;
+    public string MemAddr;
+    public string Title;
+    public string Description;
     public int Points;
-    public String Author;
+    public string Author;
     public long Modified;
     public long Created;
-    public String BadgeName;
+    public string BadgeName;
     public AchievementFlags Flags;
 
     [JsonConverter(typeof(StringEnumConverter))]
@@ -41,8 +41,8 @@ public class AchievementData {
 
     public float Rarity;
     public float RarityHardcore;
-    public String BadgeURL;
-    public String BadgeLockedURL;
+    public string BadgeURL;
+    public string BadgeLockedURL;
 
     internal static AchievementType? ConvertType(string type) {
         switch (type) {

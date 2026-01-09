@@ -10,7 +10,7 @@ static class Extensions {
     }
 
     public static async Task SendJson(this HttpResponseBase resp, object obj) {
-        String data = JsonConvert.SerializeObject(obj);
+        string data = JsonConvert.SerializeObject(obj);
         await resp.Send(data);
     }
 

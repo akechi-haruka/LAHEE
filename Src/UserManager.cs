@@ -10,10 +10,10 @@ class UserManager {
 
     private static Dictionary<string, UserData> userData;
     private static Dictionary<string, UserData> activeTokens;
-    private static readonly object SAVE_LOCK = new object();
+    private static readonly Lock SAVE_LOCK = new Lock();
 
     internal static void Initialize() {
-        UserDataDirectory = Configuration.Get("LAHEE", "UserDirectory");
+        UserDataDirectory = Program.Config.Get("LAHEE", "UserDirectory");
 
         activeTokens = new Dictionary<string, UserData>();
 
@@ -37,7 +37,7 @@ class UserManager {
                 continue;
             }
 
-            String username = Path.GetFileNameWithoutExtension(file);
+            string username = Path.GetFileNameWithoutExtension(file);
             try {
                 Log.User.LogDebug("Reading {f}", file);
 
@@ -119,14 +119,14 @@ class UserManager {
         return RegisterSessionToken(user, Utils.RandomString(32));
     }
 
-    public static string RegisterSessionToken(UserData user, String token) {
+    public static string RegisterSessionToken(UserData user, string token) {
         Log.User.LogDebug("Registering session token: {token}", token);
         activeTokens[token] = user;
         return token;
     }
 
     public static UserData GetUserDataFromToken(string str) {
-        if (Configuration.GetBool("LAHEE", "AutoSessionOnSingleUser") && userData.Count == 1) {
+        if (Program.Config.GetBool("LAHEE", "AutoSessionOnSingleUser") && userData.Count == 1) {
             UserData u = userData.Values.First();
             Log.User.LogDebug("AutoSession enabled, user is {u}", u);
             return u;

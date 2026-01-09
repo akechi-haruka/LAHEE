@@ -15,13 +15,13 @@ public class GameData {
 
     public int DataVersion;
     public uint ID;
-    public String Title;
-    public String ImageIcon;
-    public String RichPresencePatch;
+    public string Title;
+    public string ImageIcon;
+    public string RichPresencePatch;
     public int ConsoleID;
-    public String ImageIconURL;
+    public string ImageIconURL;
     public List<SetData> AchievementSets;
-    public List<String> ROMHashes = new List<string>();
+    public List<string> ROMHashes = new List<string>();
     public List<CodeNote> CodeNotes = new List<CodeNote>();
 
     public GameData() {
