@@ -12,7 +12,7 @@ public class LeaderboardData {
     public int ID;
     public string Mem;
     public string Format;
-    public int LowerIsBetter;
+    public bool LowerIsBetter;
     public string Title;
     public string Description;
     public bool Hidden;
