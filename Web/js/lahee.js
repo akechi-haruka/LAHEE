@@ -1198,7 +1198,7 @@ function lahee_render_achievement(game, ug, a, ua, size) {
         var id = ua?.AchievementID ?? a.ID ?? 0;
         return `<img src="/Badge/00000.png" class="ach ach_status_0" loading="lazy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-title="<b>Unknown Achievement</b><hr />Unknown Achievement ID ${id}" ${size ? "width='" + size + "'" : ""} />`;
     }
-    return `<img src="${status != LaheeUserAchievementStatus.Locked ? a.BadgeURL : a.BadgeLockedURL}" class="ach ach_type_${a.Type} ach_status_${status} ach_flags_${a.Flags} ${ug?.FlaggedAchievements?.includes(a.ID) ? "ach_flag_important" : ""}" onclick="lahee_select_ach(${game?.ID ?? 0}, ${a.ID});" loading="lazy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-title="<b>${a.Title.replaceAll("\"", "&quot;")}</b> (${a.Points})<hr />${a.Description.replaceAll("\"", "&quot;")}" ${size ? "width='" + size + "'" : ""} />`;
+    return `<img src="${status != LaheeUserAchievementStatus.Locked ? a.BadgeURL : a.BadgeLockedURL}" class="ach ach_type_${a.Type} ach_status_${status} ach_flags_${a.Flags} ${ug?.FlaggedAchievements?.includes(a.ID) ? "ach_flag_important" : ""}" onclick="lahee_select_ach(${game?.ID ?? 0}, ${a.ID});" loading="lazy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-title="<b>${a.Title.replaceAll("\"", "&quot;")}</b> (${a.Points})<hr />${a.Description.replaceAll("\"", "&quot;")}" ${size ? "width='" + size + "'" : "width='64' height='64'"} />`;
 }
 
 function lahee_show_code_popup() {
