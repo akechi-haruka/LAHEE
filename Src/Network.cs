@@ -37,6 +37,7 @@ static class Network {
         server.Settings.Debug.Routing = Program.Config.GetBool("Watson", "DebugRouting");
 
         server.Routes.PreAuthentication.Static.Add(HttpMethod.GET, BASE_DIR, Routes.RedirectWeb, Routes.DefaultErrorRoute);
+        server.Routes.PreAuthentication.Static.Add(HttpMethod.OPTIONS, BASE_DIR + "dorequest.php", Routes.DisableCors, Routes.DefaultErrorRoute);
         server.Routes.PreAuthentication.Static.Add(HttpMethod.POST, BASE_DIR + "dorequest.php", Routes.RARequestRoute, Routes.DefaultErrorRoute);
         server.Routes.PreAuthentication.Static.Add(HttpMethod.POST, BASE_DIR + "doupload.php", Routes.RAUploadRoute, Routes.DefaultErrorRoute);
 
@@ -120,6 +121,12 @@ static class Routes {
         }
 
         return Task.CompletedTask;
+    }
+
+    internal static async Task DisableCors(HttpContextBase ctx) {
+        ctx.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+        ctx.Response.StatusCode = 204;
+        await ctx.Response.Send();
     }
 
     internal static async Task RARequestRoute(HttpContextBase ctx) {
