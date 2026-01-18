@@ -37,6 +37,15 @@ class LiveTicker {
         }
     }
 
+    public static void BroadcastNotification(String str) {
+        lock (connecteds) {
+            Log.Network.LogDebug("Sending notification to {n} websockets...", connecteds.Count);
+            foreach (LiveTickerWS ws in connecteds) {
+                ws.SendMessage(new LiveTickerEventNotification(str));
+            }
+        }
+    }
+
     public class LiveTickerWS : WebSocketBehavior {
         private string ip;
 
@@ -103,6 +112,14 @@ class LiveTicker {
         public LiveTickerEventUnlock(uint gameId, UserAchievementData userAchievementData) : base("unlock") {
             this.gameId = gameId;
             this.userAchievementData = userAchievementData;
+        }
+    }
+
+    public class LiveTickerEventNotification : LiveTickerEvent {
+        public string notification;
+
+        public LiveTickerEventNotification(string notification) : base("notification") {
+            this.notification = notification;
         }
     }
 }

@@ -114,6 +114,11 @@ function lahee_init_done(res) {
     try {
         lahee_data = new LaheeInfoResponse(res);
 
+        if (lahee_data.notifications?.length > 0) {
+            document.getElementById("server_side_notifications").innerHTML = lahee_data.notifications.join("<br />");
+            bootstrap.Toast.getOrCreateInstance(document.getElementById("toast_notifications")).show();
+        }
+
         if (lahee_data.users.length == 0) {
             document.getElementById("page_loading").innerHTML = "No user data is registered on LAHEE. Connect your emulator and create user data before attempting to use the web UI.";
             return;
@@ -295,6 +300,8 @@ function lahee_build_achievements(user, game) {
         }
     });
 
+    console.log(arr);
+
     var content = "";
     if (arr.length == 0) {
         content = `<p class="ach_set_header">No achievements were found.</p>`;
@@ -345,8 +352,8 @@ function lahee_build_achievements(user, game) {
         max_pt += a.Points;
     }
     var game_point_el = document.getElementById("game_point_progress");
-    game_point_el.style.width = (pt / max_pt * 100) + "%";
-    game_point_el.innerText = Math.floor(pt / max_pt * 100) + "%";
+    game_point_el.style.width = max_pt > 0 ? (pt / max_pt * 100) + "%" : 0;
+    game_point_el.innerText = max_pt > 0 ? Math.floor(pt / max_pt * 100) + "%" : 0;
     document.getElementById("game_pt").innerText = pt.toLocaleString() + "/" + max_pt.toLocaleString();
 
     var total_pt = 0;
@@ -471,6 +478,8 @@ function lahee_live_ticker_update(data) {
         lahee_update_game_status(new LaheeLivePingEvent(data));
     } else if (event.type == "unlock") {
         lahee_play_unlock_sound(new LaheeLiveUnlockEvent(data));
+    } else if (event.type == "notification") {
+        lahee_notify(new LaheeLiveNotificationEvent(data));
     } else {
         console.warn("unknown event: " + event.type);
     }
@@ -1455,5 +1464,11 @@ function lahee_settings_apply() {
 
     if (lahee_data) {
         lahee_change_game();
+    }
+}
+
+function lahee_notify(n) {
+    if (Notification.permission == "granted") {
+        new Notification("LAHEE Notification", {body: n.notification});
     }
 }

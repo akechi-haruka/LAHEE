@@ -117,6 +117,7 @@ class LaheeResponse {
     public UserData[] users;
     public GameData[] games;
     public UserComment[] comments;
+    public string[] notifications;
 }
 
 class LaheeUserResponse {
@@ -192,4 +193,18 @@ class RARichPresencePatchResponse : RAAnyResponse {
 class LaheeAchievementCodeResponse : RAAnyResponse {
     public List<CodeNote> CodeNotes;
     public RequirementGroup[] TriggerGroups;
+}
+
+class RAApiGameExtendedResponse {
+    public Dictionary<uint, ServerAchievementData> Achievements;
+
+    public class ServerAchievementData {
+        public int ID;
+        public String Title;
+        // remaining fields omitted
+
+        public override string ToString() {
+            return Title + " (" + ID + ")";
+        }
+    }
 }

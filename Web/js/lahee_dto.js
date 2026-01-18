@@ -499,12 +499,15 @@ class LaheeInfoResponse {
     games;
     /** @type {Array.<LaheeUserComment>} */
     comments;
+    /** @type {Array.<string>} */
+    notifications;
 
     constructor(data) {
         this.version = data.version;
         this.users = data.users.map(u => new LaheeUserData(u));
         this.games = data.games.map(g => new LaheeGameData(g));
         this.comments = data.comments.map(c => new LaheeUserComment(c));
+        this.notifications = data.notifications;
     }
 
     /**
@@ -652,6 +655,15 @@ class LaheeLiveUnlockEvent {
     constructor(data) {
         this.gameId = data.gameId;
         this.userAchievementData = new LaheeUserAchievementData(null, data.userAchievementData);
+    }
+}
+
+class LaheeLiveNotificationEvent {
+    /** @type {string} */
+    notification;
+
+    constructor(data) {
+        this.notification = data.notification;
     }
 }
 

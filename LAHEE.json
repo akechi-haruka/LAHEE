@@ -3,16 +3,21 @@
     "WebPort": 8000,
     "AutoSessionOnSingleUser": true,
     "LoadAsSingleSet": false,
+    "DisableLeaderboards": false,
     "BadgeDirectory": "Badge",
     "DataDirectory": "Data",
     "UserDirectory": "User",
     "PresenceHistoryLimit": -1,
+    "AutoOpenBrowser": true,
     "RAFetch": {
       "Url": "https://retroachievements.org",
       "WebApiKey": "",
       "Username": "",
       "Password": "",
-      "AutoUpdateCodeNotes": false
+      "AutoUpdateCodeNotes": false,
+      "CheckSetRevisions": true,
+      "SetRevisionCheckCacheDays": 14,
+      "SetRevisionCheckIncludeUnofficial": true
     },
     "OBSWebsocketUrl": "ws://localhost:4455",
     "Capture": [

@@ -41,6 +41,7 @@ This allows local/offline/modded progression of RetroAchievements.
 * LAHEE does NOT have rules you need to be aware of.
 * LAHEE does NOT require you to talk to anyone to create or edit achievements.
 * LAHEE does NOT broadcast your activity to the world.
+* LAHEE does NOT focus on competition.
 
 ## Usage
 
@@ -166,10 +167,16 @@ To not have your changes overwritten on updates, you can create a copy of `appse
 * AutoSessionOnSingleUser: if only one user exists, LAHEE completely ignores authentication, and always logs the only
   existing user in, regardless of session tokens.
 * LoadAsSingleSet: when true, all achievement sets will be merged to a single set.
+* DisableLeaderboards: Disables all leaderboards from being tracked and from being shown in emulators.
 * BadgeDirectory/DataDirectory/UserDirectory: Paths to folders LAHEE stores various files.
 * PresenceHistoryLimit: The maximum number of presence (gameplay status) entries LAHEE should save. -1 for no limit.
   Might be cool to look back on the past, but set to a low number if you don't care or your save data becomes too big.
-* RAFetch: Settings for downloading/fetching data from the official site, see "Adding achievements (from real site)"
+* AutoOpenBrowser: Opens your default browser with the web UI when LAHEE is started.
+* RAFetch: Settings for downloading/fetching data from the official site, see "Adding achievements (from real site) -
+  via LAHEE console"
+    * AutoUpdateCodeNotes: Automatically updates code notes for the achievement code viewer when needed.
+    * CheckSetRevisions: Checks and notifies for any data mismatch against the official server (new achievements, etc.)
+    * SetRevisionCheckIncludeUnofficial: Whether or not to include "unofficial" achievements in the revision check.
 * OBSWebsocketUrl: URL to your OBS instance for sending commands. Must not use authentication.
 
 ## Attribution

@@ -1,6 +1,8 @@
-﻿using System.Drawing;
+﻿using System.Diagnostics;
+using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
 namespace LAHEE.Util;
@@ -71,5 +73,17 @@ class Utils {
         }
 
         return newBitmap;
+    }
+
+    public static void OpenBrowser(string url) {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+            Process.Start(new ProcessStartInfo("cmd", $"/c start {url}"));
+        } else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+            Process.Start("xdg-open", url);
+        } else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+            Process.Start("open", url);
+        } else {
+            throw new NotSupportedException("Not supported for this OS");
+        }
     }
 }

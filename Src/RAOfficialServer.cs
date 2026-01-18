@@ -44,7 +44,7 @@ public static class RAOfficialServer {
         }
     }
 
-    public static void FetchData(string gameIdStr, string overrideIdStr, bool includeUnofficial, string copyToUsername = null) {
+    public static void FetchData(string gameIdStr, string overrideIdStr, bool includeUnofficial, bool force = false, string copyToUsername = null) {
         if (!CanFetch) {
             return;
         }
@@ -135,14 +135,14 @@ public static class RAOfficialServer {
         string fileBase = Program.Config.Get("LAHEE", "DataDirectory") + "\\" + overrideId + "-" + new string(gameData.Title.Where(ch => !Program.INVALID_FILE_NAME_CHARS.Contains(ch)).ToArray());
         string fileData = fileBase + ".set.json";
         string fileHash = fileBase + ".hash.txt";
-        if (!File.Exists(fileData)) {
+        if (!File.Exists(fileData) || force) {
             Log.RCheevos.LogInformation("Creating file {f}", fileData);
             File.WriteAllText(fileData, JsonConvert.SerializeObject(gameData));
         } else {
             Log.RCheevos.LogWarning("File {f} already exists, not overwriting! Delete to force an update!", fileData);
         }
 
-        if (!File.Exists(fileHash)) {
+        if (!File.Exists(fileHash) || force) {
             Log.RCheevos.LogInformation("Creating file {f}", fileHash);
             File.WriteAllLines(fileHash, hashes);
         } else {
@@ -330,5 +330,64 @@ public static class RAOfficialServer {
         game.CodeNotes = notes.CodeNotes;
 
         return notes.CodeNotes;
+    }
+
+    public static void FetchUpdatedSets() {
+        try {
+            Log.RCheevos.LogInformation("Checking for updated sets / revisions in the background...");
+
+            string apiWeb = Program.Config.Get("LAHEE", "RAFetch", "WebApiKey");
+            int cacheDays = Program.Config.GetInt("LAHEE", "RAFetch", "SetRevisionCheckCacheDays");
+            bool includeUnofficial = Program.Config.GetBool("LAHEE", "RAFetch", "SetRevisionCheckIncludeUnofficial");
+
+            foreach (GameData game in StaticDataManager.GetAllGameData()) {
+                if (StaticDataManager.Global.LastRevisionCheck.TryGetValue(game.ID, out DateTime lastCheck)) {
+                    if (lastCheck + TimeSpan.FromDays(cacheDays) > DateTime.Now) {
+                        continue;
+                    }
+                }
+
+                RAApiGameExtendedResponse remote = Query<RAApiGameExtendedResponse>(HttpMethod.Get, Url, "API/API_GetGameExtended.php?y=" + apiWeb + "&i=" + game.ID + "&f=3", null);
+                if (remote == null) {
+                    continue;
+                }
+
+                CheckRAGameExtendedResponse(game, remote, "core");
+
+                if (includeUnofficial) {
+                    remote = Query<RAApiGameExtendedResponse>(HttpMethod.Get, Url, "API/API_GetGameExtended.php?y=" + apiWeb + "&i=" + game.ID + "&f=5", null);
+                    if (remote == null) {
+                        continue;
+                    }
+
+                    CheckRAGameExtendedResponse(game, remote, "unofficial");
+                }
+
+                StaticDataManager.Global.LastRevisionCheck[game.ID] = DateTime.Now;
+
+                Thread.Sleep(5000);
+            }
+        } catch (Exception ex) {
+            Log.RCheevos.LogCritical(ex, "Failed to check for revisions");
+        } finally {
+            StaticDataManager.SaveGlobalData();
+        }
+
+        Log.RCheevos.LogInformation("Finished checking for revisions");
+    }
+
+    private static void CheckRAGameExtendedResponse(GameData game, RAApiGameExtendedResponse remote, string label) {
+        int missingAchievements = 0;
+
+        foreach (uint achievementId in remote.Achievements.Keys) {
+            if (game.GetAchievementById(achievementId) == null) {
+                Log.RCheevos.LogWarning("Game \"{g}\" is missing an achievement from {s}: {a}", game, label, remote.Achievements[achievementId]);
+                missingAchievements++;
+            }
+        }
+
+        if (missingAchievements > 0) {
+            Program.AddNotification("Game \"" + game + "\" has " + missingAchievements + " " + label + " achievement(s) on the official server that are not on LAHEE!");
+        }
     }
 }

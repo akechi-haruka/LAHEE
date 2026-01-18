@@ -10,6 +10,7 @@ namespace LAHEE;
 static class StaticDataManager {
     private static readonly string[] SUPPORTED_LOCAL_ACHIEVEMENT_FILE_VERSION_PREFIX_LIST = new string[] { "1.3.0", "1.3.1", "1.4.0" };
     private const string CUSTOM_ACHIEVEMENT_COUNTER_FILE = "lahee_custom_achievement_counter.txt";
+    private const string GLOBAL_DATA_FILE = "global.json";
     public const int UNSUPPORTED_EMULATOR_ACHIEVEMENT_ID = 101000001;
 
     private enum LoadPriority {
@@ -24,6 +25,7 @@ static class StaticDataManager {
     private static Dictionary<uint, GameData> gameData;
     private static Dictionary<uint, List<UserComment>> commentData;
     private static int customAchievementIdNext = 5_000_000;
+    public static GlobalData Global { get; private set; } = new GlobalData();
 
     public static void Initialize() {
         InitializeAchievements(true);
@@ -53,6 +55,8 @@ static class StaticDataManager {
             Log.Data.LogDebug("Detected file: {F}", file);
             if (file.EndsWith(CUSTOM_ACHIEVEMENT_COUNTER_FILE)) {
                 ParseAchievementCounterFile(File.ReadAllText(file));
+            } else if (file.EndsWith(GLOBAL_DATA_FILE)) {
+                LoadGlobalData(File.ReadAllText(file));
             } else if (file.EndsWith("comments.json")) {
                 loadQueue[LoadPriority.Comments].Add(file);
             } else if (file.EndsWith(".ach.json")) {
@@ -74,6 +78,14 @@ static class StaticDataManager {
         loadQueue[LoadPriority.AchievementData].ForEach(file => Process(file, ParseSingleAchievementJson));
         loadQueue[LoadPriority.Comments].ForEach(file => Process(file, ParseCommentDataJson));
         loadQueue[LoadPriority.Hash].ForEach(file => Process(file, ParseAchievementHashFile));
+
+        if (Program.Config.GetBool("LAHEE", "DisableLeaderboards")) {
+            foreach (GameData game in gameData.Values) {
+                game.AchievementSets.ForEach(set => set.Leaderboards = new List<LeaderboardData>());
+            }
+
+            Log.Data.LogWarning("All leaderboards have been disabled due to config settings.");
+        }
     }
 
     private static void Process(string file, Action<uint, string, string> parser) {
@@ -426,5 +438,19 @@ static class StaticDataManager {
 
         File.WriteAllText(fn, JsonConvert.SerializeObject(ach));
         Log.Data.LogInformation("Achievement data was saved for {a}", ach);
+    }
+
+    public static void LoadGlobalData(string content) {
+        Global = JsonConvert.DeserializeObject<GlobalData>(content);
+        Log.Data.LogInformation("Global data loaded");
+    }
+
+    public static void SaveGlobalData() {
+        try {
+            File.WriteAllText(Path.Combine(Program.Config.Get("LAHEE", "DataDirectory"), GLOBAL_DATA_FILE), JsonConvert.SerializeObject(Global));
+            Log.Data.LogInformation("Global data saved");
+        } catch (Exception e) {
+            Log.Data.LogCritical(e, "Error while saving global data");
+        }
     }
 }

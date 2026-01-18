@@ -15,10 +15,10 @@
 		<Description>RetroAchievements API Emulator</Description>
 		<Copyright>2024-2026 Akechi Haruka</Copyright>
 		<IncludeSourceRevisionInInformationalVersion>true</IncludeSourceRevisionInInformationalVersion>
-		<AssemblyVersion>2.0.3</AssemblyVersion>
-		<FileVersion>2.0.3</FileVersion>
+        <AssemblyVersion>2.1</AssemblyVersion>
+        <FileVersion>2.1</FileVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<Version>2.0.3</Version>
+        <Version>2.1</Version>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -41,16 +41,10 @@
 		<None Remove="screenshot3.png"/>
 		<None Remove="screenshot2.png"/>
 		<None Remove="Readme\**"/>
-		<None Update="Haruka.Common.Settings.debug.json">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
 		<None Update="LAHEE.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 		<None Remove="Haruka.Common\**"/>
-		<None Update="Haruka.Common.Settings.json">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
 	</ItemGroup>
 
 	<ItemGroup>

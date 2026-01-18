@@ -2,6 +2,7 @@
 using System.Text;
 using Haruka.Common.Configuration;
 using LAHEE.Data;
+using LAHEE.Util;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic.FileIO;
 
@@ -13,6 +14,7 @@ class Program {
     public static readonly string NAME;
 
     public static AppConfig Config;
+    public static List<string> Notifications = new List<string>();
 
     static Program() {
         string gitHash = Assembly.Load(typeof(Program).Assembly.FullName!)
@@ -58,6 +60,20 @@ class Program {
         Log.Main.LogInformation("Initialization complete.");
         Console.WriteLine("Type \"stop\" to save and exit.\nType \"help\" for console commands.\nPoint your emulator to: " + Network.LocalUrl);
 
+        if (Config.GetBool("LAHEE", "AutoOpenBrowser")) {
+            Log.Main.LogInformation("Opening your web browser...");
+            try {
+                Utils.OpenBrowser(Network.LocalUrl);
+            } catch (Exception ex) {
+                Log.Main.LogError("Failed to open web browser: " + ex.Message);
+            }
+        }
+
+        if (Config.GetBool("LAHEE", "RAFetch", "CheckSetRevisions")) {
+            new Thread(RAOfficialServer.FetchUpdatedSets) {
+                Name = "Check Set Revisions"
+            }.Start();
+        }
 
         Console.CancelKeyPress += Console_CancelKeyPress;
 
@@ -86,18 +102,18 @@ class Program {
         switch (args[0]) {
             case "help":
                 Console.WriteLine(@"
-help                                                                  Show this help
-exit                                                                  Exit LAHEE
-stop                                                                  Exit LAHEE
-listach <gamename>                                                    Lists all achievements for game
-unlock <username> <gamename> <achievementname> <hardcore 1/0>         Grant an achievement
-lock <username> <gamename> <achievementname> <hardcore 1/0>           Remove an achievement
-lockall <username> <gamename>                                         Remove ALL achievements
-fetch <gameid> [override_gameid/0] [unofficial 1/0] [copy_unlocks_to] Copies game and achievement data from official server
-delete <gamename>                                                     Deletes game and achievement data (not user data!)
-addhash <gamename> <hash>                                             Adds a ROM hash to a game
-reload                                                                Reloads achievement data
-reloaduser                                                            Reloads user data
+help                                                                              Show this help
+exit                                                                              Exit LAHEE
+stop                                                                              Exit LAHEE
+listach <gamename>                                                                Lists all achievements for game
+unlock <username> <gamename> <achievementname> <hardcore 1/0>                     Grant an achievement
+lock <username> <gamename> <achievementname> <hardcore 1/0>                       Remove an achievement
+lockall <username> <gamename>                                                     Remove ALL achievements
+fetch <gameid> [override_gameid/0] [unofficial 1/0] [force 1/0] [copy_unlocks_to] Copies game and achievement data from official server
+delete <gamename>                                                                 Deletes game and achievement data (not user data!)
+addhash <gamename> <hash>                                                         Adds a ROM hash to a game
+reload                                                                            Reloads achievement data
+reloaduser                                                                        Reloads user data
 ");
                 break;
             case "exit":
@@ -124,7 +140,7 @@ reloaduser                                                            Reloads us
                 ReloadUserFromConsole();
                 break;
             case "fetch":
-                RAOfficialServer.FetchData(args[1], args.Length >= 3 && args[2] != "0" ? args[2] : null, args.Length >= 4 && args[3] == "1", args.Length >= 5 ? args[4] : null);
+                RAOfficialServer.FetchData(args[1], args.Length >= 3 && args[2] != "0" ? args[2] : null, args.Length >= 4 && args[3] == "1", args.Length >= 5 && args[4] == "1", args.Length >= 6 ? args[5] : null);
                 break;
             case "delete":
                 DeleteDataFromConsole(args[1]);
@@ -292,6 +308,12 @@ reloaduser                                                            Reloads us
         Network.Stop();
         UserManager.Save();
         StaticDataManager.SaveAllCommentFiles();
+        StaticDataManager.SaveGlobalData();
         Environment.Exit(0);
+    }
+
+    public static void AddNotification(string message) {
+        Notifications.Add(message);
+        LiveTicker.BroadcastNotification(message);
     }
 }

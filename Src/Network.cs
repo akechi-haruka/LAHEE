@@ -517,7 +517,8 @@ static class Routes {
             version = Program.NAME,
             games = StaticDataManager.GetAllGameData().ToArray(),
             users = UserManager.GetAllUserData(),
-            comments = StaticDataManager.GetAllUserComments()
+            comments = StaticDataManager.GetAllUserComments(),
+            notifications = Program.Notifications.ToArray()
         };
 
         await ctx.Response.SendJson(response);
