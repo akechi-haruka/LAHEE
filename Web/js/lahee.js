@@ -296,7 +296,9 @@ function lahee_build_achievements(user, game) {
     });
 
     var content = "";
-    if (localStorage.getItem("lahee_setting_ach_grouping") === "true" && game.AchievementSets.length > 1) {
+    if (arr.length == 0) {
+        content = `<p class="ach_set_header">No achievements were found.</p>`;
+    } else if (localStorage.getItem("lahee_setting_ach_grouping") === "true" && game.AchievementSets.length > 1) {
         var rendered_achievement_sets = {};
         for (var set of game.AchievementSets) {
             rendered_achievement_sets[set.Title] = "";
@@ -308,12 +310,14 @@ function lahee_build_achievements(user, game) {
         }
 
         for (var title of Object.keys(rendered_achievement_sets)) {
-            content += `
-                <p class="ach_set_header">${title}</p>
-                <div class='ach_grid'>
-                    ${rendered_achievement_sets[title]}
-                </div>
-            `;
+            if (rendered_achievement_sets[title] != "") {
+                content += `
+                    <p class="ach_set_header">${title}</p>
+                    <div class='ach_grid'>
+                        ${rendered_achievement_sets[title]}
+                    </div>
+                `;
+            }
         }
     } else {
         content += "<div class='ach_grid'>";
