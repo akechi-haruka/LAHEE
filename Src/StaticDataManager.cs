@@ -204,16 +204,16 @@ static class StaticDataManager {
 
         AchievementData data = JsonConvert.DeserializeObject<AchievementData>(content);
         SetData set = new SetData() {
+            Title = "Single: " + data.Title,
+            Type = SetType.bonus,
+            AchievementSetId = game.AchievementSets.Count + 1,
+            GameId = RAIntegrationAssertionWorkaround(game.ID),
+            ImageIconUrl = game.ImageIconURL,
             Achievements = new List<AchievementData>() {
                 data
             },
             Leaderboards = new List<LeaderboardData>(),
-            Title = "Single: " + data.Title,
-            AchievementSetId = game.AchievementSets.Count + 1,
             FileSource = source,
-            GameId = RAIntegrationAssertionWorkaround(game.ID),
-            ImageIconUrl = game.ImageIconURL,
-            Type = SetType.core
         };
 
         game.AchievementSets.Add(set);
