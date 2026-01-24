@@ -195,23 +195,29 @@ reloaduser                                                                      
         }
     }
 
-    private static void UnlockAchievementFromConsole(string username, string gamename, string achievementname, bool hardcore, bool unlock) {
+    private static void UnlockAchievementFromConsole(string username, string gamename, string achievementName, bool hardcore, bool unlock) {
         UserData user = UserManager.GetUserData(username);
         if (user == null) {
-            Log.Main.LogError("User not found.");
+            Log.Main.LogError("User not found: " + username);
             return;
         }
 
-        GameData game = StaticDataManager.FindGameDataByName(gamename, true);
+        GameData game = StaticDataManager.FindGameDataByName(gamename, false);
         if (game == null) {
-            Log.Main.LogError("Game not found.");
-            return;
+            game = StaticDataManager.FindGameDataByName(gamename, true);
+            if (game == null) {
+                Log.Main.LogError("Game not found: " + gamename);
+                return;
+            }
         }
 
-        AchievementData ach = game.GetAchievementByName(achievementname, true);
+        AchievementData ach = game.GetAchievementByName(achievementName, false);
         if (ach == null) {
-            Log.Main.LogError("Achievement not found.");
-            return;
+            ach = game.GetAchievementByName(achievementName, true);
+            if (ach == null) {
+                Log.Main.LogError("Achievement not found (in " + game + "): " + achievementName);
+                return;
+            }
         }
 
         if (!user.GameData.TryGetValue(game.ID, out UserGameData userGameData)) {
