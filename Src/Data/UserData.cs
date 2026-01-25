@@ -6,6 +6,8 @@
 // ReSharper disable UnusedMember.Global
 // ReSharper disable ClassNeverInstantiated.Global
 
+using System.Collections.Concurrent;
+
 namespace LAHEE.Data;
 
 public class UserData {
@@ -26,7 +28,7 @@ public class UserData {
     public UserGameData RegisterGame(GameData game) {
         UserGameData ugd = new UserGameData() {
             GameID = game.ID,
-            Achievements = new Dictionary<int, UserAchievementData>(),
+            Achievements = new ConcurrentDictionary<int, UserAchievementData>(),
             PresenceHistory = new List<PresenceHistory>(),
             FirstPlay = DateTime.Now,
             LastPlay = DateTime.Now,

@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Collections.Concurrent;
+using System.Drawing;
 using System.Drawing.Imaging;
 using HttpMultipartParser;
 using LAHEE.Data;
@@ -466,11 +467,11 @@ static class Routes {
         }
 
         if (userGameData.LeaderboardEntries == null) { // backcompat
-            userGameData.LeaderboardEntries = new Dictionary<int, List<UserLeaderboardData>>();
+            userGameData.LeaderboardEntries = new ConcurrentDictionary<int, List<UserLeaderboardData>>();
         }
 
         if (!userGameData.LeaderboardEntries.ContainsKey(leaderboardId)) {
-            userGameData.LeaderboardEntries.Add(leaderboardId, new List<UserLeaderboardData>());
+            userGameData.LeaderboardEntries[leaderboardId] = new List<UserLeaderboardData>();
         }
 
         userGameData.LeaderboardEntries[leaderboardId].Add(new UserLeaderboardData() {
@@ -548,7 +549,7 @@ static class Routes {
             last_ping = userGameData?.PlayTimeLastPing,
             last_play = userGameData?.LastPlay,
             play_time = userGameData?.PlayTimeApprox,
-            achievements = userGameData?.Achievements ?? []
+            achievements = userGameData?.Achievements.ToDictionary() ?? []
         };
 
         await ctx.Response.SendJson(response);

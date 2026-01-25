@@ -106,7 +106,7 @@ help                                                                            
 exit                                                                              Exit LAHEE
 stop                                                                              Exit LAHEE
 listach <gamename>                                                                Lists all achievements for game
-unlock <username> <gamename> <achievementname> <hardcore 1/0>                     Grant an achievement
+unlock <username> <gamename> <achievementname> <hardcore 1/0> [date] [playtime]   Grant an achievement
 lock <username> <gamename> <achievementname> <hardcore 1/0>                       Remove an achievement
 lockall <username> <gamename>                                                     Remove ALL achievements
 fetch <gameid> [override_gameid/0] [unofficial 1/0] [force 1/0] [copy_unlocks_to] Copies game and achievement data from official server
@@ -122,16 +122,36 @@ reloaduser                                                                      
                 Console_CancelKeyPress(null, null);
                 break;
             case "listach":
-                ListAchievementsFromConsole(args[1]);
+                if (args.Length == 2) {
+                    ListAchievementsFromConsole(args[1]);
+                } else {
+                    Log.Main.LogError("Command requires exactly one argument.");
+                }
+
                 break;
             case "unlock":
-                UnlockAchievementFromConsole(args[1], args[2], args[3], args[4] == "1", true);
+                if (args.Length >= 5) {
+                    UnlockAchievementFromConsole(args[1], args[2], args[3], args[4] == "1", true, args.Length >= 6 ? args[5] : null, args.Length >= 7 ? args[6] : null);
+                } else {
+                    Log.Main.LogError("Command requires at least 4 arguments.");
+                }
+
                 break;
             case "lock":
-                UnlockAchievementFromConsole(args[1], args[2], args[3], false, false);
+                if (args.Length == 4) {
+                    UnlockAchievementFromConsole(args[1], args[2], args[3], false, false);
+                } else {
+                    Log.Main.LogError("Command requires exactly 3 arguments.");
+                }
+
                 break;
             case "lockall":
-                LockAllAchievementsFromConsole(args[1], args[2]);
+                if (args.Length == 2) {
+                    LockAllAchievementsFromConsole(args[1], args[2]);
+                } else {
+                    Log.Main.LogError("Command requires exactly 2 arguments.");
+                }
+
                 break;
             case "reload":
                 ReloadFromConsole();
@@ -140,13 +160,23 @@ reloaduser                                                                      
                 ReloadUserFromConsole();
                 break;
             case "fetch":
-                RAOfficialServer.FetchData(args[1], args.Length >= 3 && args[2] != "0" ? args[2] : null, args.Length >= 4 && args[3] == "1", args.Length >= 5 && args[4] == "1", args.Length >= 6 ? args[5] : null);
+                if (args.Length >= 2) {
+                    RAOfficialServer.FetchData(args[1], args.Length >= 3 && args[2] != "0" ? args[2] : null, args.Length >= 4 && args[3] == "1", args.Length >= 5 && args[4] == "1", args.Length >= 6 ? args[5] : null);
+                } else {
+                    Log.Main.LogError("Command requires at least one argument.");
+                }
+
                 break;
             case "delete":
                 DeleteDataFromConsole(args[1]);
                 break;
             case "addhash":
-                AddHashFromConsole(args[1], args[2]);
+                if (args.Length == 3) {
+                    AddHashFromConsole(args[1], args[2]);
+                } else {
+                    Log.Main.LogError("Command requires exactly 2 arguments.");
+                }
+
                 break;
             default:
                 Log.Main.LogWarning("Unknown command: {arg}", args[0]);
@@ -164,17 +194,20 @@ reloaduser                                                                      
         Log.Main.LogInformation("Reload completed");
     }
 
-    private static void LockAllAchievementsFromConsole(string username, string gamename) {
+    private static void LockAllAchievementsFromConsole(string username, string gameName) {
         UserData user = UserManager.GetUserData(username);
         if (user == null) {
             Log.Main.LogError("User not found.");
             return;
         }
 
-        GameData game = StaticDataManager.FindGameDataByName(gamename, true);
+        GameData game = StaticDataManager.FindGameDataByName(gameName, false);
         if (game == null) {
-            Log.Main.LogError("Game not found.");
-            return;
+            game = StaticDataManager.FindGameDataByName(gameName, true);
+            if (game == null) {
+                Log.Main.LogError("Game not found: " + gameName);
+                return;
+            }
         }
 
         user.GameData[game.ID].Achievements.Clear();
@@ -184,10 +217,13 @@ reloaduser                                                                      
     }
 
     private static void ListAchievementsFromConsole(string gamename) {
-        GameData game = StaticDataManager.FindGameDataByName(gamename, true);
+        GameData game = StaticDataManager.FindGameDataByName(gamename, false);
         if (game == null) {
-            Log.Main.LogError("Game not found.");
-            return;
+            game = StaticDataManager.FindGameDataByName(gamename, true);
+            if (game == null) {
+                Log.Main.LogError("Game not found: " + gamename);
+                return;
+            }
         }
 
         foreach (AchievementData ach in game.GetAllAchievements()) {
@@ -195,7 +231,7 @@ reloaduser                                                                      
         }
     }
 
-    private static void UnlockAchievementFromConsole(string username, string gamename, string achievementName, bool hardcore, bool unlock) {
+    private static void UnlockAchievementFromConsole(string username, string gamename, string achievementName, bool hardcore, bool unlock, string unlockTime = null, string unlockPlayTime = null) {
         UserData user = UserManager.GetUserData(username);
         if (user == null) {
             Log.Main.LogError("User not found: " + username);
@@ -227,7 +263,28 @@ reloaduser                                                                      
 
         UserAchievementData userAchievementData;
         if (unlock) {
-            userAchievementData = userGameData.UnlockAchievement(ach.ID, hardcore);
+            long unlockUnixSeconds = 0;
+            TimeSpan? unlockPlayTimeSpan = null;
+
+            if (unlockTime != null) {
+                if (DateTime.TryParse(unlockTime, out DateTime unlockDateTime)) {
+                    unlockUnixSeconds = (long)Utils.ConvertToUnixTimestamp(unlockDateTime);
+                } else {
+                    Log.Main.LogError("Could not parse given achievement unlock date.");
+                    return;
+                }
+            }
+
+            if (unlockPlayTime != null) {
+                if (TimeSpan.TryParse(unlockPlayTime, out TimeSpan unlockPlayTimeSpanParsed)) {
+                    unlockPlayTimeSpan = unlockPlayTimeSpanParsed;
+                } else {
+                    Log.Main.LogError("Could not parse given achievement unlock play time.");
+                    return;
+                }
+            }
+
+            userAchievementData = userGameData.UnlockAchievement(ach.ID, hardcore, unlockUnixSeconds, unlockPlayTimeSpan);
 
             LiveTicker.BroadcastUnlock(game.ID, userAchievementData);
             CaptureManager.StartCapture(game, user, ach);
@@ -251,10 +308,13 @@ reloaduser                                                                      
     }
 
     private static void DeleteDataFromConsole(string gameName) {
-        GameData game = StaticDataManager.FindGameDataByName(gameName, true);
+        GameData game = StaticDataManager.FindGameDataByName(gameName, false);
         if (game == null) {
-            Log.Main.LogError("Game not found.");
-            return;
+            game = StaticDataManager.FindGameDataByName(gameName, true);
+            if (game == null) {
+                Log.Main.LogError("Game not found: " + gameName);
+                return;
+            }
         }
 
         int count = 0;

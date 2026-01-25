@@ -1,4 +1,5 @@
-﻿using LAHEE.Util;
+﻿using System.Collections.Concurrent;
+using LAHEE.Util;
 using Newtonsoft.Json;
 
 // ReSharper disable InconsistentNaming
@@ -13,8 +14,8 @@ namespace LAHEE.Data;
 public class UserGameData {
     public uint GameID;
     public string LastPresence;
-    public Dictionary<int, UserAchievementData> Achievements;
-    public Dictionary<int, List<UserLeaderboardData>> LeaderboardEntries;
+    public ConcurrentDictionary<int, UserAchievementData> Achievements;
+    public ConcurrentDictionary<int, List<UserLeaderboardData>> LeaderboardEntries;
     public List<PresenceHistory> PresenceHistory;
     public List<int> FlaggedAchievements;
     public DateTime FirstPlay;
@@ -22,7 +23,7 @@ public class UserGameData {
     [JsonIgnore] public DateTime? PlayTimeLastPing;
     public TimeSpan PlayTimeApprox;
 
-    public UserAchievementData UnlockAchievement(int achievementId, bool isHardcore, long achieveDate = 0) {
+    public UserAchievementData UnlockAchievement(int achievementId, bool isHardcore, long achieveDate = 0, TimeSpan? achievePlayTime = null) {
         if (achievementId == StaticDataManager.UNSUPPORTED_EMULATOR_ACHIEVEMENT_ID) { // "Unsupported Emulator"
             return null;
         }
@@ -42,7 +43,7 @@ public class UserGameData {
             }
 
             if (userAchievementData.AchievePlaytime == TimeSpan.Zero) {
-                userAchievementData.AchievePlaytime = PlayTimeApprox + (DateTime.Now - PlayTimeLastPing.GetValueOrDefault(DateTime.Now));
+                userAchievementData.AchievePlaytime = achievePlayTime ?? PlayTimeApprox + (DateTime.Now - PlayTimeLastPing.GetValueOrDefault(DateTime.Now));
             }
         } else if (userAchievementData.Status == UserAchievementData.StatusFlag.Locked) {
             userAchievementData.Status = UserAchievementData.StatusFlag.SoftcoreUnlock;
@@ -52,7 +53,7 @@ public class UserGameData {
             }
 
             if (userAchievementData.AchievePlaytimeSoftcore == TimeSpan.Zero) {
-                userAchievementData.AchievePlaytimeSoftcore = PlayTimeApprox + (DateTime.Now - PlayTimeLastPing.GetValueOrDefault(DateTime.Now));
+                userAchievementData.AchievePlaytimeSoftcore = achievePlayTime ?? PlayTimeApprox + (DateTime.Now - PlayTimeLastPing.GetValueOrDefault(DateTime.Now));
             }
         }
 
