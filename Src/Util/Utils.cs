@@ -4,6 +4,8 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace LAHEE.Util;
 
@@ -91,5 +93,13 @@ class Utils {
         DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
         TimeSpan diff = date.ToUniversalTime() - origin;
         return Math.Floor(diff.TotalSeconds);
+    }
+
+    public static string MD5(string data) {
+        using (MD5 md5 = System.Security.Cryptography.MD5.Create()) {
+            byte[] inputBytes = Encoding.ASCII.GetBytes(data);
+            byte[] hashBytes = md5.ComputeHash(inputBytes);
+            return Convert.ToHexString(hashBytes);
+        }
     }
 }

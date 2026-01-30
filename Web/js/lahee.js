@@ -1092,7 +1092,7 @@ function lahee_check_meta_nut(user) {
         }
     }
 
-    if (highest_diff_ua) {
+    if (highest_diff_ua && highest_diff_previous_ua) {
         var ach = highest_diff_previous_ua.getAchievementData();
         return new LaheeMetaResult(highest_diff_ua, "The Nut", "The achievement with the longest time between the previous achievement and this one.<br>(You: " + TimeSpan.fromMilliseconds(highest_diff).toStringWithoutMs() + " since " + (ach.Title ?? "Unknown Achievement: " + highest_diff_previous_ua.AchievementID) + ")", [highest_diff_previous_ua]);
     }

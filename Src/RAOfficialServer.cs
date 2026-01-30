@@ -1,5 +1,7 @@
 using System.Net;
 using LAHEE.Data;
+using LAHEE.Util;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -339,8 +341,13 @@ public static class RAOfficialServer {
             string apiWeb = Program.Config.Get("LAHEE", "RAFetch", "WebApiKey");
             int cacheDays = Program.Config.GetInt("LAHEE", "RAFetch", "SetRevisionCheckCacheDays");
             bool includeUnofficial = Program.Config.GetBool("LAHEE", "RAFetch", "SetRevisionCheckIncludeUnofficial");
+            uint[] ignoredGames = Program.Config.GetSection("LAHEE").GetSection("RAFetch").GetSection("SetRevisionCheckIgnoreGameIds").Get<uint[]>();
 
             foreach (GameData game in StaticDataManager.GetAllGameData()) {
+                if (ignoredGames.Contains(game.ID)) {
+                    continue;
+                }
+
                 if (StaticDataManager.Global.LastRevisionCheck.TryGetValue(game.ID, out DateTime lastCheck)) {
                     if (lastCheck + TimeSpan.FromDays(cacheDays) > DateTime.Now) {
                         continue;
@@ -378,16 +385,30 @@ public static class RAOfficialServer {
 
     private static void CheckRAGameExtendedResponse(GameData game, RAApiGameExtendedResponse remote, string label) {
         int missingAchievements = 0;
+        int updatedAchievements = 0;
 
         foreach (uint achievementId in remote.Achievements.Keys) {
-            if (game.GetAchievementById(achievementId) == null) {
+            AchievementData ach = game.GetAchievementById(achievementId);
+            if (ach == null) {
                 Log.RCheevos.LogWarning("Game \"{g}\" is missing an achievement from {s}: {a}", game, label, remote.Achievements[achievementId]);
                 missingAchievements++;
+                continue;
+            }
+
+            String serverHash = remote.Achievements[achievementId].MemAddr;
+            String storedHash = Utils.MD5(ach.MemAddr);
+            if (!storedHash.Equals(serverHash, StringComparison.InvariantCultureIgnoreCase)) {
+                Log.RCheevos.LogWarning("Game \"{g}\" has an outdated achievement from {s}: {a}", game, label, remote.Achievements[achievementId]);
+                updatedAchievements++;
             }
         }
 
         if (missingAchievements > 0) {
-            Program.AddNotification("Game \"" + game + "\" has " + missingAchievements + " " + label + " achievement(s) on the official server that are not on LAHEE!");
+            Program.AddNotification("Game \"" + game + "\" has " + missingAchievements + " new " + label + " achievement(s)!");
+        }
+
+        if (updatedAchievements > 0) {
+            Program.AddNotification("Game \"" + game + "\" has " + updatedAchievements + " " + label + " achievement(s) that were updated on the official server!");
         }
     }
 }

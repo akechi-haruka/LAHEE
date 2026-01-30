@@ -201,6 +201,7 @@ class RAApiGameExtendedResponse {
     public class ServerAchievementData {
         public int ID;
         public String Title;
+        public String MemAddr;
         // remaining fields omitted
 
         public override string ToString() {

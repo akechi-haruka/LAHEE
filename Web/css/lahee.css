@@ -129,3 +129,7 @@ table {
 .ach_set_header:nth-of-type(1) {
     padding-top: 0;
 }
+
+.toast {
+    --bs-toast-bg: #fff !important;
+}
