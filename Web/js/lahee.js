@@ -771,25 +771,25 @@ function lahee_create_stats(user) {
             slowest_100.v = playtime_ms;
         }
 
-        var beat = null;
+        var best_beat = null;
         for (var completion_achievement_id of completion_ids) {
             var ua = ug.Achievements[completion_achievement_id];
             if (ua && ua.Status > 0) {
                 var at = ua.getAchievePlaytime();
-                if (beat == null || beat.compareTo(at) < 0) {
-                    beat = at;
+                if (best_beat == null || best_beat.compareTo(at) > 0) {
+                    best_beat = at;
                 }
             }
         }
 
-        if (beat != null) {
-            if (beat.valueOf() < fastest_beat.v && beat.valueOf() > 0 && playtime_ms > 0) {
+        if (best_beat != null) {
+            if (best_beat.valueOf() < fastest_beat.v && best_beat.valueOf() > 0 && playtime_ms > 0) {
                 fastest_beat.id = ug.GameID;
-                fastest_beat.v = beat.valueOf();
+                fastest_beat.v = best_beat.valueOf();
             }
-            if (beat.valueOf() > slowest_beat.v) {
+            if (best_beat.valueOf() > slowest_beat.v) {
                 slowest_beat.id = ug.GameID;
-                slowest_beat.v = beat.valueOf();
+                slowest_beat.v = best_beat.valueOf();
             }
         }
 
