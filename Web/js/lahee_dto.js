@@ -649,11 +649,14 @@ class LaheeLivePingEvent {
 class LaheeLiveUnlockEvent {
     /** @type {number} */
     gameId;
+    /** @type {number} */
+    userId;
     /** @type {LaheeUserAchievementData} */
     userAchievementData;
 
     constructor(data) {
         this.gameId = data.gameId;
+        this.userId = data.userId;
         this.userAchievementData = new LaheeUserAchievementData(null, data.userAchievementData);
     }
 }

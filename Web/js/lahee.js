@@ -477,7 +477,7 @@ function lahee_live_ticker_update(data) {
     if (event.type == "ping") {
         lahee_update_game_status(new LaheeLivePingEvent(data));
     } else if (event.type == "unlock") {
-        lahee_play_unlock_sound(new LaheeLiveUnlockEvent(data));
+        lahee_live_ticker_unlock(new LaheeLiveUnlockEvent(data));
     } else if (event.type == "notification") {
         lahee_notify(new LaheeLiveNotificationEvent(data));
     } else {
@@ -559,16 +559,36 @@ function lahee_records_change_selected() {
 /**
  * @param event {LaheeLiveUnlockEvent}
  */
-function lahee_play_unlock_sound(event) {
-    var ach = lahee_current_game.getAchievementById(event.userAchievementData.AchievementID);
+function lahee_live_ticker_unlock(event) {
+    var game = lahee_data.getGameById(event.gameId);
+    var user = lahee_data.getUserById(event.userId);
+    var ug = user?.getUserGameData(game);
+    var ach = game.getAchievementById(event.userAchievementData.AchievementID);
 
-    if (ach) {
+    if (game && user && ach) {
         lahee_select_ach(event.gameId, ach.ID);
 
         if (Notification.permission == "granted") {
             new Notification("Achievement Unlocked!", {body: ach.Title + " (" + ach.Points + ")", icon: ach.BadgeURL});
-            lahee_audio_play("162482__kastenfrosch__achievement.mp3");
+
+            var count_before = ug.getAllAchievements().filter(a => a.Status != LaheeUserAchievementStatus.Locked).length;
+            var total_count = game.getAllAchievements().length;
+            var prev_state = ug.getAchievementData(ach.ID)?.Status ?? LaheeUserAchievementStatus.Locked;
+            var new_state = event.userAchievementData.Status;
+
+            if (count_before + 1 == total_count && prev_state != new_state && prev_state == LaheeUserAchievementStatus.Locked) {
+                new Notification("Game Completed!", {
+                    body: total_count + " achievements in \"" + game.Title + "\" after " + event.userAchievementData.getLaterPlaytime().toStringWithHourConversion(),
+                    icon: game.ImageIconURL
+                });
+            }
+        } else {
+            console.warn("Notifications not allowed");
         }
+
+        lahee_audio_play("162482__kastenfrosch__achievement.mp3");
+    } else {
+        console.error("Failed to map data in lahee_live_ticker_unlock", game, ach, user, ug);
     }
 }
 
@@ -863,7 +883,7 @@ function lahee_create_stats(user) {
                     </td>
                     <td>${status}</td>
                     <td>${ug.FirstPlay.toLocaleString()}</td>
-                    <td>${ug.PlayTimeApprox.toStringWithoutMs()}</td>
+                    <td>${ug.PlayTimeApprox.toStringWithHourConversion()}</td>
                 </tr>
             `;
         }

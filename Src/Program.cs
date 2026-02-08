@@ -286,7 +286,7 @@ reloaduser                                                                      
 
             userAchievementData = userGameData.UnlockAchievement(ach.ID, hardcore, unlockUnixSeconds, unlockPlayTimeSpan);
 
-            LiveTicker.BroadcastUnlock(game.ID, userAchievementData);
+            LiveTicker.BroadcastUnlock(game.ID, (uint)user.ID, userAchievementData);
             CaptureManager.StartCapture(game, user, ach);
         } else {
             if (!userGameData.Achievements.TryGetValue(ach.ID, out userAchievementData)) {

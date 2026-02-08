@@ -4,7 +4,7 @@
 class TimeSpan {
     /**
      * Creates a new TimeSpan with the given values for each portion
-     * @param {Date|TimeSpan|number} [t=0] Date, TimeSpan, or number of milliseconds 
+     * @param {Date|TimeSpan|number} [t=0] Date, TimeSpan, or number of milliseconds
      * @param {number} [s=0] Seconds
      * @param {number} [m=0] Minutes
      * @param {number} [h=0] Hours
@@ -221,6 +221,10 @@ class TimeSpan {
     toStringWithoutMs() {
         let pad = (n, w = 2, z = '0') => n.toString().padStart(w, z);
         return `${this.totalMilliseconds < 0 ? '-' : ''}${Math.abs(this.days) > 0 ? `${Math.abs(this.days)}.` : ""}${pad(Math.abs(this.hours))}:${pad(Math.abs(this.minutes))}:${pad(Math.abs(this.seconds))}`;
+    }
+
+    toStringWithHourConversion() {
+        return this.toStringWithoutMs() + " (" + Math.floor(this.totalHours) + "h.)";
     }
 
     /**

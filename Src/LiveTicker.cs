@@ -28,11 +28,11 @@ class LiveTicker {
         }
     }
 
-    public static void BroadcastUnlock(uint gameId, UserAchievementData userAchievementData) {
+    public static void BroadcastUnlock(uint gameId, uint userId, UserAchievementData userAchievementData) {
         lock (connecteds) {
             Log.Network.LogDebug("Sending unlock to {n} websockets...", connecteds.Count);
             foreach (LiveTickerWS ws in connecteds) {
-                ws.SendMessage(new LiveTickerEventUnlock(gameId, userAchievementData));
+                ws.SendMessage(new LiveTickerEventUnlock(gameId, userId, userAchievementData));
             }
         }
     }
@@ -107,10 +107,12 @@ class LiveTicker {
 
     public class LiveTickerEventUnlock : LiveTickerEvent {
         public uint gameId;
+        public uint userId;
         public UserAchievementData userAchievementData;
 
-        public LiveTickerEventUnlock(uint gameId, UserAchievementData userAchievementData) : base("unlock") {
+        public LiveTickerEventUnlock(uint gameId, uint userId, UserAchievementData userAchievementData) : base("unlock") {
             this.gameId = gameId;
+            this.userId = userId;
             this.userAchievementData = userAchievementData;
         }
     }

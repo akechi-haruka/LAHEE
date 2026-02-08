@@ -363,7 +363,7 @@ static class Routes {
         Log.User.LogInformation("{user} has unlocked \"{ach}\" in \"{game}\" in {mode} mode!", user, ach, game, hardcoreFlag == 1 ? "Hardcore" : "Softcore");
         UserManager.Save();
 
-        LiveTicker.BroadcastUnlock(game.ID, userAchievementData);
+        LiveTicker.BroadcastUnlock(game.ID, (uint)user.ID, userAchievementData);
         LiveTicker.BroadcastPing(LiveTicker.LiveTickerEventPing.PingType.AchievementUnlock);
         CaptureManager.StartCapture(game, user, ach);
 
