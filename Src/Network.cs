@@ -72,6 +72,9 @@ static class Network {
         AddRARoute("badgeiter", Routes.RABadgeIter);
         AddRARoute("uploadachievement", Routes.RAUploadAchievement);
         AddRARoute("richpresencepatch", Routes.RARichPresencePatch);
+        AddRARoute("hashlibrary", Routes.RAHashLibrary);
+        AddRARoute("allprogress", Routes.RAAllProgress);
+        AddRARoute("gameinfolist", Routes.RAGameInfoList);
 
         Log.Network.LogInformation("Starting webserver on {H}:{P}", server.Settings.Hostname, server.Settings.Port);
         server.Start();
@@ -90,6 +93,12 @@ static class Network {
     public static void Stop() {
         Log.Network.LogDebug("Stopping webserver");
         server.Stop();
+    }
+
+    public static void CorrectResourcePath(string resourceHost, ref string url) {
+        if (url != null && !url.StartsWith("http")) {
+            url = resourceHost + url;
+        }
     }
 }
 
@@ -966,6 +975,56 @@ static class Routes {
             Success = true,
             CodeNotes = game.CodeNotes,
             TriggerGroups = trigger.Groups.ToArray()
+        };
+        await ctx.Response.SendJson(response);
+    }
+
+    internal static async Task RAHashLibrary(HttpContextBase ctx) {
+        uint consoleId = UInt32.Parse(ctx.Request.GetParameter("c"));
+
+        Dictionary<String, UInt32> hashes = new Dictionary<String, UInt32>();
+        foreach (GameData game in StaticDataManager.GetAllGameData()) {
+            if (game.ConsoleID == consoleId) {
+                foreach (string hash in game.ROMHashes) {
+                    hashes.Add(hash, game.ID);
+                }
+            }
+        }
+
+        RAHashLibraryResponse response = new RAHashLibraryResponse() {
+            Success = true,
+            MD5List = hashes
+        };
+        await ctx.Response.SendJson(response);
+    }
+
+    internal static async Task RAAllProgress(HttpContextBase ctx) {
+        //String username = ctx.Request.GetParameter("u");
+        //string token = ctx.Request.GetParameter("t");
+        uint consoleId = UInt32.Parse(ctx.Request.GetParameter("c"));
+
+        Dictionary<UInt32, RAAllProgressResponse.Progress> dict = new Dictionary<UInt32, RAAllProgressResponse.Progress>();
+        foreach (GameData game in StaticDataManager.GetAllGameData()) {
+            if (game.ConsoleID == consoleId) {
+                dict.Add(game.ID, new RAAllProgressResponse.Progress() {
+                    Achievements = game.GetAchievementCount()
+                });
+            }
+        }
+
+        RAAllProgressResponse response = new RAAllProgressResponse() {
+            Success = true,
+            Response = dict
+        };
+        await ctx.Response.SendJson(response);
+    }
+
+    internal static async Task RAGameInfoList(HttpContextBase ctx) {
+        uint[] gameIds = ctx.Request.GetParameter("g").Split(',').Select(UInt32.Parse).ToArray();
+
+        RAGameInfoListResponse response = new RAGameInfoListResponse() {
+            Success = true,
+            Response = gameIds.Select(StaticDataManager.FindGameDataById).Where(game => game != null).ToArray()
         };
         await ctx.Response.SendJson(response);
     }

@@ -209,3 +209,19 @@ class RAApiGameExtendedResponse {
         }
     }
 }
+
+class RAHashLibraryResponse : RAAnyResponse {
+    public Dictionary<String, UInt32> MD5List;
+}
+
+class RAAllProgressResponse : RAAnyResponse {
+    public Dictionary<UInt32, Progress> Response;
+
+    public class Progress {
+        public int Achievements;
+    }
+}
+
+class RAGameInfoListResponse : RAAnyResponse {
+    public GameData[] Response;
+}

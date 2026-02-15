@@ -79,6 +79,20 @@ static class StaticDataManager {
         loadQueue[LoadPriority.Comments].ForEach(file => Process(file, ParseCommentDataJson));
         loadQueue[LoadPriority.Hash].ForEach(file => Process(file, ParseAchievementHashFile));
 
+        foreach (GameData game in gameData.Values) {
+            string resourceHost = Program.Config.Get("LAHEE", "ImageResourceHost");
+            Network.CorrectResourcePath(resourceHost, ref game.ImageIcon);
+            Network.CorrectResourcePath(resourceHost, ref game.ImageIconURL);
+            game.AchievementSets.ForEach(set => {
+                Network.CorrectResourcePath(resourceHost, ref set.ImageIconUrl);
+                set.Achievements.ForEach(ach => {
+                    Network.CorrectResourcePath(resourceHost, ref ach.BadgeLockedURL);
+                    Network.CorrectResourcePath(resourceHost, ref ach.BadgeURL);
+                });
+            });
+        }
+
+
         if (Program.Config.GetBool("LAHEE", "DisableLeaderboards")) {
             foreach (GameData game in gameData.Values) {
                 game.AchievementSets.ForEach(set => set.Leaderboards = new List<LeaderboardData>());
