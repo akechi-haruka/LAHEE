@@ -50,19 +50,20 @@ class Program {
             Directory.CreateDirectory(badgeDirectory);
         }
 
+        Log.Initialize();
         try {
-            Log.Initialize();
             UserManager.Initialize();
             StaticDataManager.Initialize();
             Network.Initialize();
             LiveTicker.Initialize();
             CaptureManager.Initialize();
         } catch (Exception ex) {
-            Console.WriteLine("An internal error occurred:\n" + ex.Message);
+            Log.Main.LogCritical("An internal error occurred:\n" + ex.Message);
 #if DEBUG
             Console.WriteLine(ex);
 #endif
             Console.ReadLine();
+            return;
         }
 
         Log.Main.LogInformation("Initialization complete.");
