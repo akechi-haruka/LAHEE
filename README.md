@@ -68,6 +68,18 @@ RetroArch has no ability to change the RA server name, so we need to patch that 
 3. Open a command prompt in the folder where RetroArch is located and execute `hexedit2 multi -t StringASCII retroarch.exe retroarch.exe https://retroachievements.org http://localhost:8000`
 4. Launch RetroArch, navigate to the achievements menu, and type in any desired username and any password.
 
+### DuckStation, others
+
+Other emulators may need to be patched generically as following:
+
+1. Download https://github.com/akechi-haruka/hexedit2 and place the .exe next to your emulator .exe file.
+2. Create a backup copy of your emulator.
+3. Open a command prompt in the folder where your emulator is located and execute
+   `hexedit2 multi -t StringASCII duckstation-qt-x64-ReleaseLTCG.exe duckstation-qt-x64-ReleaseLTCG.exe https://retroachievements.org/dorequest.php http://localhost:8000/dorequest.php`
+    1. Make sure to replace the .exe file name.
+    2. You should get at least 1 hit.
+4. Launch the emulator, navigate to the achievements menu, and type in any desired username and any password.
+
 ## Web Viewer
 
 Open http://localhost:8000/Web/ in your browser to see locked/unlocked achievements, records, status message and score.

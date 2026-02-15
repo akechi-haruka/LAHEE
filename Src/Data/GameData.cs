@@ -11,7 +11,7 @@ using LAHEE.Data.File;
 namespace LAHEE.Data;
 
 public class GameData {
-    public const int CURRENT_DATA_VERSION = 3;
+    public const int CURRENT_DATA_VERSION = 4;
 
     public int DataVersion;
     public uint ID;
@@ -20,6 +20,7 @@ public class GameData {
     public string RichPresencePatch;
     public int ConsoleID;
     public string ImageIconURL;
+    public string ImageIconUrl;
     public List<SetData> AchievementSets;
     public List<string> ROMHashes = new List<string>();
     public List<CodeNote> CodeNotes = new List<CodeNote>();
@@ -81,6 +82,10 @@ public class GameData {
 
         if (AchievementSets == null) {
             AchievementSets = new List<SetData>();
+        }
+
+        if (ImageIconUrl == null) {
+            ImageIconUrl = ImageIconURL;
         }
 
         DataVersion = CURRENT_DATA_VERSION;
