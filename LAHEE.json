@@ -24,6 +24,7 @@
     },
     "OBSWebsocketUrl": "ws://localhost:4455",
     "ImageResourceHost": "http://localhost:8000",
+    "LoadUnofficialAsOfficial": false,
     "Capture": [
       {
         "Trigger": "Screenshot",
