@@ -757,6 +757,14 @@ static class Routes {
             sets = game.AchievementSets;
         }
 
+        if (Program.Config.GetBool("LAHEE", "LoadUnofficialAsOfficial")) {
+            sets = sets.Copy();
+            foreach (AchievementData achievementData in sets.SelectMany(s => s.Achievements).Where(a => (a.Flags & AchievementFlags.Unofficial) != 0)) {
+                achievementData.Flags &= ~AchievementFlags.Unofficial;
+                achievementData.Flags |= AchievementFlags.Official;
+            }
+        }
+
         RAPatchResponseV2 response = new RAPatchResponseV2() {
             Success = true,
             GameId = game.ID,
