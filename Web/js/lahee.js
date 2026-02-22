@@ -1183,6 +1183,7 @@ function lahee_check_meta_combo(user) {
         /** @type {Array.<LaheeUserAchievementData>}  */
         var current_combo_ua = [];
         var current_combo_diff_total = 0;
+        var current_game_id = 0;
         /** @type {?LaheeUserAchievementData} */
         var previous_ua = null;
 
@@ -1193,10 +1194,12 @@ function lahee_check_meta_combo(user) {
                 continue;
             }
 
+            var game_id = lahee_data.getAchievementById(ua.AchievementID)?.getGameData()?.ID ?? 0;
+
             var previous_playtime = previous_ua ? (is_hardcore ? previous_ua.AchievePlaytime : previous_ua.AchievePlaytimeSoftcore).valueOf() : 0;
 
             var diff = Math.abs(playtime - previous_playtime);
-            if (diff < 1000 * 60 * 10) { // at most 10 minutes between achievements
+            if (diff < 1000 * 60 * 10 && game_id == current_game_id) { // at most 10 minutes between achievements
                 current_combo_count++;
                 current_combo_diff_total += diff;
                 current_combo_ua.push(ua);
@@ -1211,6 +1214,7 @@ function lahee_check_meta_combo(user) {
                 current_combo_count = 1;
                 current_combo_ua = [ua];
                 current_combo_diff_total = 0;
+                current_game_id = game_id;
             }
 
             previous_ua = ua;
