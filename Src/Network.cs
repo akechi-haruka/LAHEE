@@ -523,15 +523,21 @@ static class Routes {
     }
 
     internal static async Task LaheeInfo(HttpContextBase ctx) {
-        LaheeResponse response = new LaheeResponse() {
-            version = Program.NAME,
-            games = StaticDataManager.GetAllGameData().ToArray(),
-            users = UserManager.GetAllUserData(),
-            comments = StaticDataManager.GetAllUserComments(),
-            notifications = Program.Notifications.ToArray()
-        };
-
-        await ctx.Response.SendJson(response);
+        bool extendedData = ctx.Request.GetParameter("extended_data") == "true";
+        try {
+            LaheeResponse response = new LaheeResponse() {
+                version = Program.NAME,
+                games = StaticDataManager.GetAllGameData().ToArray(),
+                users = UserManager.GetAllUserData(),
+                comments = StaticDataManager.GetAllUserComments(),
+                notifications = Program.Notifications.ToArray(),
+                achievements_extended = extendedData ? StaticDataManager.GetAllExtendedAchievementData() : null
+            };
+            await ctx.Response.SendJson(response);
+        } catch (Exception ex) {
+            Log.Network.LogError(ex, "Error loading data");
+            await ctx.Response.SendJson(new RAErrorResponse("Internal server error loading data"));
+        }
     }
 
     internal static async Task LaheeUserInfo(HttpContextBase ctx) {

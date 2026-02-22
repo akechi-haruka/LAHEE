@@ -118,6 +118,7 @@ class LaheeResponse {
     public GameData[] games;
     public UserComment[] comments;
     public string[] notifications;
+    public Dictionary<int, AchievementExtendedData> achievements_extended;
 }
 
 class LaheeUserResponse {

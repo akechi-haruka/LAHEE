@@ -133,3 +133,26 @@ table {
 .toast {
     --bs-toast-bg: #fff !important;
 }
+
+.ach_icon_container {
+    position: relative;
+    float: left;
+}
+
+.ach_ex_overlay {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    padding: 2px;
+    background-color: rgba(0, 0, 0, 0.25);
+    font-size: smaller;
+    color: white;
+    text-align: right;
+}
+
+.ach_ex_trigger {
+}
+
+.ach_ex_measured {
+    font-size: smaller;
+}

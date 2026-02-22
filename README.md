@@ -190,6 +190,8 @@ To not have your changes overwritten on updates, you can create a copy of `appse
     * CheckSetRevisions: Checks and notifies for any data mismatch against the official server (new achievements, etc.)
     * SetRevisionCheckIncludeUnofficial: Whether or not to include "unofficial" achievements in the revision check.
 * OBSWebsocketUrl: URL to your OBS instance for sending commands. Must not use authentication.
+* LoadUnofficialAsOfficial: Send all unofficial achievements as official to the emulator. Is needed in a few emulators
+  to work around them not sending Unofficial unlocks.
 
 ## Attribution
 

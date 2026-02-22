@@ -467,4 +467,13 @@ static class StaticDataManager {
             Log.Data.LogCritical(e, "Error while saving global data");
         }
     }
+
+    public static Dictionary<int, AchievementExtendedData> GetAllExtendedAchievementData() {
+        Dictionary<int, AchievementExtendedData> list = new Dictionary<int, AchievementExtendedData>();
+        foreach (AchievementData a in GetAllGameData().SelectMany(g => g.GetAllAchievements())) {
+            list[a.ID] = new AchievementExtendedData(a);
+        }
+
+        return list;
+    }
 }

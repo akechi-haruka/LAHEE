@@ -501,6 +501,8 @@ class LaheeInfoResponse {
     comments;
     /** @type {Array.<string>} */
     notifications;
+    /** @type {?Object.<string, LaheeAchievementExtendedData>} */
+    achievements_extended;
 
     constructor(data) {
         this.version = data.version;
@@ -508,6 +510,10 @@ class LaheeInfoResponse {
         this.games = data.games.map(g => new LaheeGameData(g));
         this.comments = data.comments.map(c => new LaheeUserComment(c));
         this.notifications = data.notifications;
+        this.achievements_extended = {};
+        if (data.achievements_extended) {
+            Object.keys(data.achievements_extended).forEach(aid => this.achievements_extended[aid] = new LaheeAchievementExtendedData(data.achievements_extended[aid]));
+        }
     }
 
     /**
@@ -1010,4 +1016,19 @@ class RAToolsField {
         }
     }
 
+}
+
+class LaheeAchievementExtendedData {
+    /** @type {number} */
+    ID;
+    /** @type {boolean} */
+    IsTrigger;
+    /** @type {number} */
+    MeasuredMax;
+
+    constructor(data) {
+        this.ID = data.ID;
+        this.IsTrigger = data.IsTrigger;
+        this.MeasuredMax = data.MeasuredMax;
+    }
 }

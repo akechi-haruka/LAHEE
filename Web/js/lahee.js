@@ -29,7 +29,7 @@ function lahee_init() {
     lahee_split_init_library();
 
     LAHEE_URL = "http://" + window.location.host + "/dorequest.php";
-    lahee_request("r=laheeinfo").then(lahee_init_done).catch(lahee_init_error);
+    lahee_request("r=laheeinfo&extended_data=" + lahee_should_get_extended_data()).then(lahee_init_done).catch(lahee_init_error);
 }
 
 function lahee_split_init_library() {
@@ -112,6 +112,9 @@ function lahee_set_page(page) {
 function lahee_init_done(res) {
 
     try {
+        if (!res.Success && res.Error) {
+            throw new Error(res.Error);
+        }
         lahee_data = new LaheeInfoResponse(res);
 
         if (lahee_data.notifications?.length > 0) {
@@ -152,6 +155,7 @@ function lahee_init_done(res) {
                 lahee_autoselect_based_on_most_recent_achievement();
                 lahee_change_game();
                 lahee_records_change_selected();
+                lahee_set_extended_display();
                 lahee_set_page("page_achievements");
             } catch (e) {
                 lahee_init_error(e);
@@ -409,6 +413,12 @@ function lahee_select_ach(game_id, ach_id) {
     }
     document.getElementById("adetail_type").innerText = type;
     document.getElementById("adetail_score").innerText = ach.Points.toString();
+
+    if (lahee_should_get_extended_data()) {
+        var aex = lahee_get_extended_achievement_data(ach.ID);
+        document.getElementById("adetail_ex_measured").innerText = (aex?.MeasuredMax ?? 0).toString();
+        document.getElementById("adetail_ex_trigger").innerText = (aex?.IsTrigger ? "Yes" : "No");
+    }
 
     var status = "Locked";
     var unlockDate = "Locked";
@@ -1226,19 +1236,68 @@ function lahee_check_meta_combo(user) {
  * @returns {string}
  */
 function lahee_render_achievement(game, ug, a, ua, size) {
+
+    var aid = ua?.AchievementID ?? a.ID ?? 0;
+    var gid = game?.ID ?? 0;
+    
     var status = ua?.Status ?? LaheeUserAchievementStatus.Locked;
-    var protect = localStorage.getItem("lahee_setting_hover_spoiler_protect") && status == LaheeUserAchievementStatus.Locked && a.Type == LaheeAchievementType.progression;
-    if (!a) {
-        var id = ua?.AchievementID ?? a.ID ?? 0;
-        return `<img src="/Badge/00000.png" class="ach ach_status_0" loading="lazy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-title="<b>Unknown Achievement</b><hr />Unknown Achievement ID ${id}" ${size ? "width='" + size + "'" : ""} />`;
-    }
-    var title = a.Title.replaceAll("\"", "&quot;");
-    var desc = a.Description.replaceAll("\"", "&quot;");
+    var protect = localStorage.getItem("lahee_setting_hover_spoiler_protect") == "true" && status == LaheeUserAchievementStatus.Locked && a.Type == LaheeAchievementType.progression;
+    var title = a?.Title.replaceAll("\"", "&quot;") ?? "Unknown Achievement";
+    var desc = a?.Description.replaceAll("\"", "&quot;") ?? "Unknown Achievement ID " + aid;
+    var badgeurl = (status != LaheeUserAchievementStatus.Locked ? a?.BadgeURL : a?.BadgeLockedURL) ?? "/Badge/00000.png";
+    
     if (protect) {
         title = "Hidden";
         desc = "Spoiler protection is enabled";
     }
-    return `<img src="${status != LaheeUserAchievementStatus.Locked ? a.BadgeURL : a.BadgeLockedURL}" class="ach ach_type_${a.Type} ach_status_${status} ach_flags_${a.Flags} ${ug?.FlaggedAchievements?.includes(a.ID) ? "ach_flag_important" : ""}" onclick="lahee_select_ach(${game?.ID ?? 0}, ${a.ID});" loading="lazy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-title="<b>${title}</b> (${a.Points})<hr />${desc}" ${size ? "width='" + size + "'" : "width='64' height='64'"} />`;
+
+    var overlay = "";
+    if (lahee_should_get_extended_data() && status == LaheeUserAchievementStatus.Locked && !size) {
+        overlay = lahee_render_achievement_ex(lahee_get_extended_achievement_data(aid));
+    }
+
+    return `<div class="ach_icon_container">
+            <img src="${badgeurl}"
+                class="ach ach_type_${a?.Type} ach_status_${status} ach_flags_${a?.Flags} ${ug?.FlaggedAchievements?.includes(aid) ? "ach_flag_important" : ""}"
+                onclick="lahee_select_ach(${gid}, ${aid});" 
+                loading="lazy" 
+                data-bs-html="true" 
+                data-bs-toggle="tooltip" 
+                data-bs-title="<b>${title}</b> (${a?.Points ?? 0})<hr />${desc}" ${size ? "width='" + size + "'" : "width='64' height='64'"} 
+            />
+            ${overlay}
+            </div>`;
+}
+
+function lahee_render_achievement_ex(aex) {
+    var overlay = "";
+    if (aex?.IsTrigger || aex?.MeasuredMax) {
+        var first = false;
+        overlay += `<div class="ach_ex_overlay">`;
+
+        if (aex.IsTrigger) {
+            if (first) {
+                overlay += "<br />";
+            }
+            overlay += `<span class="ach_ex_trigger">[!]</span>`;
+            if (!first) {
+                first = true;
+            }
+        }
+
+        if (aex.MeasuredMax) {
+            if (first) {
+                overlay += "<br />";
+            }
+            overlay += `<span class="ach_ex_measured">/${aex.MeasuredMax}</span>`;
+            if (!first) {
+                first = true;
+            }
+        }
+
+        overlay += `</div>`;
+    }
+    return overlay;
 }
 
 function lahee_show_code_popup() {
@@ -1465,14 +1524,26 @@ function lahee_settings_load() {
     document.getElementById("lahee_setting_ach_no_margin").checked = localStorage.getItem("lahee_setting_ach_no_margin") === "true";
     document.getElementById("lahee_setting_hover_spoiler_protect").checked = localStorage.getItem("lahee_setting_hover_spoiler_protect") === "true";
     document.getElementById("lahee_setting_split_sizes").value = localStorage.getItem("lahee_setting_split_sizes");
+    document.getElementById("lahee_setting_show_metaflags").checked = localStorage.getItem("lahee_setting_show_metaflags") === "true";
 }
 
 function lahee_settings_save() {
+    var reload = false;
+
+    if (localStorage.getItem("lahee_setting_show_metaflags") !== document.getElementById("lahee_setting_show_metaflags").checked) {
+        reload = true;
+    }
+    
     localStorage.setItem("lahee_setting_ach_grouping", document.getElementById("lahee_setting_ach_grouping").checked);
     localStorage.setItem("lahee_setting_ach_no_margin", document.getElementById("lahee_setting_ach_no_margin").checked);
     localStorage.setItem("lahee_setting_hover_spoiler_protect", document.getElementById("lahee_setting_hover_spoiler_protect").checked);
+    localStorage.setItem("lahee_setting_show_metaflags", document.getElementById("lahee_setting_show_metaflags").checked);
 
     bootstrap.Toast.getOrCreateInstance(document.getElementById("toast_saved")).show();
+
+    if (reload) {
+        window.location.reload();
+    }
 }
 
 function lahee_settings_reset() {
@@ -1500,4 +1571,21 @@ function lahee_notify(n) {
     if (Notification.permission == "granted") {
         new Notification("LAHEE Notification", {body: n.notification});
     }
+}
+
+function lahee_should_get_extended_data() {
+    return localStorage.getItem("lahee_setting_show_metaflags") === "true";
+}
+
+function lahee_get_extended_achievement_data(id) {
+    if (!lahee_data.achievements_extended) {
+        return null;
+    }
+    return lahee_data.achievements_extended[id];
+}
+
+function lahee_set_extended_display() {
+    var show = lahee_should_get_extended_data();
+    document.getElementById("adetail_ex_trigger_row").style.display = show ? "" : "none";
+    document.getElementById("adetail_ex_measured_row").style.display = show ? "" : "none";
 }
