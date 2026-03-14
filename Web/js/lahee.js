@@ -151,8 +151,9 @@ function lahee_init_done(res) {
             try {
                 document.getElementById("main_nav").style.visibility = "visible";
                 document.getElementById("main_data_selector").style.visibility = "visible";
-                lahee_build_game_selector();
+                lahee_build_game_selector(false);
                 lahee_autoselect_based_on_most_recent_achievement();
+                lahee_build_game_selector(true);
                 lahee_change_game();
                 lahee_records_change_selected();
                 lahee_set_extended_display();
@@ -249,6 +250,8 @@ function lahee_autoselect_based_on_most_recent_achievement() {
         document.getElementById("user_select").value = last_user.ID;
         document.getElementById("game_select").value = last_game.ID;
         console.log("Latest Achievement was from " + last_time + " from UID " + last_user + " in " + last_game);
+    } else {
+        console.warn("Could not find the most recent achievement");
     }
 }
 
@@ -1441,16 +1444,18 @@ function lahee_show_extended_cn(addr, text) {
     lahee_popup_2.show();
 }
 
-function lahee_build_game_selector() {
-    var ru = document.getElementById("user_select").value;
-    var user = lahee_data.getUserById(ru);
+function lahee_build_game_selector(check_userdata) {
+    var current_user_id = document.getElementById("user_select").value;
+    var user = lahee_data.getUserById(current_user_id);
+
+    var current_game_id = document.getElementById("game_select").value;
 
     var now = new Date();
     var game_list = lahee_data.games.slice();
 
     var select_html = "";
 
-    if (user) {
+    if (user && check_userdata) {
 
         select_html += "<optgroup label='Recently Played'>";
         for (var game of game_list) {
@@ -1512,7 +1517,9 @@ function lahee_build_game_selector() {
 
     } else {
 
-        console.warn("cannot create game selector based on userdata because no userdata is available");
+        if (check_userdata) {
+            console.warn("cannot create game selector based on userdata because no userdata is available");
+        }
 
         for (var game of lahee_data.games) {
             select_html += "<option value='" + game.ID + "'>" + game.Title + "</option>";
@@ -1521,6 +1528,7 @@ function lahee_build_game_selector() {
     }
 
     document.getElementById("game_select").innerHTML = select_html;
+    document.getElementById("game_select").value = current_game_id;
 }
 
 function lahee_settings_load() {

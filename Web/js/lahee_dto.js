@@ -401,6 +401,10 @@ class LaheeUserData {
         }
         return [];
     }
+
+    toString() {
+        return this.UserName + " (" + this.ID + ")";
+    }
 }
 
 class LaheeUserGameData {
