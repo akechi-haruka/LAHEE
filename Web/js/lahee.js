@@ -17,6 +17,10 @@ var lahee_popup_2;
 /** @type {Array.<Tooltip>} */
 var tooltipList;
 
+function lahee_set_loading(n) {
+    document.getElementById("loading_progress").value = n;
+}
+
 function lahee_init() {
     lahee_settings_load();
     lahee_settings_apply();
@@ -27,6 +31,8 @@ function lahee_init() {
     lahee_audio_play("540121__jj_om__blank-sound.ogg");
 
     lahee_split_init_library();
+
+    lahee_set_loading(1);
 
     LAHEE_URL = "http://" + window.location.host + "/dorequest.php";
     lahee_request("r=laheeinfo&extended_data=" + lahee_should_get_extended_data()).then(lahee_init_done).catch(lahee_init_error);
@@ -115,6 +121,8 @@ function lahee_init_done(res) {
         if (!res.Success && res.Error) {
             throw new Error(res.Error);
         }
+        lahee_set_loading(2);
+        
         lahee_data = new LaheeInfoResponse(res);
 
         if (lahee_data.notifications?.length > 0) {
@@ -147,13 +155,17 @@ function lahee_init_done(res) {
         document.getElementById("user_select").innerHTML = users;
 
         lahee_live_ticker_connect();
+        lahee_set_loading(3);
+        
         setTimeout(function () {
             try {
+                lahee_set_loading(4);
                 document.getElementById("main_nav").style.visibility = "visible";
                 document.getElementById("main_data_selector").style.visibility = "visible";
                 lahee_build_game_selector(false);
                 lahee_autoselect_based_on_most_recent_achievement();
                 lahee_build_game_selector(true);
+                lahee_set_loading(5);
                 lahee_change_game();
                 lahee_records_change_selected();
                 lahee_set_extended_display();
