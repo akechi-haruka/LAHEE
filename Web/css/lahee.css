@@ -156,3 +156,7 @@ table {
 .ach_ex_measured {
     font-size: smaller;
 }
+
+#adetail_desc {
+    clear: both;
+}
