@@ -230,7 +230,7 @@ function lahee_change_game() {
     lahee_current_game = game;
 
     document.getElementById("user_avatar").src = "../UserPic/" + user.UserName + ".png";
-    document.getElementById("game_avatar").src = game.ImageIconURL;
+    document.getElementById("game_avatar").src = lahee_check_and_fix_resource_url(game.ImageIconURL);
 
     lahee_build_achievements(user, game);
     lahee_records_build_select(user, game);
@@ -594,7 +594,10 @@ function lahee_live_ticker_unlock(event) {
         lahee_select_ach(event.gameId, ach.ID);
 
         if (Notification.permission == "granted") {
-            new Notification("Achievement Unlocked!", {body: ach.Title + " (" + ach.Points + ")", icon: ach.BadgeURL});
+            new Notification("Achievement Unlocked!", {
+                body: ach.Title + " (" + ach.Points + ")",
+                icon: lahee_check_and_fix_resource_url(ach.BadgeURL)
+            });
 
             var count_before = ug.getAllAchievements().filter(a => a.Status != LaheeUserAchievementStatus.Locked).length;
             var total_count = game.getAllAchievements().length;
@@ -604,7 +607,7 @@ function lahee_live_ticker_unlock(event) {
             if (count_before + 1 == total_count && prev_state != new_state && prev_state == LaheeUserAchievementStatus.Locked) {
                 new Notification("Game Completed!", {
                     body: total_count + " achievements in \"" + game.Title + "\" after " + event.userAchievementData.getLaterPlaytime().toStringWithHourConversion(),
-                    icon: game.ImageIconURL
+                    icon: lahee_check_and_fix_resource_url(game.ImageIconURL)
                 });
             }
         } else {
@@ -890,7 +893,7 @@ function lahee_create_stats(user) {
 
             table_str += `
                 <tr>
-                    <td><img src="${game.ImageIconURL}" height="64" /></td>
+                    <td><img src="${lahee_check_and_fix_resource_url(game.ImageIconURL)}" height="64" /></td>
                     <td>${game.Title}</td>
                     <td class="text-center">
                         ${softcore_achievements + hardcore_achievements} / ${total_achievements}
@@ -958,7 +961,7 @@ function lahee_stats_render_game(suffix, user, game_id, time) {
         img.classList.remove("ach_status_" + i);
     }
     img.classList.add("ach_status_" + status);
-    img.src = game ? game.ImageIconURL : "";
+    img.src = game ? lahee_check_and_fix_resource_url(game.ImageIconURL) : "";
 
     document.getElementById("game_title_" + suffix).innerText = game ? game.Title : (game_id > 0 ? "Unknown Game: " + game_id : "No Data");
     document.getElementById("game_time_" + suffix).innerText = time ? TimeSpan.fromMilliseconds(time).toStringWithoutMs() : (ug ? ug.PlayTimeApprox.toStringWithoutMs() : "--:--:--");
@@ -983,7 +986,7 @@ function lahee_stats_render_milestones(user) {
 
             milestone_html += `
                 <tr>
-                    <td><img src="${game?.ImageIconURL}" height="64" /></td>
+                    <td><img src="${lahee_check_and_fix_resource_url(game?.ImageIconURL)}" height="64" /></td>
                     <td>${lahee_render_achievement(game, ua.UserGame, ach, ua)}</td>
                     <td>${ach?.Title ?? ("Unknown Achievement: " + ua.AchievementID)}<br /><small>${game?.Title ?? "Unknown Game"}</small></td>
                     <td>${ua.getLaterAchieveDate().toLocaleString()}</td>
@@ -1055,7 +1058,7 @@ function lahee_stats_render_meta_achievements(user) {
             meta_html += `
                 <tr>
                     <td>${meta_data.name}<br /><small>${meta_data.description}</small></td>
-                    <td><img src="${game?.ImageIconURL}" height="64" /></td>
+                    <td><img src="${lahee_check_and_fix_resource_url(game?.ImageIconURL)}" height="64" /></td>
                     <td>${lahee_render_achievement(game, ug, ach, ua)}</td>
                     <td>${ach?.Title ?? ("Unknown Achievement: " + ua.AchievementID)}<br /><small>${game?.Title ?? "Unknown Game"}</small></td>
                     <td>${related_html}</td>
@@ -1263,7 +1266,7 @@ function lahee_render_achievement(game, ug, a, ua, size) {
     var protect = localStorage.getItem("lahee_setting_hover_spoiler_protect") == "true" && status == LaheeUserAchievementStatus.Locked && a.Type == LaheeAchievementType.progression;
     var title = a?.Title.replaceAll("\"", "&quot;") ?? "Unknown Achievement";
     var desc = a?.Description.replaceAll("\"", "&quot;") ?? "Unknown Achievement ID " + aid;
-    var badgeurl = (status != LaheeUserAchievementStatus.Locked ? a?.BadgeURL : a?.BadgeLockedURL) ?? "/Badge/00000.png";
+    var badgeurl = lahee_check_and_fix_resource_url((status != LaheeUserAchievementStatus.Locked ? a?.BadgeURL : a?.BadgeLockedURL) ?? "/Badge/00000.png");
     
     if (protect) {
         title = "Hidden";
@@ -1612,4 +1615,11 @@ function lahee_set_extended_display() {
     var show = lahee_should_get_extended_data();
     document.getElementById("adetail_ex_trigger_row").style.display = show ? "" : "none";
     document.getElementById("adetail_ex_measured_row").style.display = show ? "" : "none";
+}
+
+function lahee_check_and_fix_resource_url(url) {
+    if (!url) {
+        return url;
+    }
+    return url.replace("localhost", window.location.host + (window.location.port ? ":" + window.location.port : ""));
 }
