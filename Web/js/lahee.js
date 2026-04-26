@@ -640,7 +640,7 @@ function lahee_audio_play(audio) {
 /**
  * @param ach_id {number}
  */
-function lahee_load_comments(ach_id) {
+function lahee_generate_comment_html(ach_id) {
     var str = "";
 
     if (lahee_data.comments) {
@@ -659,10 +659,20 @@ function lahee_load_comments(ach_id) {
         }
     }
 
+    return str;
+}
+
+/**
+ * @param ach_id {number}
+ */
+function lahee_load_comments(ach_id) {
+    var str = lahee_generate_comment_html(ach_id);
+
     var cc = document.getElementById("comment_container");
     cc.innerHTML = str;
     cc.style.display = str != "" ? "block" : "none";
 }
+
 
 function lahee_show_comment_editor() {
     lahee_popup = new bootstrap.Modal(document.getElementById('writeCommentModal'), {});
@@ -1622,4 +1632,27 @@ function lahee_check_and_fix_resource_url(url) {
         return url;
     }
     return url.replace("localhost", window.location.host + (window.location.port ? ":" + window.location.port : ""));
+}
+
+function lahee_show_notes_popup() {
+    var ach = lahee_current_achievement;
+    var game = ach.getGameData();
+    if (!ach || !game) {
+        return;
+    }
+
+    var ug = lahee_current_user.getUserGameData(game);
+    var ua = ug.getAchievementData(ach);
+
+    if (!ach.MemAddr) {
+        alert("This achievement has no code.");
+        return;
+    }
+
+    document.getElementById("commentModalTitle").innerHTML = lahee_render_achievement(game, ug, ach, ua, 32) + " " + ach.Title + ": Notes";
+
+    document.getElementById("comment_content").innerHTML = lahee_generate_comment_html(ach.ID);
+
+    lahee_popup = new bootstrap.Modal(document.getElementById('commentModal'), {});
+    lahee_popup.show();
 }

@@ -187,8 +187,19 @@
                                        onclick="lahee_show_comment_editor();"/>
                             </div>
                             <div class="col">
-                                <input id="ra_download_btn" type="button" onclick="lahee_download_comments();"
-                                       class="btn btn-secondary w-100" value="DL Notes"/>
+                                <div class="btn-group w-100" role="group">
+                                    <button id="ra_download_btn" type="button"
+                                            class="btn btn-secondary w-100 dropdown-toggle" data-bs-toggle="dropdown"
+                                            onclick="lahee_download_comments();">
+                                        User Notes
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="javascript:lahee_download_comments();">Download
+                                            from RA</a></li>
+                                        <li><a class="dropdown-item" href="javascript:lahee_show_notes_popup();">Show
+                                            Notes in Popup</a></li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                         <div id="comment_container">
@@ -489,6 +500,23 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal"
                             onclick="lahee_popup_2.hide();">Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="commentModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="commentModalTitle">Achievement Notes</h5>
+                </div>
+                <div class="modal-body" id="comment_content">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="lahee_popup.hide();">
+                        Close (Esc)
                     </button>
                 </div>
             </div>
