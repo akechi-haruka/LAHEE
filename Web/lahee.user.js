@@ -2,8 +2,8 @@
 // @name        retroachievements.org LAHEE import shortcut
 // @namespace   Violentmonkey Scripts
 // @match       https://retroachievements.org/game/*
-// @grant       none
-// @version     1.1
+// @grant       unsafeWindow
+// @version     1.1.1
 // @author      Haruka Akechi
 // @description Adds a shortcut to copy achievement data to a locally running LAHEE instance.
 // ==/UserScript==
