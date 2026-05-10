@@ -160,3 +160,9 @@ table {
 #adetail_desc {
     clear: both;
 }
+
+@media (max-width: 576px) {
+    #footer {
+        position: relative;
+    }
+}
