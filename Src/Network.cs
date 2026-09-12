@@ -787,12 +787,12 @@ static class Routes {
 
     internal static async Task RALatestIntegration(HttpContextBase ctx) {
         RALatestIntegrationResponse response = new RALatestIntegrationResponse() {
-            Success = false,
-            LatestVersion = "0.0",
-            MinimumVersion = "0.0",
-            LatestVersionUrl = "",
-            LatestVersionUrlX64 = ""
-        }; // TODO: ?
+            Success = true,
+            LatestVersion = "1.0.0.0",
+            MinimumVersion = "1.0.0.0",
+            LatestVersionUrl = "http://0.0.0.0",
+            LatestVersionUrlX64 = "http://0.0.0.0"
+        };
         await ctx.Response.SendJson(response);
     }
 
