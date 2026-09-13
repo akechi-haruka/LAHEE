@@ -30,7 +30,7 @@
 	</PropertyGroup>
 	
 	<PropertyGroup>
-	    <PublishProfile Condition="'$(PublishLAHEE)' == 'true'">LAHEE</PublishProfile>
+	    <PublishProfile Condition="'$(PublishLAHEE)' == 'true'">.\LAHEE.pubxml</PublishProfile>
 	</PropertyGroup>
 
 	<ItemGroup>
