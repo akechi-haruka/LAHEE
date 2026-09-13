@@ -6,17 +6,16 @@ on:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
+  release:
+    types:
+      - published
 jobs:
   build:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         submodules: recursive
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
@@ -26,12 +25,27 @@ jobs:
         dotnet publish .\LAHEE.csproj --configuration Release /p:PublishProfile=.\LAHEE.pubxml
     - name: Copy Web Files
       run: |
-        xcopy Web\ bin\Release\net8.0\publish\Web\ /E
+        xcopy Web\ bin\Release\net10.0\publish\Web\ /E
     - name: Upload
-      uses: actions/upload-artifact@v4.3.3
+      uses: actions/upload-artifact@v7
       with:
         name: LAHEE
-        path: bin\Release\net8.0\publish
+        path: bin\Release\net10.0\publish
         if-no-files-found: error
         overwrite: true
-              
+  deploy:
+    permissions:
+        contents: write
+    runs-on: windows-latest
+    needs: [ build ]
+    if: github.event_name == 'release'
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: tmp
+          skip-decompress: true
+      - name: Add binaries to release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            tmp/*
