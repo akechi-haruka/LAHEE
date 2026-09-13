@@ -28,6 +28,10 @@
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
 		<CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
 	</PropertyGroup>
+	
+	<PropertyGroup>
+	    <PublishProfile Condition="'$(PublishLAHEE)' == 'true'">LAHEE</PublishProfile>
+	</PropertyGroup>
 
 	<ItemGroup>
 		<None Remove="LICENSE.txt" />
