@@ -26,6 +26,7 @@ jobs:
     - name: Copy Web Files
       run: |
         xcopy Web\ publish\Web\ /E
+        del publish\Haruka.Common.Settings.debug.json
     - name: Upload
       uses: actions/upload-artifact@v7
       with:
