@@ -14,6 +14,23 @@ const LaheeAchievementFlags = Object.freeze({
     Unofficial: 4
 });
 
+const LaheeSpoilerHideType = Object.freeze({
+    None: -1,
+    WinCondition: 0,
+    Progression: 1,
+    AllButMissables: 2,
+    All: 3
+});
+
+const LaheeAchievementHideFlags = Object.freeze({
+    None: 0,
+    Name: 1,
+    Description: 2,
+    Icon: 4,
+    Flags: 8,
+    Points: 16
+});
+
 class LaheeAchievementData {
     /** @Type {LaheeSetData} */
     Set;

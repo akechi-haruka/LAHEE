@@ -15,10 +15,10 @@
 		<Description>RetroAchievements API Emulator</Description>
 		<Copyright>2024-2026 Akechi Haruka</Copyright>
 		<IncludeSourceRevisionInInformationalVersion>true</IncludeSourceRevisionInInformationalVersion>
-		<AssemblyVersion>2.4.5</AssemblyVersion>
-		<FileVersion>2.4.5</FileVersion>
+		<AssemblyVersion>2.5.0</AssemblyVersion>
+		<FileVersion>2.5.0</FileVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<Version>2.4.5</Version>
+		<Version>2.5.0</Version>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
