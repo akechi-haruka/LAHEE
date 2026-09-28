@@ -1580,8 +1580,10 @@ function lahee_settings_load() {
 function lahee_settings_save() {
     var reload = false;
 
-    if (localStorage.getItem("lahee_setting_show_metaflags") !== document.getElementById("lahee_setting_show_metaflags").checked) {
+    if ((localStorage.getItem("lahee_setting_show_metaflags") === "true") != document.getElementById("lahee_setting_show_metaflags").checked) {
         reload = true;
+        lahee_set_page("page_loading");
+        lahee_set_loading(0);
     }
     
     localStorage.setItem("lahee_setting_ach_grouping", document.getElementById("lahee_setting_ach_grouping").checked);
@@ -1595,6 +1597,7 @@ function lahee_settings_save() {
     if (reload) {
         window.location.reload();
     }
+    return !reload;
 }
 
 function lahee_settings_reset() {
