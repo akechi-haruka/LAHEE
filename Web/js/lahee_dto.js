@@ -419,6 +419,18 @@ class LaheeUserData {
         return [];
     }
 
+    /**
+     * @type {boolean}
+     * @param game {?LaheeGameData}
+     */
+    hasBeaten(game) {
+        if (!game) {
+            return false;
+        }
+        var completion_ids = (game.getAllAchievements() ?? []).filter(a => a.Type == LaheeAchievementType.win_condition).map(a => a.ID);
+        return this.getUserGameData(game).getAllAchievements().filter(a => completion_ids.includes(a.AchievementID) && a.Status > 0).length > 0;
+    }
+
     toString() {
         return this.UserName + " (" + this.ID + ")";
     }

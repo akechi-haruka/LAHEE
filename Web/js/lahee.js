@@ -1273,7 +1273,7 @@ function lahee_render_achievement(game, ug, a, ua, size) {
     var gid = game?.ID ?? 0;
     
     var status = ua?.Status ?? LaheeUserAchievementStatus.Locked;
-    var protect = lahee_should_spoiler_protect(a);
+    var protect = lahee_should_spoiler_protect(a, game);
     var title = a?.Title.replaceAll("\"", "&quot;") ?? "Unknown Achievement";
     var desc = a?.Description.replaceAll("\"", "&quot;") ?? "Unknown Achievement ID " + aid;
     var badge_url = lahee_check_and_fix_resource_url((status != LaheeUserAchievementStatus.Locked ? a?.BadgeURL : a?.BadgeLockedURL) ?? "/Badge/00000.png");
@@ -1572,6 +1572,7 @@ function lahee_settings_load() {
     document.getElementById("lahee_setting_ach_no_margin").checked = localStorage.getItem("lahee_setting_ach_no_margin") === "true";
     document.getElementById("lahee_setting_spoiler_protect_type").value = localStorage.getItem("lahee_setting_spoiler_protect_type") ?? (LaheeAchievementHideFlags.Name | LaheeAchievementHideFlags.Description);
     document.getElementById("lahee_setting_spoiler_protect_ach_type").value = localStorage.getItem("lahee_setting_spoiler_protect_ach_type") ?? LaheeSpoilerHideType.Progression;
+    document.getElementById("lahee_setting_spoiler_protect_ach_type_post_clear").value = localStorage.getItem("lahee_setting_spoiler_protect_ach_type_post_clear") ?? LaheeSpoilerHideType.Progression;
     document.getElementById("lahee_setting_split_sizes").value = localStorage.getItem("lahee_setting_split_sizes");
     document.getElementById("lahee_setting_show_metaflags").checked = localStorage.getItem("lahee_setting_show_metaflags") === "true";
     lahee_settings_update_selections();
@@ -1590,6 +1591,7 @@ function lahee_settings_save() {
     localStorage.setItem("lahee_setting_ach_no_margin", document.getElementById("lahee_setting_ach_no_margin").checked);
     localStorage.setItem("lahee_setting_spoiler_protect_type", document.getElementById("lahee_setting_spoiler_protect_type").value);
     localStorage.setItem("lahee_setting_spoiler_protect_ach_type", document.getElementById("lahee_setting_spoiler_protect_ach_type").value);
+    localStorage.setItem("lahee_setting_spoiler_protect_ach_type_post_clear", document.getElementById("lahee_setting_spoiler_protect_ach_type_post_clear").value);
     localStorage.setItem("lahee_setting_show_metaflags", document.getElementById("lahee_setting_show_metaflags").checked);
 
     bootstrap.Toast.getOrCreateInstance(document.getElementById("toast_saved")).show();
@@ -1676,17 +1678,20 @@ function lahee_show_notes_popup() {
 
 /**
  * @param [ach] {?LaheeAchievementData}
+ * @param [game] {?LaheeGameData}
  * @returns {LaheeAchievementHideFlags}
  */
-function lahee_should_spoiler_protect(ach) {
+function lahee_should_spoiler_protect(ach, game) {
     if (!ach) {
         return LaheeAchievementHideFlags.None;
     }
 
+    var isBeaten = lahee_current_user.hasBeaten(game);
+
     /** @type {LaheeAchievementHideFlags} */
     var userType = localStorage.getItem("lahee_setting_spoiler_protect_type") ?? (LaheeAchievementHideFlags.Name | LaheeAchievementHideFlags.Description);
     /** @type {LaheeSpoilerHideType} */
-    var userAType = localStorage.getItem("lahee_setting_spoiler_protect_ach_type") ?? LaheeSpoilerHideType.Progression;
+    var userAType = (isBeaten ? localStorage.getItem("lahee_setting_spoiler_protect_ach_type_post_clear") : localStorage.getItem("lahee_setting_spoiler_protect_ach_type")) ?? LaheeSpoilerHideType.Progression;
 
     var hide = false;
     if (userAType == LaheeSpoilerHideType.WinCondition) {
@@ -1704,4 +1709,5 @@ function lahee_should_spoiler_protect(ach) {
 
 function lahee_settings_update_selections() {
     document.getElementById("lahee_setting_spoiler_protect_ach_type").disabled = document.getElementById("lahee_setting_spoiler_protect_type").value == 0;
+    document.getElementById("lahee_setting_spoiler_protect_ach_type_post_clear").disabled = document.getElementById("lahee_setting_spoiler_protect_type").value == 0;
 }

@@ -426,10 +426,20 @@
             </div>
             <div class="ms-3">
                 <p>
-                    Apply to:
+                    <label for="lahee_setting_spoiler_protect_ach_type" class="form-label">Before the game is beaten,
+                        apply to:</label>
                     <select class="form-control" type="checkbox" id="lahee_setting_spoiler_protect_ach_type">
                         <option value="0">Win Condition only</option>
                         <option value="1" selected="selected">Progression achievements</option>
+                        <option value="2">All achievements except missables</option>
+                        <option value="3">All achievements</option>
+                    </select>
+                </p>
+                <p>
+                    <label for="lahee_setting_spoiler_protect_ach_type_post_clear" class="form-label">After the game is
+                        beaten, apply to:</label>
+                    <select class="form-control" type="checkbox" id="lahee_setting_spoiler_protect_ach_type_post_clear">
+                        <option value="1" selected="selected">None</option>
                         <option value="2">All achievements except missables</option>
                         <option value="3">All achievements</option>
                     </select>
