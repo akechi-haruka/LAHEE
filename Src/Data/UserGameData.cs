@@ -59,4 +59,22 @@ public class UserGameData {
 
         return userAchievementData;
     }
+
+    public UserAchievementData LockAchievement(int achievementId) {
+        if (achievementId == StaticDataManager.UNSUPPORTED_EMULATOR_ACHIEVEMENT_ID) { // "Unsupported Emulator"
+            return null;
+        }
+
+        if (!Achievements.TryGetValue(achievementId, out UserAchievementData userAchievementData)) {
+            return null;
+        }
+
+        userAchievementData.AchieveDateSoftcore = 0;
+        userAchievementData.AchieveDate = 0;
+        userAchievementData.AchievePlaytime = TimeSpan.Zero;
+        userAchievementData.AchievePlaytimeSoftcore = TimeSpan.Zero;
+        userAchievementData.Status = UserAchievementData.StatusFlag.Locked;
+
+        return userAchievementData;
+    }
 }

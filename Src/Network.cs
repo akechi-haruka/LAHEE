@@ -75,6 +75,7 @@ static class Network {
         AddRARoute("hashlibrary", Routes.RAHashLibrary);
         AddRARoute("allprogress", Routes.RAAllProgress);
         AddRARoute("gameinfolist", Routes.RAGameInfoList);
+        AddRARoute("laheeadmin", Routes.LaheeAdminCommand);
 
         Log.Network.LogInformation("Starting webserver on {H}:{P}", server.Settings.Hostname, server.Settings.Port);
         server.Start();
@@ -1041,5 +1042,81 @@ static class Routes {
             Response = gameIds.Select(StaticDataManager.FindGameDataById).Where(game => game != null).ToArray()
         };
         await ctx.Response.SendJson(response);
+    }
+
+    internal static async Task LaheeAdminCommand(HttpContextBase ctx) {
+        string userName = ctx.Request.GetParameter("user");
+        uint gameId = UInt32.Parse(ctx.Request.GetParameter("gameid"));
+        int achievementId = Int32.Parse(ctx.Request.GetParameter("aid"));
+        bool hardcore = ctx.Request.GetParameter("hardcore") == "true";
+        String mode = ctx.Request.GetParameter("mode");
+
+        String error = null;
+
+        UserData user = UserManager.GetUserData(userName);
+        GameData game = StaticDataManager.FindGameDataById(gameId);
+        AchievementData ach = game?.GetAchievementById(achievementId);
+
+        if (user == null) {
+            error = "User not found";
+        } else if (game == null) {
+            error = "Game not found";
+        } else if (mode == "lock") {
+            if (ach != null) {
+                if (!user.GameData.TryGetValue(gameId, out UserGameData userGameData)) {
+                    userGameData = user.RegisterGame(game);
+                }
+
+                if (!userGameData.Achievements.TryGetValue(achievementId, out UserAchievementData userAchievementData) || userAchievementData.Status != UserAchievementData.StatusFlag.Locked) {
+                    userGameData.LockAchievement(achievementId);
+
+                    Log.Main.LogInformation("{u} locked achievement \"{a}\" of game \"{g}\" from danger zone", user, ach, game);
+                } else {
+                    error = "Achievement is not unlocked";
+                }
+            } else {
+                error = "Achievement not found";
+            }
+        } else if (mode == "unlock") {
+            if (ach != null) {
+                if (!user.GameData.TryGetValue(gameId, out UserGameData userGameData)) {
+                    userGameData = user.RegisterGame(game);
+                }
+
+                userGameData.UnlockAchievement(achievementId, hardcore);
+
+                Log.Main.LogInformation("{u} unlocked achievement \"{a}\" of game \"{g}\" from danger zone", user, ach, game);
+            } else {
+                error = "Achievement not found";
+            }
+        } else if (mode == "lock_all") {
+            if (user.GameData.TryGetValue(gameId, out UserGameData userGameData)) {
+                userGameData.Achievements.Clear();
+
+                Log.Main.LogInformation("{u} reset all achievements of game \"{g}\" from danger zone", user, ach);
+            } else {
+                error = "No progression for this game found";
+            }
+        } else if (mode == "delete_all") {
+            if (user.GameData.Remove(gameId)) {
+                Log.Main.LogInformation("{u} reset all user data of game \"{g}\" from danger zone", user, ach);
+            } else {
+                error = "No progression for this game found";
+            }
+        } else {
+            error = "Unknown operation: " + mode;
+        }
+
+        if (error != null) {
+            Log.Main.LogError("Admin operation failed with: " + error);
+        } else {
+            LiveTicker.BroadcastPing(LiveTicker.LiveTickerEventPing.PingType.AchievementUnlock);
+            LiveTicker.BroadcastPing(LiveTicker.LiveTickerEventPing.PingType.Time);
+            UserManager.Save();
+        }
+
+        await ctx.Response.SendJson(new RAErrorResponse(error) {
+            Success = error == null
+        });
     }
 }

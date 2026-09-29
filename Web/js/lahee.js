@@ -1711,3 +1711,75 @@ function lahee_settings_update_selections() {
     document.getElementById("lahee_setting_spoiler_protect_ach_type").disabled = document.getElementById("lahee_setting_spoiler_protect_type").value == 0;
     document.getElementById("lahee_setting_spoiler_protect_ach_type_post_clear").disabled = document.getElementById("lahee_setting_spoiler_protect_type").value == 0;
 }
+
+function lahee_check_open_danger_menu(event) {
+    if (event.keyCode == 120 && lahee_current_user && lahee_current_game) {
+        document.getElementById("lahee_danger_zone_current_user").innerText = "Currently selected user:\n" + lahee_current_user.toString();
+        document.getElementById("lahee_danger_zone_current_game").innerText = "Currently selected game:\n" + lahee_current_game.toString();
+        document.getElementById("lahee_danger_zone_current_achievement_r").innerHTML = (lahee_current_achievement ? lahee_render_achievement(lahee_current_game, null, lahee_current_achievement, null, 32) + " " + lahee_current_achievement.Title : "none");
+        document.getElementById("lahee_danger_zone_lock_achievement").disabled = !lahee_current_achievement;
+        document.getElementById("lahee_danger_zone_unlock_achievement").disabled = !lahee_current_achievement;
+        lahee_popup = new bootstrap.Modal(document.getElementById('dangerModal'), {});
+        lahee_popup.show();
+    }
+}
+
+function lahee_danger_lock() {
+    lahee_request("r=laheeadmin&mode=lock&user=" + lahee_current_user.UserName + "&gameid=" + lahee_current_game.ID + "&aid=" + lahee_current_achievement.ID).then(function (ret) {
+        var result = new RAResponseBase(ret);
+        if (result.Success) {
+            lahee_popup.hide();
+        } else {
+            alert("Error occurred: " + result.Error);
+        }
+    }).catch(function (e) {
+        console.error(e);
+        alert("Error occurred: " + e);
+    });
+}
+
+function lahee_danger_unlock(hardcore) {
+    lahee_request("r=laheeadmin&mode=unlock&hardcore=" + hardcore + "&user=" + lahee_current_user.UserName + "&gameid=" + lahee_current_game.ID + "&aid=" + lahee_current_achievement.ID).then(function (ret) {
+        var result = new RAResponseBase(ret);
+        if (result.Success) {
+            lahee_popup.hide();
+        } else {
+            alert("Error occurred: " + result.Error);
+        }
+    }).catch(function (e) {
+        console.error(e);
+        alert("Error occurred: " + e);
+    });
+}
+
+function lahee_danger_lock_all() {
+    if (confirm("Are you sure that you want to RESET ALL ACHIEVEMENTS for " + lahee_current_user + " in " + lahee_current_game + "?")) {
+        lahee_request("r=laheeadmin&mode=lock_all&user=" + lahee_current_user.UserName + "&gameid=" + lahee_current_game.ID + "&aid=0").then(function (ret) {
+            var result = new RAResponseBase(ret);
+            if (result.Success) {
+                lahee_popup.hide();
+            } else {
+                alert("Error occurred: " + result.Error);
+            }
+        }).catch(function (e) {
+            console.error(e);
+            alert("Error occurred: " + e);
+        });
+    }
+}
+
+function lahee_danger_delete_all() {
+    if (confirm("Are you sure that you want to DELETE ALL USER DATA for " + lahee_current_user + " in " + lahee_current_game + "?")) {
+        lahee_request("r=laheeadmin&mode=delete_all&user=" + lahee_current_user.UserName + "&gameid=" + lahee_current_game.ID + "&aid=0").then(function (ret) {
+            var result = new RAResponseBase(ret);
+            if (result.Success) {
+                window.location.reload();
+            } else {
+                alert("Error occurred: " + result.Error);
+            }
+        }).catch(function (e) {
+            console.error(e);
+            alert("Error occurred: " + e);
+        });
+    }
+}

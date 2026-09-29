@@ -16,7 +16,7 @@
     <script src="js/3rdparty/split.min.js"></script>
     <script src="js/lahee_dto.js"></script>
 </head>
-<body class="d-flex flex-column h-100" onload="lahee_init();">
+<body class="d-flex flex-column h-100" onload="lahee_init();" onkeyup="lahee_check_open_danger_menu(event);">
 
     <!-- theme toggle -->
     <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
@@ -547,6 +547,49 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="lahee_popup.hide();">
+                        Close (Esc)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="dangerModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-danger">
+                    <h5 class="modal-title" id="dangerModalLabel">Danger Zone</h5>
+                </div>
+                <div class="modal-body">
+                    <p id="lahee_danger_zone_current_user"></p>
+                    <p id="lahee_danger_zone_current_game"></p>
+                    <div id="lahee_danger_zone_current_achievement">
+                        Currently selected achievement:
+                        <div id="lahee_danger_zone_current_achievement_r"></div>
+                    </div>
+                    <hr/>
+                    <p>
+                        <input id="lahee_danger_zone_lock_achievement" type="button" class="btn btn-warning float-start"
+                               value="Lock selected" onclick="lahee_danger_lock();"/>
+                    <div class="btn-group float-none ms-2" role="group">
+                        <button id="lahee_danger_zone_unlock_achievement" type="button"
+                                class="btn btn-warning dropdown-toggle" data-bs-toggle="dropdown">
+                            Unlock selected
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="javascript:lahee_danger_unlock(true);">Hardcore</a></li>
+                            <li><a class="dropdown-item" href="javascript:lahee_danger_unlock(false);">Softcore</a></li>
+                        </ul>
+                    </div>
+                    </p>
+                    <hr/>
+                    <p><input type="button" class="btn btn-danger" value="Lock all achievements for current game"
+                              onclick="lahee_danger_lock_all();"/></p>
+                    <p><input type="button" class="btn btn-danger"
+                              value="Delete all data for current user in current game"
+                              onclick="lahee_danger_delete_all();"/></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="lahee_popup.hide();">
                         Close (Esc)
                     </button>
                 </div>
