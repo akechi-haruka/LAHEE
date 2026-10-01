@@ -1295,7 +1295,7 @@ function lahee_render_achievement(game, ug, a, ua, size) {
     }
 
     var overlay = "";
-    if (lahee_should_get_extended_data() && status == LaheeUserAchievementStatus.Locked && (protect & LaheeAchievementHideFlags.Flags) != 0 && !size) {
+    if (lahee_should_get_extended_data() && status == LaheeUserAchievementStatus.Locked && (protect & LaheeAchievementHideFlags.Flags) == 0 && !size) {
         overlay = lahee_render_achievement_ex(lahee_get_extended_achievement_data(aid));
     }
 
