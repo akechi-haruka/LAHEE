@@ -15,10 +15,10 @@
 		<Description>RetroAchievements API Emulator</Description>
 		<Copyright>2024-2026 Akechi Haruka</Copyright>
 		<IncludeSourceRevisionInInformationalVersion>true</IncludeSourceRevisionInInformationalVersion>
-		<AssemblyVersion>2.5.3</AssemblyVersion>
-		<FileVersion>2.5.3</FileVersion>
+		<AssemblyVersion>2.5.4</AssemblyVersion>
+		<FileVersion>2.5.4</FileVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<Version>2.5.3</Version>
+		<Version>2.5.4</Version>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -106,10 +106,6 @@
 		<ProjectReference Include="RATools\Core\Core\Source\Jamiras.Core.csproj"/>
 		<ProjectReference Include="RATools\Source\Data\RATools.Data.csproj"/>
 	</ItemGroup>
-
-	<ItemGroup>
-		<Folder Include="Src\"/>
-    </ItemGroup>
 
     <Target Name="SetHash" AfterTargets="InitializeSourceControlInformation">
 

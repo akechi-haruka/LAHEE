@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Text;
+using Haruka.Arcade.Hexedit2;
 using Haruka.Common.Configuration;
 using LAHEE.Data;
 using LAHEE.Util;
@@ -123,6 +124,7 @@ delete <gamename>                                                               
 addhash <gamename> <hash>                                                         Adds a ROM hash to a game
 reload                                                                            Reloads achievement data
 reloaduser                                                                        Reloads user data
+patch <filename>                                                                  Patches the server URL in the given file
 ");
                 break;
             case "exit":
@@ -184,6 +186,14 @@ reloaduser                                                                      
                     AddHashFromConsole(args[1], args[2]);
                 } else {
                     Log.Main.LogError("Command requires exactly 2 arguments.");
+                }
+
+                break;
+            case "patch":
+                if (args.Length == 2) {
+                    PatchFromConsole(args[1]);
+                } else {
+                    Log.Main.LogError("Command requires exactly 1 argument.");
                 }
 
                 break;
@@ -363,6 +373,49 @@ reloaduser                                                                      
         game.ROMHashes.Add(hash);
 
         Log.Data.LogInformation("Added {h} to {g}.", hash, game);
+    }
+
+    private static void PatchFromConsole(string filePath) {
+        if (!File.Exists(filePath)) {
+            Log.Main.LogError("File not found: " + filePath);
+            return;
+        }
+
+        byte[] file = File.ReadAllBytes(filePath);
+
+        List<long> unknownsPatch;
+        List<long> unknownsOriginal;
+
+        byte[] patch = Patch.Parse(Network.LocalUrl + "/dorequest.php", PatchType.StringAscii, out unknownsPatch);
+        byte[] original = Patch.Parse("https://retroachievements.org/dorequest.php", PatchType.StringAscii, out unknownsOriginal);
+
+        List<long> offsets = Patch.SearchOffsets(file, original, unknownsOriginal, Int32.MaxValue);
+        if (offsets.Count == 0) {
+            if (Patch.SearchOffsets(file, patch, unknownsPatch, 1).Count > 0) {
+                Log.Hex.LogWarning("File was already patched");
+            } else {
+                Log.Hex.LogError("Incorrect file or file version");
+            }
+
+            return;
+        }
+
+        foreach (long offset in offsets) {
+            Log.Hex.LogInformation("Patching offset 0x" + offset.ToString("X2"));
+            Patch.PatchResult pr = Patch.ApplyPatch(ref file, offset, patch, original, unknownsPatch, unknownsOriginal, true);
+            if (pr != Patch.PatchResult.Ok && pr != Patch.PatchResult.OkAlready) {
+                Log.Hex.LogError("Patch failed: " + pr);
+                return;
+            }
+
+            Log.Hex.LogDebug("Patch Result: " + pr);
+        }
+
+        string backupFilePath = filePath + ".bak";
+        Log.Hex.LogInformation("Saving backup to: " + backupFilePath);
+        File.Copy(filePath, backupFilePath, true);
+        Log.Hex.LogInformation("Saving result to: " + filePath);
+        File.WriteAllBytes(filePath, file);
     }
 
     private static string[] ParseConsoleCommand(string line) {

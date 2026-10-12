@@ -9,6 +9,7 @@ static class Log {
     public static ILogger User { get; private set; }
     public static ILogger RCheevos { get; private set; }
     public static ILogger Websocket { get; private set; }
+    public static ILogger Hex { get; private set; }
 
     public static void Initialize() {
         Haruka.Common.Log.Initialize();
@@ -18,6 +19,7 @@ static class Log {
         User = Haruka.Common.Log.GetOrCreate("User");
         RCheevos = Haruka.Common.Log.GetOrCreate("Rche");
         Websocket = Haruka.Common.Log.GetOrCreate("Webs");
+        Hex = Haruka.Common.Log.GetOrCreate("Hex ");
 
         Main.LogInformation("Local Achievements Home Enhanced Edition " + Program.NAME);
     }
