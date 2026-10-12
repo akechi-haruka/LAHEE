@@ -1,6 +1,6 @@
 # L.A.H.E.E. - Local Achievements Home Edition Enhanced
 
-RetroAchievements Service Emulator
+[RetroAchievements](https://retroachievements.org) Service Emulator ("private server")
 
 2024-2026 Haruka
 
@@ -24,8 +24,10 @@ This allows local/offline/modded progression of RetroAchievements.
 ### Features
 
 * Obtain achievements fully offline without an internet connection.
-* Add or modify achievements (ex. remove single player checks from Final Fantasy Crystal Chronicles achievements), presence text (ex. Add a point counter display to FFCC)
-* Merge sub-sets to one set (to play multiple challenges at once)
+* Add or modify achievements and presence text.
+    * Example: remove the single player restriction
+      from [Final Fantasy Crystal Chronicles achievements](https://retroachievements.org/game/3885).
+* Merge sub-sets to one set (to play multiple challenges at once, regardless if they're Extra sets or not)
 * Add custom ROM hashes (to use graphic patches, undubs, mods, etc.)
 * Fetch achievement data and previous online progression from your real RetroAchievements account.
 * Playtime tracking (approximate) and stats.
@@ -52,7 +54,7 @@ This allows local/offline/modded progression of RetroAchievements.
 
 ### Dolphin
 
-1. Go to `<your user data location>\Config\RetroAchievements.ini`
+1. Go to `<Documents>\Dolphin Emulator\Config\RetroAchievements.ini`
 and append a new entry named
 `HostUrl = http://localhost:8000/`
 2. Go to the directory where `Dolphin.exe` is located. If there are any `RA_Integration` files:
