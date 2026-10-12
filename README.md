@@ -145,8 +145,8 @@ Achievement definitions must be placed in `<root>\<Data>\<gameid>-<optional_labe
 - For combined sets (v3), simply copy the `####.set.json` from your source.
 - Achievement images must be placed in `<root>\lahee\Badge\<badgeid>.png`
 - Game hash definitions must be placed in `<root>\<Data>\<gameid>-<optional_label>.hash.txt`
-- Every line should depict one valid hash for this game+achievement set combo
-- All `.zhash` files of the same ID are merged.
+    - Every line should depict one valid hash for this game+achievement set combo
+    - All `.hash.txt` files of the same ID are merged.
 
 Note that the Game ID from the file name itself will override the Game ID that is stored inside the .json itself. This allows you to easily merge sets.
 
