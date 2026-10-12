@@ -45,9 +45,10 @@ This allows local/offline/modded progression of RetroAchievements.
 
 ## Usage
 
-Latest stable release: https://github.com/akechi-haruka/LAHEE/releases
-
-Latest unstable development build: https://nightly.link/akechi-haruka/LAHEE/workflows/dotnet/master
+1. Download the latest stable release here: https://github.com/akechi-haruka/LAHEE/releases
+2. Unzip the program to any directory and run `LAHEE.exe`
+3. To configure your emulator, see below.
+4. For further configuration, see [Config](#config).
 
 ### Dolphin
 
@@ -55,7 +56,7 @@ Latest unstable development build: https://nightly.link/akechi-haruka/LAHEE/work
 and append a new entry named
 `HostUrl = http://localhost:8000/`
 2. Go to the directory where `Dolphin.exe` is located. If there are any `RA_Integration` files:
-    1. If you want to be able to edit achievements, see "Patching RAIntegration".
+    1. If you want to be able to edit achievements, see [Patching RAIntegration](#ra_integrationdll).
    2. Otherwise, delete those files.
 3. Launch Dolphin, navigate to Tools > Achievements, and type in any desired username and any password.
 
@@ -80,6 +81,18 @@ Most other emulators have no ability to change the RA server name, so we need to
     * You should get at least 1 hit.
 4. Launch the emulator, navigate to the achievements menu, and type in any desired username and any password.
 
+Alternatively, you may also just hexedit the string in the target binary manually.
+
+### RA_Integration.dll
+
+This is only required if your emulator loads RAIntegration from `RA_Integration[-x64].dll` or if you want to use
+RAIntegration to edit achievements on LAHEE.
+
+1. Start LAHEE.
+2. Type `patch <path_to_raintegration.dll>`
+    * Example: `patch C:\Duckstation\RA_Integration.dll`
+    * Note that this file may also be called `RA_Integration-x64.dll`. If both exist, patch both.
+
 ## Web Viewer
 
 Open http://localhost:8000/Web/ in your browser to see locked/unlocked achievements, records, status message and score.
@@ -96,9 +109,9 @@ If desired, an avatar can be placed in `<lahee root>\UserPic\<username>.png`.
 2. Set "WebApiKey" to the Web API Key found on https://retroachievements.org/settings, as well as "Username" and
    "Password" to your real RetroAchievements account.
 
-then to add achievements:
+then to add achievements you can choose one or more of the following options:
 
-### via Browser
+### add via Browser
 
 This requires a userscript manager addon such as Greasemonkey.
 
@@ -107,32 +120,18 @@ Install this userscript: https://raw.githubusercontent.com/akechi-haruka/LAHEE/r
 Afterwards, you will have a button on the game specific page to copy the set to LAHEE.
 ![https://github.com/akechi-haruka/LAHEE/blob/master/Readme/screenshot_userscript.png](https://github.com/akechi-haruka/LAHEE/blob/master/Readme/screenshot_userscript.png)
 
-### via LAHEE console
+### add via LAHEE console
 
 In the LAHEE console, type `fetch XXXX` where XXXX is the game ID you want to get achievements for. This ID can be found in the URL of the achievements page (ex. for FFCC: https://retroachievements.org/game/3885, this would be 3885).
 
-Alternatively, 
+### add custom achievements via RAIntegration
 
-## Adding achievements (via RAIntegration)
-
-From LAHEE 1.11 and above, you can use RAIntegration / "RetroAchievements Development" to add and modify achievements
+From LAHEE 1.11 and above, you can use RAIntegration / "RetroAchievements Development" to create and modify achievements
 directly in LAHEE via the Upload/Promote/Demote buttons.
 
-### Patching RAIntegration
+Make sure you have [patched RA_Integration.dll](#ra_integrationdll).
 
-These steps are only required if your emulator loads RAIntegration from `RA_Integration[-x64].dll` or if you want to use
-RAIntegration to edit achievements on LAHEE.
-
-1. Download https://github.com/akechi-haruka/hexedit2 and place the .exe next to `Dolphin.exe`.
-2. Run following:
-   ```
-   hexedit2 multi -t StringASCII RA_Integration.dll RA_Integration.dll https://retroachievements.org/dorequest.php http://localhost:8000/dorequest.php
-   hexedit2 multi -t StringASCII RA_Integration.dll RA_Integration.dll https://retroachievements.org http://localhost:8000
-   hexedit2 multi -t StringASCII RA_Integration-x64.dll RA_Integration-x64.dll https://retroachievements.org/dorequest.php http://localhost:8000/dorequest.php
-   hexedit2 multi -t StringASCII RA_Integration-x64.dll RA_Integration-x64.dll https://retroachievements.org http://localhost:8000
-   ```
-
-## Adding achievements (manually / custom)
+### add achievements (externally / manually / custom)
 
 Achievement definitions must be placed in `<root>\<Data>\<gameid>-<optional_label>.<extension>`
 
@@ -141,6 +140,7 @@ Achievement definitions must be placed in `<root>\<Data>\<gameid>-<optional_labe
 - For core sets, simply copy the `####.json` file from `RAIntegration\Data`.
 - For user sets, simply copy the `####-User.txt` file from `RAIntegration\Data`.
     - Latest supported RAIntegration version: 1.4.0.
+- For combined sets (v3), simply copy the `####.set.json` from your source.
 - Achievement images must be placed in `<root>\lahee\Badge\<badgeid>.png`
 - Game hash definitions must be placed in `<root>\<Data>\<gameid>-<optional_label>.hash.txt`
 - Every line should depict one valid hash for this game+achievement set combo
